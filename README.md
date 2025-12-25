@@ -65,16 +65,79 @@ npm run dev
 http://localhost:5005
 ---
 
-### ✅ How to use
-1. Create a file named **`README.md`**
-2. Paste the above content
-3. Commit & push to GitHub
+---
 
-If you want, I can also:
-- ✨ Add **badges** (Node, MongoDB, JWT)
-- 📸 Add **Postman API screenshots section**
-- 🎓 Create a **college / internship submission version**
-- 🧩 Customize for **frontend + backend combined repo**
+## 🔗 API Endpoints
 
-Just tell me 👍
+### 🔑 Authentication
+| Method | Endpoint | Description |
+|------|--------|------------|
+| POST | `/api/auth/signup` | Register user |
+| POST | `/api/auth/login` | Login user |
+| GET  | `/api/auth/me` | Get logged‑in user |
+
+---
+
+### 👤 User
+| Method | Endpoint | Description |
+|------|--------|------------|
+| GET | `/api/users/profile` | Get user profile |
+
+---
+
+### 👑 Admin
+| Method | Endpoint | Description |
+|------|--------|------------|
+| GET | `/api/admin/check-admin` | Admin‑only route |
+
+---
+
+### 🚚 Service Requests
+| Method | Endpoint | Description |
+|------|--------|------------|
+| POST | `/api/service-requests` | Create service request |
+
+---
+
+### ⭐ Reviews
+| Method | Endpoint | Description |
+|------|--------|------------|
+| POST | `/api/reviews` | Submit review |
+
+---
+
+## 🧪 Testing
+
+All APIs are tested using **Postman**.
+
+**Authorization Header format:**
+
+---
+
+## ✅ Week‑2 Completion Summary
+
+- ✔ Backend routing with Express
+- ✔ MongoDB database integration
+- ✔ Authentication using JWT
+- ✔ Role‑based authorization (Admin/User)
+- ✔ Middleware protection
+- ✔ API testing with Postman
+
+---
+
+## 🧠 Future Enhancements
+
+- Payment integration
+- Admin dashboard APIs
+- Service provider management
+- Order tracking system
+- Frontend integration
+
+---
+
+## 👨‍💻 Author
+
+**Muhammed Aflah A**  
+Full Stack Developer
+
 
