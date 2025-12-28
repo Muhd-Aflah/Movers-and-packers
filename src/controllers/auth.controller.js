@@ -1,48 +1,71 @@
-const jwt = require("jsonwebtoken");
 const User = require("../models/User.model");
+const jwt = require("jsonwebtoken");
 
+// helper to generate token
 const generateToken = (id) => {
   return jwt.sign({ id }, process.env.JWT_SECRET, {
-    expiresIn: "30d",
+    expiresIn: "1d",
   });
 };
 
+// Signup
 exports.signup = async (req, res) => {
-  try {
-    const { name, email, password, role } = req.body;
+  const { name, email, password, role } = req.body;
 
-    const user = await User.create({
-      name,
-      email,
-      password,
-      role
-    });
-
-    res.status(201).json({
-      message: "User created",
-      user,
-      token: generateToken(user._id)
-    });
-  } catch (error) {
-    res.status(400).json({ error: error.message });
+  const userExists = await User.findOne({ email });
+  if (userExists) {
+    return res.status(400).json({ message: "User already exists" });
   }
+
+  const user = await User.create({
+    name,
+    email,
+    password,
+    role,
+  });
+
+  res.status(201).json({
+    _id: user._id,
+    name: user.name,
+    email: user.email,
+    role: user.role,
+    token: generateToken(user._id),
+  });
 };
 
+// Login
 exports.login = async (req, res) => {
-  try {
-    const { email, password } = req.body;
+  const { email, password } = req.body;
 
-    const user = await User.findOne({ email, password });
-    if (!user) {
-      return res.status(401).json({ message: "Invalid credentials" });
-    }
+  const user = await User.findOne({ email });
 
-    res.json({
-      message: "Login successful",
-      user,
-      token: generateToken(user._id)
-    });
-  } catch (error) {
-    res.status(500).json({ error: error.message });
+  if (!user || !(await user.matchPassword(password))) {
+    return res.status(401).json({ message: "Invalid email or password" });
   }
+
+  res.json({
+    _id: user._id,
+    name: user.name,
+    email: user.email,
+    role: user.role,
+    token: generateToken(user._id),
+  });
+};
+
+// Profile (JWT protected)
+exports.profile = (req, res) => {
+  res.json({
+    success: true,
+    user: req.user,
+  });
+};
+
+// Check user role
+exports.checkUser = (req, res) => {
+  res.json({ message: "User access verified" });
+};
+
+// Check admin role
+exports.checkAdmin = (req, res) => {
+  res.json({ message: "Admin access verified" });
 };
