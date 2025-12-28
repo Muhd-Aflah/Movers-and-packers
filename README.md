@@ -64,8 +64,6 @@ npm run dev
 http://localhost:5005
 ---
 
----
-
 ## 🔗 API Endpoints
 
 ### 🔑 Authentication
