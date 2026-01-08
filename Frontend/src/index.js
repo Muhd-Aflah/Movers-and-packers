@@ -1,0 +1,1 @@
+export { LogisticsLanding } from "./LogisticsLanding";
