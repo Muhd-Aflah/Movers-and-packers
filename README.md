@@ -4,9 +4,9 @@ SwiftMove is a full-stack web application designed to simplify logistics service
 Users can calculate prices, book services, make secure payments, and track their bookings through a modern web interface.
 
 ---
+## 📌 Project Status: **In Development**
 
-## 🌐 Live Project
-> _Local development project (can be deployed to Vercel / Render)_
+> ⚠️ This project is currently under active development.Features are being implemented step by step.
 
 ---
 
