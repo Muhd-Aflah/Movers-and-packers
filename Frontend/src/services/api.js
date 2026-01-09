@@ -22,3 +22,4 @@ export const apiRequest = async (endpoint, options = {}) => {
 
   return data;
 };
+
