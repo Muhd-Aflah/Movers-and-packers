@@ -1,89 +1,107 @@
 export function AboutPage() {
   return (
-    <div className="w-full bg-white">
+    <div className="w-full bg-white text-gray-900">
+
       {/* HERO */}
-      <section className="max-w-7xl mx-auto px-6 py-16">
-        <h1 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-4">
-          About SwiftMove
-        </h1>
-        <p className="text-gray-600 max-w-3xl">
-          SwiftMove is a modern logistics and warehousing platform designed to
-          simplify global shipping, storage, and last-mile delivery through
-          technology and operational excellence.
-        </p>
+      <section className="bg-gray-900 text-white">
+        <div className="max-w-6xl mx-auto px-6 py-24">
+          <h1 className="text-4xl sm:text-5xl font-bold mb-6">
+            Built to Move Faster
+          </h1>
+          <p className="text-blue-100 text-lg max-w-2xl">
+            SwiftMove is a modern logistics and warehousing platform helping
+            businesses ship, store, and deliver goods without friction.
+          </p>
+        </div>
       </section>
 
-      {/* MISSION + VISION */}
-      <section className="bg-[#eef1fa]">
-        <div className="max-w-7xl mx-auto px-6 py-16 grid gap-10 md:grid-cols-2">
-          <div>
-            <h2 className="text-2xl font-bold text-gray-900 mb-3">
+      {/* MISSION STRIP */}
+      <section className="bg-white">
+        <div className="max-w-6xl mx-auto px-6 py-20">
+          <div className="border-l-4 border-gray-900 pl-6 max-w-3xl">
+            <h2 className="text-2xl font-bold mb-4">
               Our Mission
             </h2>
-            <p className="text-gray-700 leading-relaxed">
-              To deliver fast, reliable, and transparent logistics services by
-              combining smart technology, skilled teams, and a global
+            <p className="text-gray-600 leading-relaxed">
+              To deliver fast, reliable, and transparent logistics by combining
+              smart technology, skilled teams, and a strong global
               infrastructure.
             </p>
           </div>
+        </div>
+      </section>
 
-          <div>
-            <h2 className="text-2xl font-bold text-gray-900 mb-3">
-              Our Vision
-            </h2>
-            <p className="text-gray-700 leading-relaxed">
-              To become a trusted global logistics partner that empowers
-              businesses to scale without friction.
-            </p>
-          </div>
+      {/* VISION BLOCK */}
+      <section className="bg-gray-600 text-white">
+        <div className="max-w-6xl mx-auto px-6 py-20">
+          <h2 className="text-2xl font-bold mb-6">
+            Our Vision
+          </h2>
+          <p className="text-gray-300 text-lg max-w-3xl">
+            To become a trusted global logistics partner that empowers
+            businesses to scale confidently, no matter the destination.
+          </p>
         </div>
       </section>
 
       {/* WHY CHOOSE US */}
-      <section className="max-w-7xl mx-auto px-6 py-16">
-        <h2 className="text-2xl font-bold text-gray-900 mb-8">
-          Why Choose SwiftMove
-        </h2>
+      <section className="bg-gray-50">
+        <div className="max-w-6xl mx-auto px-6 py-20">
+          <h2 className="text-2xl font-bold mb-12 text-center">
+            Why Choose SwiftMove
+          </h2>
 
-        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-          {[
-            {
-              title: "Global Network",
-              desc: "Warehouses and delivery partners across major regions.",
-            },
-            {
-              title: "Fast Operations",
-              desc: "Optimized processes for quick turnaround times.",
-            },
-            {
-              title: "Secure Handling",
-              desc: "Safety-first approach for all shipments.",
-            },
-            {
-              title: "Tech Driven",
-              desc: "Real-time tracking and smart logistics tools.",
-            },
-            {
-              title: "Customer Support",
-              desc: "Dedicated teams available when you need them.",
-            },
-            {
-              title: "Scalable Solutions",
-              desc: "Built for startups, SMEs, and enterprises.",
-            },
-          ].map((item, index) => (
-            <div
-              key={index}
-              className="p-6 rounded-xl border border-gray-200 hover:shadow-md transition"
-            >
-              <h3 className="font-semibold text-gray-900 mb-2">
-                {item.title}
-              </h3>
-              <p className="text-sm text-gray-600">{item.desc}</p>
-            </div>
-          ))}
+          <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-3">
+            {[
+              {
+                title: "Global Network",
+                desc: "Warehouses and delivery partners across major regions.",
+                color: "bg-blue-100 text-blue-700",
+              },
+              {
+                title: "Fast Operations",
+                desc: "Optimized processes for rapid turnaround.",
+                color: "bg-green-100 text-green-700",
+              },
+              {
+                title: "Secure Handling",
+                desc: "Safety-first handling for every shipment.",
+                color: "bg-purple-100 text-purple-700",
+              },
+              {
+                title: "Tech Driven",
+                desc: "Real-time tracking and smart logistics tools.",
+                color: "bg-orange-100 text-orange-700",
+              },
+              {
+                title: "Customer Support",
+                desc: "Dedicated teams when you need help.",
+                color: "bg-pink-100 text-pink-700",
+              },
+              {
+                title: "Scalable Solutions",
+                desc: "Built for startups, SMEs, and enterprises.",
+                color: "bg-yellow-100 text-yellow-700",
+              },
+            ].map((item, index) => (
+              <div
+                key={index}
+                className="bg-white rounded-xl p-6 shadow-sm hover:shadow-md transition"
+              >
+                <span
+                  className={`inline-block text-sm font-semibold px-3 py-1 rounded-full mb-4 ${item.color}`}
+                >
+                  {item.title}
+                </span>
+                <p className="text-gray-600 text-sm">
+                  {item.desc}
+                </p>
+              </div>
+            ))}
+          </div>
         </div>
       </section>
+
     </div>
   );
 }

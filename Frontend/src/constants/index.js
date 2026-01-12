@@ -1,5 +1,10 @@
 export const NAVIGATION_ITEMS = [
   {
+    label: "About",
+    href: "/about",
+  },
+
+  {
     label: "Services",
     href: "/services",
     hasDropdown: true,
@@ -19,20 +24,9 @@ export const NAVIGATION_ITEMS = [
     ],
   },
   {
-    label: "Industries",
-    href: "/industries",
-    hasDropdown: true,
-    children: [
-      { label: "Retail", href: "/industries/retail" },
-      { label: "Manufacturing", href: "/industries/manufacturing" },
-    ],
-  },
-  {
-    label: "Insights",
-    href: "/insights",
-    hasDropdown: false,
-  },
-  
+    label: "",
+    href: "",
+  }
 ];
 
 export const FOOTER_LINKS = {

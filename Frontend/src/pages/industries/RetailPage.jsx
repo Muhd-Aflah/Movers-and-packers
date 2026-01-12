@@ -95,7 +95,7 @@ export function RetailPage() {
             <h3 className="font-semibold text-gray-900 mb-3">Retail Specialists</h3>
             <div className="space-y-2 text-sm text-gray-600">
               <p>📞 1-800-RETAIL</p>
-              <p>✉️ retail@swiftmove.com</p>
+              <p>✉️ swiftmove@online.com</p>
               <p>🕐 Mon-Sat: 8AM-8PM EST</p>
             </div>
           </div>

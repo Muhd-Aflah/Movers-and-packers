@@ -95,7 +95,7 @@ export function FreightPage() {
             <h3 className="font-semibold text-gray-900 mb-3">Freight Hotline</h3>
             <div className="space-y-2 text-sm text-gray-600">
               <p>📞 1-800-FREIGHT</p>
-              <p>✉️ freight@swiftmove.com</p>
+              <p>✉️ swiftmove@online.com</p>
               <p>🕐 24/7 Support</p>
             </div>
           </div>

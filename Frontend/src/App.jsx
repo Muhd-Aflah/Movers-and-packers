@@ -1,4 +1,6 @@
+import { useState } from "react";
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+
 import { LogisticsLanding } from "./LogisticsLanding.jsx";
 import { Header } from "./components/layout/Header";
 import { Footer } from "./components/layout/Footer";
@@ -10,10 +12,10 @@ import { DashboardPage } from "./pages/DashboardPage";
 import { ProfilePage } from "./pages/ProfilePage";
 
 // Main pages
+import { AboutPage } from "./pages/AboutPage.jsx";
 import { ServicesPage } from "./pages/ServicesPage";
 import { SolutionsPage } from "./pages/SolutionsPage";
 import { IndustriesPage } from "./pages/IndustriesPage";
-import { InsightsPage } from "./pages/InsightsPage";
 import { BookingPage } from "./pages/BookingPage";
 
 // Service sub-pages
@@ -29,47 +31,66 @@ import { EnterprisePage } from "./pages/solutions/EnterprisePage";
 import { RetailPage } from "./pages/industries/RetailPage";
 import { ManufacturingPage } from "./pages/industries/ManufacturingPage";
 
-function App() {
+export default function App() {
+  const [dark, setDark] = useState(false);
+
   return (
-    <Router>
-      <div className="app-container">
-        <Header />
-        <main className="main-content">
-          <Routes>
-            {/* Home */}
-            <Route path="/" element={<LogisticsLanding />} />
-            
-            {/* Auth */}
-            <Route path="/login" element={<LoginPage />} />
-            <Route path="/signup" element={<SignupPage />} />
-            <Route path="/dashboard" element={<DashboardPage />} />
-            <Route path="/profile" element={<ProfilePage />} />
-            
-            {/* Main pages */}
-            <Route path="/services" element={<ServicesPage />} />
-            <Route path="/solutions" element={<SolutionsPage />} />
-            <Route path="/industries" element={<IndustriesPage />} />
-            <Route path="/insights" element={<InsightsPage />} />
-            <Route path="/booking" element={<BookingPage />} />
-            
-            {/* Service sub-pages */}
-            <Route path="/services/warehousing" element={<WarehousingPage />} />
-            <Route path="/services/freight" element={<FreightPage />} />
-            <Route path="/services/packaging" element={<PackagingPage />} />
-            
-            {/* Solution sub-pages */}
-            <Route path="/solutions/ecommerce" element={<EcommercePage />} />
-            <Route path="/solutions/enterprise" element={<EnterprisePage />} />
-            
-            {/* Industry sub-pages */}
-            <Route path="/industries/retail" element={<RetailPage />} />
-            <Route path="/industries/manufacturing" element={<ManufacturingPage />} />
-          </Routes>
-        </main>
-        <Footer />
+    <div className={dark ? "dark" : ""}>
+      <div className="min-h-screen bg-background text-foreground transition-colors">
+        <Router>
+          <Header dark={dark} setDark={setDark} />
+
+          {/* TEMP TOGGLE (you can move it into Header later) */}
+          <button
+            onClick={() => setDark(!dark)}
+            className="fixed bottom-6 right-6 z-50 px-4 py-2 rounded-full bg-primary text-primary-foreground shadow-lg"
+          >
+            {dark ? "Light" : "Dark"}
+          </button>
+
+          <main className="main-content">
+            <Routes>
+              <Route path="/" element={<LogisticsLanding />} />
+
+              {/* Auth */}
+              <Route path="/login" element={<LoginPage />} />
+              <Route path="/signup" element={<SignupPage />} />
+              <Route path="/dashboard" element={<DashboardPage />} />
+              <Route path="/profile" element={<ProfilePage />} />
+
+              {/* Main pages */}
+              <Route path="/about" element={<AboutPage />} />
+              <Route path="/services" element={<ServicesPage />} />
+              <Route path="/solutions" element={<SolutionsPage />} />
+              <Route path="/industries" element={<IndustriesPage />} />
+              <Route path="/booking" element={<BookingPage />} />
+
+              {/* Service sub-pages */}
+              <Route path="/services" element={<ServicesPage />}>
+                <Route path="warehousing" element={<WarehousingPage />} />
+                <Route path="freight" element={<FreightPage />} />
+                <Route path="packaging" element={<PackagingPage />} />
+              </Route>
+
+              {/* Solution sub-pages */}
+              <Route path="/solutions/ecommerce" element={<EcommercePage />} />
+              <Route
+                path="/solutions/enterprise"
+                element={<EnterprisePage />}
+              />
+
+              {/* Industry sub-pages */}
+              <Route path="/industries/retail" element={<RetailPage />} />
+              <Route
+                path="/industries/manufacturing"
+                element={<ManufacturingPage />}
+              />
+            </Routes>
+          </main>
+
+          <Footer />
+        </Router>
       </div>
-    </Router>
+    </div>
   );
 }
-
-export default App;

@@ -8,7 +8,7 @@ import { WarehouseSection as WarehouseMapSection } from "./components/features/W
 
 export const LogisticsLanding = () => {
   return (
-    <div className="relative w-full bg-white overflow-hidden">
+   <div className="relative w-full bg-white overflow-visible">
       <img
         src="/group-7031.png"
         alt=""

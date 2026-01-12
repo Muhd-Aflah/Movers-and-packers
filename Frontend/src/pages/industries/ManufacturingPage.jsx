@@ -95,7 +95,7 @@ export function ManufacturingPage() {
             <h3 className="font-semibold text-gray-900 mb-3">Manufacturing Experts</h3>
             <div className="space-y-2 text-sm text-gray-600">
               <p>📞 1-800-MANUFACTURE</p>
-              <p>✉️ manufacturing@swiftmove.com</p>
+              <p>✉️ swiftmove@online.com</p>
               <p>🕐 24/7 Production Support</p>
             </div>
           </div>
