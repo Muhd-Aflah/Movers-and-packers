@@ -2,7 +2,7 @@ import { apiRequest } from "./api";
 
 // login
 export const login = (email, password) => {
-  return apiRequest("/auth/login", {
+  return apiRequest("/api/auth/login", {
     method: "POST",
     body: JSON.stringify({ email, password }),
   });
@@ -10,7 +10,7 @@ export const login = (email, password) => {
 
 // signup
 export const signup = (name, email, password, role) => {
-  return apiRequest("/auth/signup", {
+  return apiRequest("/api/auth/signup", {
     method: "POST",
     body: JSON.stringify({
       name,
