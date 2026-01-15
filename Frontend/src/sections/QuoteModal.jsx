@@ -23,7 +23,7 @@ export const QuoteModal = ({ isOpen, onClose }) => {
 
     try {
       const res = await fetch(
-        `${import.meta.env.VITE_API_URL}/api/quotes`,
+        `${import.meta.env.VITE_API_URL}/quotes`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
