@@ -1,8 +1,7 @@
 const express = require("express");
 const router = express.Router();
 
-// POST /api/quotes
-router.post("/quotes", async (req, res, next) => {
+router.post("/", async (req, res) => {
   try {
     const { name, phone, pickup, drop, moveDate } = req.body;
 
@@ -10,7 +9,6 @@ router.post("/quotes", async (req, res, next) => {
       return res.status(400).json({ message: "All fields required" });
     }
 
-    // 🔹 For now just log (DB later)
     console.log("New Quote:", req.body);
 
     res.status(201).json({
