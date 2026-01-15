@@ -258,10 +258,6 @@ router.post("/refund", protect, async (req, res) => {
   }
 });
 
-/**
- * Webhook Handler
- * POST /api/payments/webhook
- */
 router.post("/webhook", express.raw({ type: 'application/json' }), (req, res) => {
   try {
     const webhookSecret = process.env.RAZORPAY_WEBHOOK_SECRET || "your_webhook_secret";
