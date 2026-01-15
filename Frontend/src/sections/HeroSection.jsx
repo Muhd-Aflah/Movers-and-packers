@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { QuoteModal } from "./QuoteModal"; 
+import { QuoteModal } from "./QuoteModal";
 
 export const HeroSection = () => {
   const [isQuoteOpen, setIsQuoteOpen] = useState(false);
@@ -9,7 +9,6 @@ export const HeroSection = () => {
       <section className="w-full py-16">
         <div className="max-w-7xl mx-auto px-6">
           <div className="flex flex-col lg:flex-row items-center justify-between gap-12">
-
             {/* LEFT CONTENT */}
             <div className="flex flex-col gap-6 max-w-xl">
               <p className="text-sm font-semibold tracking-wide text-gray-500 uppercase">
@@ -24,9 +23,9 @@ export const HeroSection = () => {
               </h1>
 
               <p className="text-gray-600 text-base leading-relaxed">
-                Professional home and office moving services with expert packing,
-                secure transportation, and guaranteed on-time delivery. Your
-                belongings are handled with care — from pickup to drop-off.
+                Professional home and office moving services with expert
+                packing, secure transportation, and guaranteed on-time delivery.
+                Your belongings are handled with care — from pickup to drop-off.
               </p>
 
               {/* CTA BUTTONS */}
@@ -38,11 +37,13 @@ export const HeroSection = () => {
                   Get a Free Quote
                 </button>
 
-                <button className="px-6 py-3 rounded-lg bg-gray-900 text-white font-semibold hover:bg-gray-800 transition">
+                <button
+                  onClick={() => navigate("/signup")}
+                  className="px-6 py-3 rounded-lg bg-gray-900 text-white font-semibold hover:bg-gray-800 transition"
+                >
                   Join Now
                 </button>
               </div>
-
               {/* TRUST LINE */}
               <p className="text-sm text-gray-500">
                 No hidden charges • 100% insured • On-time guarantee
@@ -57,16 +58,12 @@ export const HeroSection = () => {
                 className="w-full max-w-md lg:max-w-2xl h-auto"
               />
             </div>
-
           </div>
         </div>
       </section>
 
       {/* QUOTE MODAL */}
-      <QuoteModal
-        isOpen={isQuoteOpen}
-        onClose={() => setIsQuoteOpen(false)}
-      />
+      <QuoteModal isOpen={isQuoteOpen} onClose={() => setIsQuoteOpen(false)} />
     </>
   );
 };
