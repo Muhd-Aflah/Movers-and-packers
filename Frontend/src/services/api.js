@@ -1,7 +1,4 @@
-const api = axios.create({
-  baseURL: import.meta.env.VITE_API_URL,
-});
-
+const API_BASE_URL = import.meta.env.VITE_API_URL;
 
 export const apiRequest = async (endpoint, options = {}) => {
   const token = localStorage.getItem("token");
@@ -25,4 +22,3 @@ export const apiRequest = async (endpoint, options = {}) => {
 
   return data;
 };
-
