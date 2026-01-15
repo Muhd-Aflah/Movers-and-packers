@@ -5,7 +5,7 @@ const cors = require("cors");
 const connectDB = require("./src/config/db");
 const errorHandler = require("./src/middleware/error.middleware");
 
-const quoteRoutes = require("./routes/quote.routes");
+const quoteRoutes = require("./src/routes/quote.routes");
 const paymentRoutes = require("./src/routes/payment.routes");
 
 dotenv.config();
