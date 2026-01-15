@@ -6,8 +6,7 @@ import { FooterSection } from "../sections/FooterSection";
 
 export function HomePage() {
   return (
-   <div className="relative w-full bg-white overflow-visible">
-
+    <div className="relative w-full bg-white overflow-visible">
       <img
         src="/group-7031.png"
         alt=""

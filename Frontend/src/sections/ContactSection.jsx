@@ -1,6 +1,6 @@
-import { Button } from "../../ui/button";
-import { Card, CardContent } from "../../ui/card";
-import { LOCATION_DATA } from "../../../constants";
+import { Button } from "../components/ui/button";
+import { Card, CardContent } from "../components/ui/card";
+import { LOCATION_DATA } from "../constants";
 
 export function ContactSection() {
   return (

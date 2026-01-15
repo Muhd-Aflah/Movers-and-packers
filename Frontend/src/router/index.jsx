@@ -1,5 +1,7 @@
 import { createBrowserRouter, RouterProvider } from "react-router-dom";
+
 import { Layout } from "../components/layout/Layout";
+
 import { HomePage } from "../pages/HomePage";
 import { AboutPage } from "../pages/AboutPage";
 import { ServicesPage } from "../pages/ServicesPage";
@@ -9,7 +11,9 @@ import { ProfilePage } from "../pages/ProfilePage";
 import { DashboardPage } from "../pages/DashboardPage";
 import { BookingPage } from "../pages/BookingPage";
 import { PaymentPage } from "../pages/PaymentPage";
-import { ProtectedRoute } from "../components/auth/ProtectedRoute";
+
+// Auth
+import { ProtectedRoute}  from "../components/auth/ProtectedRoute";
 
 const ContactPage = () => <div className="p-8">Contact Page</div>;
 const NotFoundPage = () => <div className="p-8">404</div>;
@@ -27,6 +31,7 @@ export const router = createBrowserRouter([
       { path: "signup", element: <SignupPage /> },
       { path: "booking", element: <BookingPage /> },
       { path: "payment", element: <PaymentPage /> },
+
       {
         path: "profile",
         element: (
@@ -35,6 +40,7 @@ export const router = createBrowserRouter([
           </ProtectedRoute>
         ),
       },
+
       {
         path: "dashboard",
         element: (
@@ -43,6 +49,7 @@ export const router = createBrowserRouter([
           </ProtectedRoute>
         ),
       },
+
       { path: "*", element: <NotFoundPage /> },
     ],
   },

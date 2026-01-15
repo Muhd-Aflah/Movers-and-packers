@@ -175,56 +175,55 @@ export function BookingPage() {
               </div>
             </div>
 
-              <div className="grid md:grid-cols-3 gap-6">
-                <input
-                  type="text"
-                  placeholder="Full Name"
-                  className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                />
-                <input
-                  type="email"
-                  placeholder="mail@example.com"
-                  className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                />
-                <input
-                  type="tel"
-                  placeholder="+91 23456 78900"
-                  className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                />
-              </div>
+            <div className="grid md:grid-cols-3 gap-6">
+              <input
+                type="text"
+                placeholder="Full Name"
+                className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+              />
+              <input
+                type="email"
+                placeholder="mail@example.com"
+                className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+              />
+              <input
+                type="tel"
+                placeholder="+91 23456 78900"
+                className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+              />
             </div>
-          </div>
-          {/* Price */}
-          {price !== null && (
-            <div className="bg-blue-50 p-5 rounded-lg mb-6 flex justify-between">
-              <span className="font-semibold">Estimated Price</span>
-              <span className="text-2xl font-bold text-blue-600">
-                ₹{price.toLocaleString("en-IN")}
-              </span>
-            </div>
-          )}
-
-          {/* Actions */}
-          <div className="flex gap-4">
-            <button
-              onClick={calculatePrice}
-              disabled={loading}
-              className="flex-1 bg-blue-600 text-white py-3 rounded-lg"
-            >
-              {loading ? "Calculating…" : "Check Price"}
-            </button>
-
-            {showBookButton && (
-              <button
-                onClick={bookNow}
-                className="flex-1 bg-green-600 text-white py-3 rounded-lg animate-pulse"
-              >
-                Book Now
-              </button>
-            )}
           </div>
         </div>
+        {/* Price */}
+        {price !== null && (
+          <div className="bg-blue-50 p-5 rounded-lg mb-6 flex justify-between">
+            <span className="font-semibold">Estimated Price</span>
+            <span className="text-2xl font-bold text-blue-600">
+              ₹{price.toLocaleString("en-IN")}
+            </span>
+          </div>
+        )}
+
+        {/* Actions */}
+        <div className="flex gap-4">
+          <button
+            onClick={calculatePrice}
+            disabled={loading}
+            className="flex-1 bg-blue-600 text-white py-3 rounded-lg"
+          >
+            {loading ? "Calculating…" : "Check Price"}
+          </button>
+
+          {showBookButton && (
+            <button
+              onClick={bookNow}
+              className="flex-1 bg-green-600 text-white py-3 rounded-lg animate-pulse"
+            >
+              Book Now
+            </button>
+          )}
+        </div>
       </div>
-  
+    </div>
   );
 }

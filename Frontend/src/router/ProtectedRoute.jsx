@@ -4,8 +4,8 @@ import { getAuthFromStorage } from "../utils/auth";
 export function ProtectedRoute({ children, allowedRoles }) {
   const { token, role } = getAuthFromStorage();
 
-  // Not logged in
-  if (!token) {
+  // Not logged in or corrupted auth
+  if (!token || !role) {
     return <Navigate to="/login" replace />;
   }
 

@@ -1,7 +1,6 @@
 export function AboutPage() {
   return (
     <div className="w-full bg-white text-gray-900">
-
       {/* HERO */}
       <section className="bg-gray-900 text-white">
         <div className="max-w-6xl mx-auto px-6 py-24">
@@ -19,9 +18,7 @@ export function AboutPage() {
       <section className="bg-white">
         <div className="max-w-6xl mx-auto px-6 py-20">
           <div className="border-l-4 border-gray-900 pl-6 max-w-3xl">
-            <h2 className="text-2xl font-bold mb-4">
-              Our Mission
-            </h2>
+            <h2 className="text-2xl font-bold mb-4">Our Mission</h2>
             <p className="text-gray-600 leading-relaxed">
               To deliver fast, reliable, and transparent logistics by combining
               smart technology, skilled teams, and a strong global
@@ -34,9 +31,7 @@ export function AboutPage() {
       {/* VISION BLOCK */}
       <section className="bg-gray-600 text-white">
         <div className="max-w-6xl mx-auto px-6 py-20">
-          <h2 className="text-2xl font-bold mb-6">
-            Our Vision
-          </h2>
+          <h2 className="text-2xl font-bold mb-6">Our Vision</h2>
           <p className="text-gray-300 text-lg max-w-3xl">
             To become a trusted global logistics partner that empowers
             businesses to scale confidently, no matter the destination.
@@ -93,15 +88,12 @@ export function AboutPage() {
                 >
                   {item.title}
                 </span>
-                <p className="text-gray-600 text-sm">
-                  {item.desc}
-                </p>
+                <p className="text-gray-600 text-sm">{item.desc}</p>
               </div>
             ))}
           </div>
         </div>
       </section>
-
     </div>
   );
 }
