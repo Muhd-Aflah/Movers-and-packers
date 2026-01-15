@@ -40,7 +40,7 @@ export default function App() {
         <Router>
           <Header dark={dark} setDark={setDark} />
 
-          {/* TEMP TOGGLE (you can move it into Header later) */}
+          {/* TEMP THEME TOGGLE */}
           <button
             onClick={() => setDark(!dark)}
             className="fixed bottom-6 right-6 z-50 px-4 py-2 rounded-full bg-primary text-primary-foreground shadow-lg"
@@ -58,28 +58,23 @@ export default function App() {
               <Route path="/dashboard" element={<DashboardPage />} />
               <Route path="/profile" element={<ProfilePage />} />
 
-              {/* Main pages */}
+              {/* Main */}
               <Route path="/about" element={<AboutPage />} />
               <Route path="/services" element={<ServicesPage />} />
               <Route path="/solutions" element={<SolutionsPage />} />
               <Route path="/industries" element={<IndustriesPage />} />
               <Route path="/booking" element={<BookingPage />} />
 
-              {/* Service sub-pages */}
-              <Route path="/services" element={<ServicesPage />}>
-                <Route path="warehousing" element={<WarehousingPage />} />
-                <Route path="freight" element={<FreightPage />} />
-                <Route path="packaging" element={<PackagingPage />} />
-              </Route>
+              {/* Services */}
+              <Route path="/services/warehousing" element={<WarehousingPage />} />
+              <Route path="/services/freight" element={<FreightPage />} />
+              <Route path="/services/packaging" element={<PackagingPage />} />
 
-              {/* Solution sub-pages */}
+              {/* Solutions */}
               <Route path="/solutions/ecommerce" element={<EcommercePage />} />
-              <Route
-                path="/solutions/enterprise"
-                element={<EnterprisePage />}
-              />
+              <Route path="/solutions/enterprise" element={<EnterprisePage />} />
 
-              {/* Industry sub-pages */}
+              {/* Industries */}
               <Route path="/industries/retail" element={<RetailPage />} />
               <Route
                 path="/industries/manufacturing"
