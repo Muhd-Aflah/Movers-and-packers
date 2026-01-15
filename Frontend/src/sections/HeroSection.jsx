@@ -1,5 +1,7 @@
+import { useNavigate } from "react-router-dom";
 import { useState } from "react";
 import { QuoteModal } from "./QuoteModal";
+const navigate = useNavigate();
 
 export const HeroSection = () => {
   const [isQuoteOpen, setIsQuoteOpen] = useState(false);
