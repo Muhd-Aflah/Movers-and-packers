@@ -1,15 +1,21 @@
 import { useState } from "react";
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import { ProtectedRoute } from "./routes/ProtectedRoute";
 
 import { LogisticsLanding } from "./LogisticsLanding.jsx";
 import { Header } from "./components/layout/Header";
 import { Footer } from "./components/layout/Footer";
 
-// Auth pages
+// Auth
 import { LoginPage } from "./pages/LoginPage";
 import { SignupPage } from "./pages/SignupPage";
 import { DashboardPage } from "./pages/DashboardPage";
 import { ProfilePage } from "./pages/ProfilePage";
+
+// Role dashboards
+import { AdminDashboard } from "./pages/AdminDashboard";
+import { ProviderDashboard } from "./pages/ProviderDashboard";
+import { UserDashboard } from "./pages/UserDashboard";
 
 // Main pages
 import { AboutPage } from "./pages/AboutPage.jsx";
@@ -18,16 +24,16 @@ import { SolutionsPage } from "./pages/SolutionsPage";
 import { IndustriesPage } from "./pages/IndustriesPage";
 import { BookingPage } from "./pages/BookingPage";
 
-// Service sub-pages
+// Services
 import { WarehousingPage } from "./pages/services/WarehousingPage";
 import { FreightPage } from "./pages/services/FreightPage";
 import { PackagingPage } from "./pages/services/PackagingPage";
 
-// Solution sub-pages
+// Solutions
 import { EcommercePage } from "./pages/solutions/EcommercePage";
 import { EnterprisePage } from "./pages/solutions/EnterprisePage";
 
-// Industry sub-pages
+// Industries
 import { RetailPage } from "./pages/industries/RetailPage";
 import { ManufacturingPage } from "./pages/industries/ManufacturingPage";
 
@@ -36,29 +42,16 @@ export default function App() {
 
   return (
     <div className={dark ? "dark" : ""}>
-      <div className="min-h-screen bg-background text-foreground transition-colors">
+      <div className="min-h-screen bg-background text-foreground">
         <Router>
           <Header dark={dark} setDark={setDark} />
 
-          {/* TEMP THEME TOGGLE */}
-          <button
-            onClick={() => setDark(!dark)}
-            className="fixed bottom-6 right-6 z-50 px-4 py-2 rounded-full bg-primary text-primary-foreground shadow-lg"
-          >
-            {dark ? "Light" : "Dark"}
-          </button>
-
           <main className="main-content">
             <Routes>
+              {/* Public */}
               <Route path="/" element={<LogisticsLanding />} />
-
-              {/* Auth */}
               <Route path="/login" element={<LoginPage />} />
               <Route path="/signup" element={<SignupPage />} />
-              <Route path="/dashboard" element={<DashboardPage />} />
-              <Route path="/profile" element={<ProfilePage />} />
-
-              {/* Main */}
               <Route path="/about" element={<AboutPage />} />
               <Route path="/services" element={<ServicesPage />} />
               <Route path="/solutions" element={<SolutionsPage />} />
@@ -79,6 +72,52 @@ export default function App() {
               <Route
                 path="/industries/manufacturing"
                 element={<ManufacturingPage />}
+              />
+
+              {/* Protected */}
+              <Route
+                path="/dashboard"
+                element={
+                  <ProtectedRoute>
+                    <DashboardPage />
+                  </ProtectedRoute>
+                }
+              />
+
+              <Route
+                path="/profile"
+                element={
+                  <ProtectedRoute>
+                    <ProfilePage />
+                  </ProtectedRoute>
+                }
+              />
+
+              <Route
+                path="/admin"
+                element={
+                  <ProtectedRoute allowedRoles={["admin"]}>
+                    <AdminDashboard />
+                  </ProtectedRoute>
+                }
+              />
+
+              <Route
+                path="/provider"
+                element={
+                  <ProtectedRoute allowedRoles={["provider"]}>
+                    <ProviderDashboard />
+                  </ProtectedRoute>
+                }
+              />
+
+              <Route
+                path="/user"
+                element={
+                  <ProtectedRoute allowedRoles={["user"]}>
+                    <UserDashboard />
+                  </ProtectedRoute>
+                }
               />
             </Routes>
           </main>

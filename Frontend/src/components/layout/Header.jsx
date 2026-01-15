@@ -1,83 +1,83 @@
-import { ChevronDownIcon, MenuIcon, XIcon } from "lucide-react";
-import { Button } from "../ui/button";
-import { useToggle } from "../../hooks/useToggle";
-import { NAVIGATION_ITEMS } from "../../constants";
-import { useBreakpoint } from "../../hooks/useMediaQuery";
-import { Link, useLocation, useNavigate } from "react-router-dom";
-import { clearAuthStorage, getAuthFromStorage } from "../../utils/auth";
 import { useState } from "react";
+import { Link, useLocation, useNavigate } from "react-router-dom";
+import { MenuIcon, XIcon, ChevronDownIcon } from "lucide-react";
+import { Button } from "../ui/button";
+import { getAuthFromStorage, clearAuthStorage } from "../../utils/auth";
 
 export function Header({ dark, setDark }) {
-  const [isMobileMenuOpen, toggleMobileMenu, , setFalse] = useToggle(false);
-  const [activeDropdown, setActiveDropdown] = useState(null);
-  const { isMobile } = useBreakpoint();
+  const [mobileOpen, setMobileOpen] = useState(false);
+  const [dropdown, setDropdown] = useState(null);
+
   const location = useLocation();
   const navigate = useNavigate();
-  const { token } = getAuthFromStorage();
+  const { token, role } = getAuthFromStorage();
 
-  const handleNavLinkClick = () => {
-    if (isMobile) setFalse();
-    setActiveDropdown(null);
-  };
-
-  const handleLogout = () => {
+  const logout = () => {
     clearAuthStorage();
-    setFalse();
-    navigate("/");
+    setMobileOpen(false);
+    navigate("/login");
   };
+
+  const NAV_ITEMS = [
+    { label: "About", href: "/about" },
+    {
+      label: "Services",
+      href: "/services",
+      children: [
+        { label: "Warehousing", href: "/services/warehousing" },
+        { label: "Freight", href: "/services/freight" },
+        { label: "Packaging", href: "/services/packaging" },
+      ],
+    },
+    { label: "Solutions", href: "/solutions" },
+  ];
 
   return (
-    <header className="w-full py-6 relative overflow-visible">
-      <div className="max-w-7xl mx-auto px-6 flex items-center justify-between relative">
+    <header className="w-full bg-white border-b relative z-50">
+      <div className="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
         {/* LOGO */}
-        <Link to="/" onClick={handleNavLinkClick}>
+        <Link to="/" className="flex items-center">
           <img
             src="/swiftmove-logo.png"
             alt="SwiftMove"
-            className=" h-10           
-    sm:h-12         
-    md:h-14        
-    lg:h-16        
-    xl:h-18         
-    w-auto"
+            className="
+    h-12
+    sm:h-14
+    md:h-16
+    lg:h-16
+    w-auto
+    object-contain
+  "
           />
         </Link>
 
         {/* DESKTOP NAV */}
         <nav className="hidden lg:flex items-center gap-8 text-sm font-medium">
-          {NAVIGATION_ITEMS.map((item) => (
+          {NAV_ITEMS.map((item) => (
             <div
-              key={`desktop-${item.href}`} // ✅ FIXED KEY
+              key={item.href}
               className="relative"
-              onMouseEnter={() => !isMobile && setActiveDropdown(item.label)}
-              onMouseLeave={() => !isMobile && setActiveDropdown(null)}
+              onMouseEnter={() => setDropdown(item.label)}
+              onMouseLeave={() => setDropdown(null)}
             >
               <Link
                 to={item.href}
-                onClick={handleNavLinkClick}
                 className={`flex items-center gap-1 ${
-                  location.pathname === item.href
+                  location.pathname.startsWith(item.href)
                     ? "text-blue-600"
                     : "text-gray-800 hover:text-blue-600"
                 }`}
               >
                 {item.label}
-                {item.hasDropdown && <ChevronDownIcon className="w-4 h-4" />}
+                {item.children && <ChevronDownIcon className="w-4 h-4" />}
               </Link>
 
-              {item.hasDropdown && (
-                <div
-                  className={`absolute top-full left-0 mt-2 w-48 bg-white border rounded-lg shadow-lg transition ${
-                    activeDropdown === item.label
-                      ? "opacity-100 visible"
-                      : "opacity-0 invisible"
-                  }`}
-                >
+              {item.children && dropdown === item.label && (
+                <div className="absolute top-full left-0 mt-2 w-48 bg-white border rounded-lg shadow-lg">
                   {item.children.map((child) => (
                     <Link
-                      key={`${item.href}-${child.href}`} // ✅ SAFE KEY
+                      key={child.href}
                       to={child.href}
-                      onClick={handleNavLinkClick}
                       className="block px-4 py-3 text-sm hover:bg-gray-100"
                     >
                       {child.label}
@@ -93,7 +93,7 @@ export function Header({ dark, setDark }) {
         <div className="hidden lg:flex items-center gap-3">
           <button
             onClick={() => setDark?.(!dark)}
-            className="w-9 h-9 rounded-md bg-muted hover:bg-accent"
+            className="w-9 h-9 rounded-md bg-gray-100 hover:bg-gray-200"
           >
             {dark ? "☀️" : "🌙"}
           </button>
@@ -106,7 +106,7 @@ export function Header({ dark, setDark }) {
               <Button asChild>
                 <Link to="/profile">Profile</Link>
               </Button>
-              <Button variant="secondary" onClick={handleLogout}>
+              <Button variant="secondary" onClick={logout}>
                 Logout
               </Button>
             </>
@@ -123,47 +123,36 @@ export function Header({ dark, setDark }) {
         </div>
 
         {/* MOBILE TOGGLE */}
-        <button onClick={toggleMobileMenu} className="lg:hidden">
-          {isMobileMenuOpen ? <XIcon /> : <MenuIcon />}
+        <button
+          className="lg:hidden"
+          onClick={() => setMobileOpen(!mobileOpen)}
+        >
+          {mobileOpen ? <XIcon /> : <MenuIcon />}
         </button>
+      </div>
 
-        {/* MOBILE MENU */}
-        {isMobileMenuOpen && (
-          <div className="lg:hidden absolute top-full left-0 right-0 bg-white shadow-lg z-50">
-            <button
-              onClick={() => {
-                setDark?.(!dark);
-                setFalse();
-              }}
-              className="w-full px-5 py-3 bg-gray-100"
-            >
-              {dark ? "Light Mode ☀️" : "Dark Mode 🌙"}
-            </button>
-
-            {NAVIGATION_ITEMS.map((item) => (
-              <div
-                key={`desktop-${item.href}`}
-                className="relative"
-                onMouseEnter={() => setActiveDropdown(item.label)}
-                onMouseLeave={() => setActiveDropdown(null)}
-              >
-                <Link to={item.href} className="flex items-center gap-1">
+      {/* MOBILE MENU */}
+      {mobileOpen && (
+        <div className="lg:hidden bg-white border-t shadow-lg">
+          <nav className="flex flex-col p-6 gap-4">
+            {NAV_ITEMS.map((item) => (
+              <div key={item.href}>
+                <Link
+                  to={item.href}
+                  onClick={() => setMobileOpen(false)}
+                  className="flex justify-between items-center font-medium"
+                >
                   {item.label}
-                  {item.hasDropdown && <ChevronDownIcon className="w-4 h-4" />}
                 </Link>
 
-                {item.hasDropdown && (
-                  <div
-                    className={`absolute top-full left-0 mt-2 w-48
-        bg-white rounded-lg shadow-lg border
-        z-[9999]
-        ${activeDropdown === item.label ? "block" : "hidden"}`}
-                  >
+                {item.children && (
+                  <div className="ml-4 mt-2 space-y-2">
                     {item.children.map((child) => (
                       <Link
                         key={child.href}
                         to={child.href}
-                        className="block px-4 py-2 text-sm hover:bg-gray-100"
+                        onClick={() => setMobileOpen(false)}
+                        className="block text-sm text-gray-600"
                       >
                         {child.label}
                       </Link>
@@ -172,9 +161,35 @@ export function Header({ dark, setDark }) {
                 )}
               </div>
             ))}
-          </div>
-        )}
-      </div>
+
+            <div className="pt-4 border-t space-y-3">
+              {token ? (
+                <>
+                  <Button asChild className="w-full">
+                    <Link to="/dashboard">Dashboard</Link>
+                  </Button>
+                  <Button
+                    onClick={logout}
+                    className="w-full"
+                    variant="secondary"
+                  >
+                    Logout
+                  </Button>
+                </>
+              ) : (
+                <>
+                  <Button asChild className="w-full">
+                    <Link to="/login">Sign In</Link>
+                  </Button>
+                  <Button asChild className="w-full">
+                    <Link to="/signup">Sign Up</Link>
+                  </Button>
+                </>
+              )}
+            </div>
+          </nav>
+        </div>
+      )}
     </header>
   );
 }

@@ -1,9 +1,11 @@
 import { useState } from "react";
+import { useLocation } from "react-router-dom";
 import { Link, useNavigate } from "react-router-dom";
 import { login } from "../services/auth.service";
 import { setUserInStorage } from "../utils/auth";
 
 export function LoginPage() {
+  const location = useLocation();
   const navigate = useNavigate();
 
   const [email, setEmail] = useState("");
@@ -11,38 +13,39 @@ export function LoginPage() {
   const [error, setError] = useState("");
 
   const handleSubmit = async (e) => {
-    e.preventDefault();
-    setError("");
+  e.preventDefault();
+  setError("");
 
-    if (!email || !password) {
-      setError("Please enter email and password");
-      return;
+  if (!email || !password) {
+    setError("Please enter email and password");
+    return;
+  }
+
+  try {
+    const data = await login(email, password);
+
+    localStorage.setItem("token", data.token);
+
+    if (data) {
+      setUserInStorage({
+        _id: data._id,
+        name: data.name,
+        email: data.email,
+        role: data.role,
+      });
     }
 
-    try {
-      const data = await login(email, password);
+    console.log("Logged in user:", data);
 
-      // Save token and user data
-      localStorage.setItem("token", data.token);
+    const redirectTo = location.state?.redirectTo || "/";
+    navigate(redirectTo, {
+      state: location.state?.bookingData || null,
+    });
+  } catch (err) {
+    setError(err.message);
+  }
+};
 
-      if (data) {
-        // Store the complete user data including role
-        setUserInStorage({
-          _id: data._id,
-          name: data.name,
-          email: data.email,
-          role: data.role
-        });
-      }
-
-      console.log("Logged in user:", data);
-
-      // Redirect after success
-      navigate("/");
-    } catch (err) {
-      setError(err.message);
-    }
-  };
 
   return (
     <div className="flex justify-center items-center min-h-[80vh]">
