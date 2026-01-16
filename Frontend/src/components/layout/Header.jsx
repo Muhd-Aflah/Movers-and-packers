@@ -36,19 +36,11 @@ export function Header({ dark, setDark }) {
     <header className="w-full bg-white border-b relative z-50">
       <div className="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
         {/* LOGO */}
-        <Link to="/" className="flex items-center">
-          <img
-            src="/swiftmove-logo.png"
-            alt="SwiftMove"
-            className="
-    h-12
-    sm:h-14
-    md:h-16
-    lg:h-16
-    w-auto
-    object-contain
-  "
-          />
+        <Link to="/" className="flex items-center hover:opacity-90 transition">
+          <span className="text-2xl sm:text-3xl font-extrabold tracking-tight">
+            <span className="text-blue-600">Swift</span>
+            <span className="text-red-600">Move</span>
+          </span>
         </Link>
 
         {/* DESKTOP NAV */}

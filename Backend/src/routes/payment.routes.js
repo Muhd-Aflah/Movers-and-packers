@@ -30,7 +30,7 @@ router.post("/create-order", protect, async (req, res) => {
 
     // Create Razorpay order
     const order = await razorpay.orders.create({
-      amount: amount * 100, // Convert rupees to paise
+      amount: amount * 100, 
       currency: currency,
       receipt: `receipt_${Date.now()}`,
       notes: {
@@ -38,7 +38,7 @@ router.post("/create-order", protect, async (req, res) => {
         user_id: req.user?.id || "guest",
         created_at: new Date().toISOString()
       },
-      payment_capture: 1, // Auto capture payment
+      payment_capture: 1,
       partial_payment: false,
     });
 

@@ -10,13 +10,21 @@ const buttonVariants = cva(
       variant: {
         default:
           "bg-primary text-primary-foreground shadow hover:bg-primary/90",
+
+        signup:
+          "bg-blue-600 text-white shadow hover:bg-blue-700 focus-visible:ring-blue-600",
+
         destructive:
           "bg-destructive text-destructive-foreground shadow-sm hover:bg-destructive/90",
+
         outline:
           "border border-input bg-background shadow-sm hover:bg-accent hover:text-accent-foreground",
+
         secondary:
           "bg-secondary text-secondary-foreground shadow-sm hover:bg-secondary/80",
+
         ghost: "hover:bg-accent hover:text-accent-foreground",
+
         link: "text-primary underline-offset-4 hover:underline",
       },
       size: {
@@ -30,7 +38,7 @@ const buttonVariants = cva(
       variant: "default",
       size: "default",
     },
-  },
+  }
 );
 
 const Button = React.forwardRef(
@@ -38,13 +46,14 @@ const Button = React.forwardRef(
     const Comp = asChild ? Slot : "button";
     return (
       <Comp
-        className={cn(buttonVariants({ variant, size, className }))}
         ref={ref}
+        className={cn(buttonVariants({ variant, size }), className)}
         {...props}
       />
     );
-  },
+  }
 );
+
 Button.displayName = "Button";
 
-export  { Button, buttonVariants };
+export { Button, buttonVariants };

@@ -24,11 +24,10 @@ export function SignupPage() {
     try {
       const data = await signup(name, email, password, role);
 
-      // Save token and user data
       localStorage.setItem("token", data.token);
 
       if (data) {
-        // Store the complete user data including role
+
         setUserInStorage({
           _id: data._id,
           name: data.name,
@@ -39,7 +38,6 @@ export function SignupPage() {
 
       console.log("Signup success:", data);
 
-      // redirect to login OR home
       navigate("/login");
     } catch (err) {
       setError(err.message);
