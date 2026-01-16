@@ -7,13 +7,14 @@ const errorHandler = require("./src/middleware/error.middleware");
 
 const quoteRoutes = require("./src/routes/quote.routes");
 const paymentRoutes = require("./src/routes/payment.routes");
+const userRoutes = require("./src/routes/user.routes"); 
 
 dotenv.config();
 connectDB();
 
 const app = express();
 
-// Razorpay webhook 
+// Razorpay webhook
 app.post(
   "/api/payments/webhook",
   express.raw({ type: "application/json" }),
@@ -27,7 +28,7 @@ app.use(express.json());
 // Routes
 app.use("/api/quotes", quoteRoutes);
 app.use("/api/auth", require("./src/routes/auth.routes"));
-app.use("/api/users", require("./src/routes/user.routes"));
+app.use("/api/users", userRoutes); 
 app.use("/api/admin", require("./src/routes/admin.routes"));
 app.use("/api/service-requests", require("./src/routes/serviceRequest.routes"));
 app.use("/api/payments", paymentRoutes);

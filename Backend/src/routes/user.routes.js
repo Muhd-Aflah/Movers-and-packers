@@ -1,8 +1,13 @@
-const express = require("express");
+import express from "express";
+import { getUserById, updateUser } from "../controllers/user.controller.js";
+import { protect } from "../middleware/auth.middleware.js";
+
 const router = express.Router();
 
-router.get("/profile", (req, res) => {
-  res.json({ message: "User profile working" });
-});
+// Get user profile
+router.get("/:id", protect, getUserById);
 
-module.exports = router;
+// Update user profile
+router.put("/:id", protect, updateUser);
+
+export default router;

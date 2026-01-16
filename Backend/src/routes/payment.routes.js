@@ -6,7 +6,6 @@ const { protect } = require("../middleware/auth.middleware");
 
 const router = express.Router();
 
-// Initialize Razorpay instance
 if (!process.env.RAZORPAY_KEY_ID || !process.env.RAZORPAY_KEY_SECRET) {
   throw new Error("Razorpay keys missing in environment variables");
 }
@@ -17,10 +16,6 @@ const razorpay = new Razorpay({
 });
 
 
-/**
- * Create Razorpay Order
- * POST /api/payments/create-order
- */
 router.post("/create-order", protect, async (req, res) => {
   try {
     const { amount, currency = "INR", notes = {} } = req.body;
@@ -75,10 +70,6 @@ router.post("/create-order", protect, async (req, res) => {
   }
 });
 
-/**
- * Verify Razorpay Payment
- * POST /api/payments/verify
- */
 router.post("/verify", async (req, res) => {
 
   try {
@@ -150,10 +141,6 @@ const expectedSignature = nodeCrypto
   }
 });
 
-/**
- * Get Payment Details
- * GET /api/payments/:paymentId
- */
 router.get("/:paymentId", protect, async (req, res) => {
   try {
     const { paymentId } = req.params;
@@ -183,10 +170,6 @@ router.get("/:paymentId", protect, async (req, res) => {
   }
 });
 
-/**
- * Get Order Details
- * GET /api/payments/order/:orderId
- */
 router.get("/order/:orderId", protect, async (req, res) => {
   try {
     const { orderId } = req.params;
@@ -216,10 +199,6 @@ router.get("/order/:orderId", protect, async (req, res) => {
   }
 });
 
-/**
- * Refund Payment
- * POST /api/payments/refund
- */
 router.post("/refund", protect, async (req, res) => {
   try {
     const { paymentId, amount } = req.body;
@@ -233,7 +212,7 @@ router.post("/refund", protect, async (req, res) => {
 
     // Create refund
     const refund = await razorpay.payments.refund(paymentId, {
-      amount: amount ? amount * 100 : undefined // Convert to paise if provided
+      amount: amount ? amount * 100 : undefined 
     });
 
     console.log("Payment Refunded:", {
