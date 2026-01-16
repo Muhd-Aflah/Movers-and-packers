@@ -7,11 +7,10 @@ export function Footer() {
         <div className="flex flex-col lg:flex-row items-start gap-8 lg:gap-[168px] w-full max-w-7xl">
           {/* Company Info */}
           <div className="flex flex-col items-start gap-5 w-full lg:w-auto">
-            <img
-              src="/swiftmove-logo.png"
-              alt="SwiftMove"
-              className="block h-10 sm:h-11 lg:h-12 w-auto max-w-[220px] object-contain"
-            />
+            <span className="text-2xl sm:text-3xl font-extrabold tracking-tight">
+            <span className="text-blue-600">Swift</span>
+            <span className="text-red-600">Move</span>
+          </span>
 
             <div className="w-full max-w-[300px] lg:w-[220px] [font-family:'League_Spartan',Helvetica] font-normal text-[#ffffff] text-sm tracking-[0] leading-[21px]">
               <span className="[font-family:'League_Spartan',Helvetica] font-normal text-[#ffffff] text-sm tracking-[0] leading-[21px]">
