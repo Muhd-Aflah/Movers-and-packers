@@ -63,9 +63,7 @@ export function PaymentPage() {
   }, []);
 
   // Calculate amount from booking data
-  const totalAmount = bookingData?.price
-    ? parseFloat(bookingData.price.replace("₹", "").replace(",", ""))
-    : 2500;
+  const totalAmount = bookingData?.price ? Number(bookingData.price) : 2500;
 
   const handlePayment = async () => {
     if (!razorpayLoaded) {
