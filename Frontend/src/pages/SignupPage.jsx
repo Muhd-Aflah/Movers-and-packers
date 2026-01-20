@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { signup } from "../services/auth.service";
-import { setUserInStorage } from "../utils/auth";
+import { setAuth } from "../utils/auth";
 
 export function SignupPage() {
   const navigate = useNavigate();
@@ -26,13 +26,10 @@ export function SignupPage() {
 
       localStorage.setItem("token", data.token);
 
-      if (data) {
-
-        setUserInStorage({
-          _id: data._id,
-          name: data.name,
-          email: data.email,
-          role: data.role
+      if (data?.token && data?.user) {
+        setAuth({
+          token: data.token,
+          user: data.user,
         });
       }
 
@@ -50,9 +47,7 @@ export function SignupPage() {
         <h2 className="text-2xl font-bold mb-4">Create Account</h2>
 
         {error && (
-          <p className="mb-3 text-red-600 text-sm text-center">
-            {error}
-          </p>
+          <p className="mb-3 text-red-600 text-sm text-center">{error}</p>
         )}
 
         <input

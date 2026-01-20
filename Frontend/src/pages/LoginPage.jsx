@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useLocation } from "react-router-dom";
 import { Link, useNavigate } from "react-router-dom";
 import { login } from "../services/auth.service";
-import { setUserInStorage } from "../utils/auth";
+import { setAuth } from "../utils/auth";
 
 export function LoginPage() {
   const location = useLocation();
@@ -13,52 +13,44 @@ export function LoginPage() {
   const [error, setError] = useState("");
 
   const handleSubmit = async (e) => {
-  e.preventDefault();
-  setError("");
+    e.preventDefault();
+    setError("");
 
-  if (!email || !password) {
-    setError("Please enter email and password");
-    return;
-  }
-
-  try {
-    const data = await login(email, password);
-
-    localStorage.setItem("token", data.token);
-
-    if (data) {
-      setUserInStorage({
-        _id: data._id,
-        name: data.name,
-        email: data.email,
-        role: data.role,
-      });
+    if (!email || !password) {
+      setError("Please enter email and password");
+      return;
     }
 
-    console.log("Logged in user:", data);
+    try {
+      const data = await login(email, password);
 
-    const redirectTo = location.state?.redirectTo || "/";
-    navigate(redirectTo, {
-      state: location.state?.bookingData || null,
-    });
-  } catch (err) {
-    setError(err.message);
-  }
-};
+      localStorage.setItem("token", data.token);
 
+      if (data?.token && data?.user) {
+        setAuth({
+          token: data.token,
+          user: data.user,
+        });
+      }
+
+      console.log("Logged in user:", data);
+
+      const redirectTo = location.state?.redirectTo || "/";
+      navigate(redirectTo, {
+        state: location.state?.bookingData || null,
+      });
+    } catch (err) {
+      setError(err.message);
+    }
+  };
 
   return (
     <div className="flex justify-center items-center min-h-[80vh]">
-      <form
-        onSubmit={handleSubmit}
-        className="w-96 p-6 shadow-lg rounded"
-      >
+      <form onSubmit={handleSubmit} className="w-96 p-6 shadow-lg rounded">
         <h2 className="text-2xl font-bold mb-4">Sign In</h2>
 
         {error && (
-          <p className="mb-3 text-red-600 text-sm text-center">
-            {error}
-          </p>
+          <p className="mb-3 text-red-600 text-sm text-center">{error}</p>
         )}
 
         <input
