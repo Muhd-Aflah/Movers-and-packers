@@ -1,4 +1,4 @@
-const User = require("../models/User");
+const User = require("../models/User.model");
 
 const getUserById = async (req, res) => {
   if (req.user.id !== req.params.id) {
