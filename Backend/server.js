@@ -8,6 +8,7 @@ const errorHandler = require("./src/middleware/error.middleware");
 const quoteRoutes = require("./src/routes/quote.routes");
 const paymentRoutes = require("./src/routes/payment.routes");
 const userRoutes = require("./src/routes/user.routes"); 
+const moveRoutes = require("./routes/move.routes");
 
 dotenv.config();
 connectDB();
@@ -32,6 +33,7 @@ app.use("/api/users", userRoutes);
 app.use("/api/admin", require("./src/routes/admin.routes"));
 app.use("/api/service-requests", require("./src/routes/serviceRequest.routes"));
 app.use("/api/payments", paymentRoutes);
+app.use("/api/moves", moveRoutes);
 
 // Test route
 app.get("/", (req, res) => {

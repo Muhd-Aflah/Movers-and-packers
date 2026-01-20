@@ -21,7 +21,7 @@ const locationData = [
     top: "top-[35%] sm:top-[40%] lg:top-[218px]",
     left: "left-[20%] sm:left-[25%] lg:left-[191px]",
     flag: "/group-7028-2.png",
-    country: "Italy",
+    country: "India",
     count: "25,000",
   },
 ];

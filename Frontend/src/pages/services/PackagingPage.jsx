@@ -95,7 +95,7 @@ export function PackagingPage() {
             <h3 className="font-semibold text-gray-900 mb-3">Packaging Experts</h3>
             <div className="space-y-2 text-sm text-gray-600">
               <p>📞 1-800-PACKAGING</p>
-              <p>✉️ packaging@swiftmove.com</p>
+              <p>✉️ swiftmove@online.com</p>
               <p>🕐 Mon-Fri: 8AM-7PM EST</p>
             </div>
           </div>

@@ -11,13 +11,11 @@ export function decodeJwt(token) {
   }
 }
 
-export function setUserInStorage(user) {
-  localStorage.setItem("user", JSON.stringify(user));
-}
-
-export function getUserFromStorage() {
-  const user = localStorage.getItem("user");
-  return user ? JSON.parse(user) : null;
+export function setAuth({ token, user }) {
+  localStorage.setItem("token", token);
+  if (user) {
+    localStorage.setItem("user", JSON.stringify(user));
+  }
 }
 
 export function clearAuthStorage() {
@@ -27,12 +25,23 @@ export function clearAuthStorage() {
 
 export function getAuthFromStorage() {
   const token = localStorage.getItem("token");
-  const user = getUserFromStorage();
+  if (!token) {
+    return { token: null, role: null, user: null };
+  }
+
   const payload = decodeJwt(token);
+
+  // Invalid or expired token
+  if (!payload || (payload.exp && payload.exp * 1000 < Date.now())) {
+    clearAuthStorage();
+    return { token: null, role: null, user: null };
+  }
+
+  const user = localStorage.getItem("user");
 
   return {
     token,
-    user,
-    role: payload?.role || user?.role || null,
+    role: payload.role, // ONLY source of truth
+    user: user ? JSON.parse(user) : null,
   };
 }

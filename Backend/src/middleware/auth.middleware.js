@@ -1,38 +1,40 @@
 const jwt = require("jsonwebtoken");
-const User = require("../models/User.model");
 
-const protect = async (req, res, next) => {
+const protect = (req, res, next) => {
   let token;
 
   if (
     req.headers.authorization &&
-    req.headers.authorization.startsWith("Bearer")
+    req.headers.authorization.startsWith("Bearer ")
   ) {
     try {
       token = req.headers.authorization.split(" ")[1];
 
       const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
-      req.user = await User.findById(decoded.id).select("-password");
+      // Attach ONLY what you need
+      req.user = {
+        id: decoded.id,
+        role: decoded.role,
+      };
 
-      next();
+      return next();
     } catch (error) {
-      return res.status(401).json({ message: "Not authorized" });
+      return res.status(401).json({ message: "Not authorized, token invalid" });
     }
   }
 
-  if (!token) {
-    return res.status(401).json({ message: "Not authorized, no token" });
-  }
+  return res.status(401).json({ message: "Not authorized, no token" });
 };
 
-// Admin only
-const admin = (req, res, next) => {
-  if (req.user && req.user.role === "admin") {
+// Role-based guard (replaces admin-only)
+const allowRoles = (...roles) => {
+  return (req, res, next) => {
+    if (!req.user || !roles.includes(req.user.role)) {
+      return res.status(403).json({ message: "Access denied" });
+    }
     next();
-  } else {
-    return res.status(401).json({ message: "Not authorized as admin" });
-  }
+  };
 };
 
-module.exports = { protect, admin };
+module.exports = { protect, allowRoles };

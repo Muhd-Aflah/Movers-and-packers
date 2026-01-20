@@ -1,17 +1,18 @@
 import { Navigate } from "react-router-dom";
-import { getAuthFromStorage } from "../utils/auth";
+import { getAuthFromStorage } from "../../utils/auth";
+import { roleHome } from "../../utils/roleRedirect";
 
 export function ProtectedRoute({ children, allowedRoles }) {
   const { token, role } = getAuthFromStorage();
 
-  // Not logged in or corrupted auth
+  // Not authenticated
   if (!token || !role) {
     return <Navigate to="/login" replace />;
   }
 
-  // Logged in but wrong role
+  // Authenticated but wrong role
   if (allowedRoles && !allowedRoles.includes(role)) {
-    return <Navigate to="/dashboard" replace />;
+    return <Navigate to={roleHome[role]} replace />;
   }
 
   return children;

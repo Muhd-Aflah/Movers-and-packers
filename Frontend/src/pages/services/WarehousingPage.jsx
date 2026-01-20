@@ -111,7 +111,7 @@ export function WarehousingPage() {
             </h3>
 
             <p className="text-sm text-gray-600">📞 1-800-WAREHOUSE</p>
-            <p className="text-sm text-gray-600">✉️ warehouse@swiftmove.com</p>
+            <p className="text-sm text-gray-600">✉️  swiftmove@online.com</p>
             <p className="text-sm text-gray-600">🕐 Mon–Fri, 9AM–6PM</p>
           </div>
         </div>

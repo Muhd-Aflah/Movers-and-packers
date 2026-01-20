@@ -94,8 +94,8 @@ export function EcommercePage() {
           <div className="mt-6 pt-6 border-t">
             <h3 className="font-semibold text-gray-900 mb-3">E-commerce Support</h3>
             <div className="space-y-2 text-sm text-gray-600">
-              <p>📞 1-800-ECOMMERCE</p>
-              <p>✉️ ecommerce@swiftmove.com</p>
+              <p>📞 +91 9656225566</p>
+              <p>✉️ swiftmove@online.com</p>
               <p>🕐 24/7 Support</p>
             </div>
           </div>
