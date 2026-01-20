@@ -3,22 +3,18 @@ const {
   getMyMoves,
   getAvailableMoves,
   acceptMove,
-} = require("../controllers/move.controller");
+} = require("./src/controllers/move.controller");
 
-const { protect, allowRoles } = require("../middleware/auth");
+const { protect } = require("../middleware/auth.middleware");
+const { allowRoles } = require("../middleware/role.middleware");
 
 const router = express.Router();
 
-// USER: My moves
-
+// USER
 router.get("/my", protect, allowRoles("user"), getMyMoves);
 
-// PROVIDER: Available moves
-
+// PROVIDER
 router.get("/available", protect, allowRoles("provider"), getAvailableMoves);
-
-// PROVIDER: Accept move
-
 router.patch("/:id/accept", protect, allowRoles("provider"), acceptMove);
 
 module.exports = router;
