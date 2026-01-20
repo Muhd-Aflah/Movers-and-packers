@@ -53,4 +53,4 @@ const moveSchema = new mongoose.Schema(
   { timestamps: true },
 );
 
-export default mongoose.model("Move", moveSchema);
+module.exports = mongoose.model("Move", moveSchema);
