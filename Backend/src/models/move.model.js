@@ -1,6 +1,6 @@
-import {mongoose} from "mongoose";
+const mongoose = require("mongoose");
 
-const {moveSchema} = new mongoose.Schema(
+const moveSchema = new mongoose.Schema(
   {
     user: {
       type: mongoose.Schema.Types.ObjectId,
@@ -31,13 +31,7 @@ const {moveSchema} = new mongoose.Schema(
 
     status: {
       type: String,
-      enum: [
-        "requested",
-        "accepted",
-        "in_progress",
-        "completed",
-        "cancelled",
-      ],
+      enum: ["requested", "accepted", "in_progress", "completed", "cancelled"],
       default: "requested",
     },
 
@@ -56,7 +50,7 @@ const {moveSchema} = new mongoose.Schema(
       comment: String,
     },
   },
-  { timestamps: true }
+  { timestamps: true },
 );
 
 export default mongoose.model("Move", moveSchema);

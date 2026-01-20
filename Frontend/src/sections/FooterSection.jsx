@@ -7,22 +7,22 @@ const locationData = [
     top: "top-[20%] sm:top-[25%] lg:top-[133px]",
     left: "left-[60%] sm:left-[65%] lg:left-[984px]",
     flag: "/group-7028.png",
-    country: "India",
-    count: "25,000",
+    country: "Malaysia",
+    count: "10,000",
   },
   {
     top: "top-[50%] sm:top-[55%] lg:top-[323px]",
     left: "left-[60%] sm:left-[65%] lg:left-[982px]",
     flag: "/group-7028-1.png",
-    country: "Berlin",
+    country: "India",
     count: "25,000",
   },
   {
     top: "top-[35%] sm:top-[40%] lg:top-[218px]",
     left: "left-[20%] sm:left-[25%] lg:left-[191px]",
     flag: "/group-7028-2.png",
-    country: "India",
-    count: "25,000",
+    country: "Uae",
+    count: "15,000",
   },
 ];
 
