@@ -1,6 +1,6 @@
-import mongoose from "mongoose";
+import {mongoose} from "mongoose";
 
-const moveSchema = new mongoose.Schema(
+const {moveSchema} = new mongoose.Schema(
   {
     user: {
       type: mongoose.Schema.Types.ObjectId,

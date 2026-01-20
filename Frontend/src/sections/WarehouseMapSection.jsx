@@ -64,15 +64,6 @@ export const WarehouseMapSection = () => {
           </div>
         ))}
       </div>
-
-      <div className="flex items-center gap-4 sm:gap-6 lg:gap-[30px]">
-        <Button className="flex items-center justify-center gap-2.5 px-6 sm:px-8 lg:px-[50px] py-3 sm:py-4 lg:py-[25px] bg-simblue rounded-xl h-auto hover:bg-simblue/90">
-          <span className="flex items-center justify-center w-fit [font-family:'Lato',Helvetica] font-extrabold text-[#ffffff] text-base sm:text-lg lg:text-lg text-center tracking-[0] leading-[normal]">
-            Join Now
-          </span>
-        </Button>
-      </div>
     </section>
   );
 };
-
