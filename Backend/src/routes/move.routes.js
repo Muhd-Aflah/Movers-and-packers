@@ -3,7 +3,7 @@ const {
   getMyMoves,
   getAvailableMoves,
   acceptMove,
-} = require("./src/controllers/move.controller");
+} = require("../controllers/move.controller");
 
 const { protect } = require("../middleware/auth.middleware");
 const { allowRoles } = require("../middleware/role.middleware");
