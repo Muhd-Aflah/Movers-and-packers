@@ -1,4 +1,4 @@
-const Move = require("../models/Move");
+const Move = require("../models/move.model");
 
 const getMyMoves = async (req, res) => {
   try {
