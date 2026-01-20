@@ -1,5 +1,4 @@
 import { AvailableMoves } from "../components/provider/AvailableMoves";
-
 export function ProviderDashboard() {
   return (
     <div className="space-y-6">
