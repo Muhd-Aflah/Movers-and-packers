@@ -1,4 +1,8 @@
-import { createBrowserRouter, RouterProvider, Navigate } from "react-router-dom";
+import {
+  createBrowserRouter,
+  RouterProvider,
+  Navigate,
+} from "react-router-dom";
 
 import { Layout } from "../components/layout/Layout";
 
@@ -12,6 +16,7 @@ import { LoginPage } from "../pages/LoginPage";
 import { SignupPage } from "../pages/SignupPage";
 
 // Dashboards
+import { ProfilePage } from "../pages/ProfilePage";
 import { UserDashboard } from "../dashboards/UserDashboard";
 import { ProviderDashboard } from "../dashboards/ProviderDashboard";
 import { AdminDashboard } from "../dashboards/AdminDashboard";
@@ -30,9 +35,11 @@ const NotFoundPage = () => <div className="p-8">404</div>;
 // Smart redirect for /dashboard
 function DashboardRedirect() {
   const { role } = getAuthFromStorage();
-  return role
-    ? <Navigate to={roleHome[role]} replace />
-    : <Navigate to="/login" replace />;
+  return role ? (
+    <Navigate to={roleHome[role]} replace />
+  ) : (
+    <Navigate to="/login" replace />
+  );
 }
 
 export const router = createBrowserRouter([
@@ -68,7 +75,14 @@ export const router = createBrowserRouter([
           </ProtectedRoute>
         ),
       },
-
+      {
+        path: "profile",
+        element: (
+          <ProtectedRoute allowedRoles={["user", "provider", "admin"]}>
+            <ProfilePage />
+          </ProtectedRoute>
+        ),
+      },
       // Dashboard redirect
       {
         path: "dashboard",
