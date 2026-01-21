@@ -1,4 +1,4 @@
-const Order = require("../models/Order.model");
+const Order = require("../models/order.model");
 const Payment = require("../models/Payment.model");
 
 exports.getUserDashboard = async (req, res) => {
