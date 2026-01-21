@@ -8,13 +8,13 @@ export function PaymentPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
-  // Load booking + Razorpay
   useEffect(() => {
     const saved = localStorage.getItem("currentBooking");
     if (!saved) {
       navigate("/booking");
       return;
     }
+
     setBookingData(JSON.parse(saved));
 
     if (!window.Razorpay) {
@@ -29,24 +29,39 @@ export function PaymentPage() {
 
   const handlePayment = async () => {
     if (loading) return;
+
     setLoading(true);
     setError("");
 
     try {
-      const order = await createOrder(bookingData.price);
+      // 🔹 CREATE ORDER (backend)
+      const response = await createOrder(
+        bookingData.price,
+        {
+          origin: bookingData.origin,
+          destination: bookingData.destination,
+          service: bookingData.service,
+        }
+      );
+
+      const order = response;
+
+      if (!order?.id || !order?.amount) {
+        throw new Error("Invalid payment order");
+      }
 
       const razorpay = new window.Razorpay({
         key: import.meta.env.VITE_RAZORPAY_KEY_ID,
-        amount: order.amount,
+        order_id: order.id,
+        amount: order.amount, 
         currency: "INR",
         name: "SwiftMove",
         description: "Move Booking Payment",
-        order_id: order.id,
 
         prefill: {
-          name: bookingData.name,
-          email: bookingData.email,
-          contact: bookingData.phone,
+          name: bookingData.name || "",
+          email: bookingData.email || "",
+          contact: bookingData.phone || "",
         },
 
         handler: async (response) => {
@@ -54,18 +69,21 @@ export function PaymentPage() {
             razorpay_order_id: response.razorpay_order_id,
             razorpay_payment_id: response.razorpay_payment_id,
             razorpay_signature: response.razorpay_signature,
-            bookingData,
           });
 
           localStorage.removeItem("currentBooking");
           navigate("/dashboard");
         },
+
+        modal: {
+          ondismiss: () => setLoading(false),
+        },
       });
 
       razorpay.open();
     } catch (err) {
+      console.error(err);
       setError(err.message || "Payment failed");
-    } finally {
       setLoading(false);
     }
   };
@@ -91,7 +109,7 @@ export function PaymentPage() {
         <button
           onClick={handlePayment}
           disabled={loading}
-          className="w-full mt-6 bg-green-600 text-white py-3 rounded-lg"
+          className="w-full mt-6 bg-green-600 text-white py-3 rounded-lg disabled:opacity-50"
         >
           {loading ? "Processing..." : "Pay Now"}
         </button>
