@@ -81,60 +81,111 @@ export function ProfilePage() {
   }
 
  return (
-  <div className="max-w-xl mx-auto p-6">
-    {/* Profile Header */}
-    <div className="flex items-center gap-4 mb-8">
-      <div className="w-16 h-16 rounded-full bg-blue-600 text-white flex items-center justify-center text-xl font-bold">
-        {profile.name?.charAt(0)?.toUpperCase()}
-      </div>
-      <div>
-        <h1 className="text-xl font-semibold">{profile.name}</h1>
+  <div className="min-h-[70vh] flex items-start justify-center px-4">
+    <div className="w-full max-w-md bg-white border rounded-xl shadow-sm p-6">
+
+      {/* Avatar + Basic Info */}
+      <div className="flex flex-col items-center text-center mb-6">
+        <div className="w-20 h-20 rounded-full bg-blue-600 text-white flex items-center justify-center text-3xl font-bold">
+          {profile.name?.charAt(0)?.toUpperCase()}
+        </div>
+
+        <h1 className="mt-4 text-xl font-semibold text-gray-800">
+          {profile.name}
+        </h1>
+
         <p className="text-sm text-gray-500">{profile.email}</p>
-        <span className="inline-block mt-1 text-xs bg-gray-100 px-2 py-1 rounded">
+
+        <span className="mt-2 inline-block text-xs px-3 py-1 rounded-full bg-gray-100 text-gray-700">
           {role}
         </span>
       </div>
-    </div>
 
-    {/* Messages */}
-    {error && <p className="mb-4 text-sm text-red-600">{error}</p>}
-    {success && <p className="mb-4 text-sm text-green-600">{success}</p>}
+      {/* Messages */}
+      {error && (
+        <p className="mb-4 text-sm text-red-600 text-center">{error}</p>
+      )}
+      {success && (
+        <p className="mb-4 text-sm text-green-600 text-center">{success}</p>
+      )}
 
-    {/* Profile Form */}
-    <div className="bg-white border rounded-lg p-6 space-y-4">
-      <h2 className="text-sm font-medium text-gray-700">
-        Profile Information
-      </h2>
+      {/* Profile Fields */}
+      <div className="space-y-4">
+        <div>
+          <label className="block text-sm text-gray-600 mb-1">
+            Full Name
+          </label>
+          <input
+            type="text"
+            value={profile.name}
+            disabled={!isEditing}
+            onChange={(e) =>
+              setProfile({ ...profile, name: e.target.value })
+            }
+            className={`w-full border rounded-md px-3 py-2 text-sm
+              ${!isEditing ? "bg-gray-100 cursor-not-allowed" : ""}`}
+          />
+        </div>
 
-      <div>
-        <label className="text-sm text-gray-600">Full Name</label>
-        <input
-          value={profile.name}
-          onChange={(e) =>
-            setProfile({ ...profile, name: e.target.value })
-          }
-          className="mt-1 w-full border rounded px-3 py-2 text-sm"
-        />
+        <div>
+          <label className="block text-sm text-gray-600 mb-1">
+            Phone Number
+          </label>
+          <input
+            type="tel"
+            value={profile.phone}
+            disabled={!isEditing}
+            onChange={(e) =>
+              setProfile({ ...profile, phone: e.target.value })
+            }
+            placeholder="Your contact number"
+            className={`w-full border rounded-md px-3 py-2 text-sm
+              ${!isEditing ? "bg-gray-100 cursor-not-allowed" : ""}`}
+          />
+        </div>
       </div>
 
-      <div>
-        <label className="text-sm text-gray-600">Phone Number</label>
-        <input
-          value={profile.phone}
-          onChange={(e) =>
-            setProfile({ ...profile, phone: e.target.value })
-          }
-          className="mt-1 w-full border rounded px-3 py-2 text-sm"
-        />
+      {/* Action Buttons */}
+      <div className="mt-6 flex justify-end gap-3">
+        {!isEditing ? (
+          <button
+            onClick={() => setIsEditing(true)}
+            className="text-sm px-4 py-2 rounded-md border hover:bg-gray-50"
+          >
+            Edit Profile
+          </button>
+        ) : (
+          <>
+            <button
+              onClick={() => {
+                setIsEditing(false);
+                setError("");
+                setSuccess("");
+              }}
+              className="text-sm px-4 py-2 rounded-md border hover:bg-gray-50"
+            >
+              Cancel
+            </button>
+
+            <button
+              onClick={async () => {
+                await handleSave();
+                setIsEditing(false);
+              }}
+              disabled={saving}
+              className="text-sm px-4 py-2 rounded-md bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-50"
+            >
+              {saving ? "Saving..." : "Save"}
+            </button>
+          </>
+        )}
       </div>
 
-      <button
-        onClick={handleSave}
-        disabled={saving}
-        className="mt-4 bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 text-sm disabled:opacity-50 transition"
-      >
-        {saving ? "Saving…" : "Save Changes"}
-      </button>
+      {/* Account Info */}
+      <div className="mt-6 pt-4 border-t text-sm text-gray-600">
+        <p>User ID: {userId}</p>
+        <p className="mt-1">Account type: {role}</p>
+      </div>
     </div>
   </div>
 );
