@@ -33,6 +33,7 @@ app.use("/api/users", userRoutes);
 app.use("/api/admin", require("./src/routes/admin.routes"));
 app.use("/api/service-requests", require("./src/routes/serviceRequest.routes"));
 app.use("/api/payments", paymentRoutes);
+app.use("/api/payments", require("./src/routes/payment.routes"));
 app.use("/api/moves", moveRoutes);
 
 // Test route
