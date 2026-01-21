@@ -1,15 +1,14 @@
 import { apiRequest } from "./api";
 
-// login
-export const login = (email, password) => {
+// LOGIN
+export const login = async (email, password) => {
   return apiRequest("/api/auth/login", {
     method: "POST",
     body: JSON.stringify({ email, password }),
   });
 };
 
-// signup
-export const signup = (name, email, password, role) => {
+export const signup = async (name, email, password, role = "user") => {
   return apiRequest("/api/auth/signup", {
     method: "POST",
     body: JSON.stringify({
@@ -19,4 +18,9 @@ export const signup = (name, email, password, role) => {
       role,
     }),
   });
+};
+
+export const logout = () => {
+  localStorage.removeItem("token");
+  localStorage.removeItem("user");
 };
