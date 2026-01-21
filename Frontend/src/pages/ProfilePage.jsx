@@ -80,79 +80,62 @@ export function ProfilePage() {
     );
   }
 
-  return (
-    <div className="p-4 max-w-lg mx-auto">
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold text-gray-800">My Profile</h1>
-        <div className="mt-1 text-gray-600">
-          {role === "admin" ? "Administrator" : 
-           role === "mover" ? "Mover Staff" : "Customer"}
-        </div>
+ return (
+  <div className="max-w-xl mx-auto p-6">
+    {/* Profile Header */}
+    <div className="flex items-center gap-4 mb-8">
+      <div className="w-16 h-16 rounded-full bg-blue-600 text-white flex items-center justify-center text-xl font-bold">
+        {profile.name?.charAt(0)?.toUpperCase()}
       </div>
-
-      {error && (
-        <div className="mb-4 p-3 bg-red-100 text-red-700 rounded border border-red-300">
-          {error}
-        </div>
-      )}
-      
-      {success && (
-        <div className="mb-4 p-3 bg-green-100 text-green-700 rounded border border-green-300">
-          {success}
-        </div>
-      )}
-
-      <div className="bg-white border rounded-lg p-5 shadow-sm">
-        <div className="space-y-4">
-          <div>
-            <label className="block text-gray-700 mb-1">Full Name *</label>
-            <input
-              type="text"
-              value={profile.name}
-              onChange={(e) => setProfile({ ...profile, name: e.target.value })}
-              className="w-full p-2 border rounded"
-              placeholder="Your name"
-            />
-          </div>
-
-          <div>
-            <label className="block text-gray-700 mb-1">Email</label>
-            <input
-              type="email"
-              value={profile.email}
-              disabled
-              className="w-full p-2 border rounded bg-gray-100"
-            />
-            <p className="text-xs text-gray-500 mt-1">Email cannot be changed</p>
-          </div>
-
-          <div>
-            <label className="block text-gray-700 mb-1">Phone Number</label>
-            <input
-              type="tel"
-              value={profile.phone}
-              onChange={(e) => setProfile({ ...profile, phone: e.target.value })}
-              className="w-full p-2 border rounded"
-              placeholder="Your contact number"
-            />
-            <p className="text-xs text-gray-500 mt-1">For delivery updates</p>
-          </div>
-        </div>
-
-        <button
-          onClick={handleSave}
-          disabled={saving}
-          className="w-full mt-6 bg-blue-600 text-white p-2.5 rounded hover:bg-blue-700 disabled:opacity-50"
-        >
-          {saving ? "Saving..." : "Save Profile"}
-        </button>
-      </div>
-
-      <div className="mt-6 p-4 bg-gray-50 rounded border">
-        <h3 className="font-medium text-gray-700 mb-2">Account Details</h3>
-        <p className="text-sm text-gray-600">User ID: {userId}</p>
-        <p className="text-sm text-gray-600 mt-1">Account type: {role}</p>
+      <div>
+        <h1 className="text-xl font-semibold">{profile.name}</h1>
+        <p className="text-sm text-gray-500">{profile.email}</p>
+        <span className="inline-block mt-1 text-xs bg-gray-100 px-2 py-1 rounded">
+          {role}
+        </span>
       </div>
     </div>
-  );
+
+    {/* Messages */}
+    {error && <p className="mb-4 text-sm text-red-600">{error}</p>}
+    {success && <p className="mb-4 text-sm text-green-600">{success}</p>}
+
+    {/* Profile Form */}
+    <div className="bg-white border rounded-lg p-6 space-y-4">
+      <h2 className="text-sm font-medium text-gray-700">
+        Profile Information
+      </h2>
+
+      <div>
+        <label className="text-sm text-gray-600">Full Name</label>
+        <input
+          value={profile.name}
+          onChange={(e) =>
+            setProfile({ ...profile, name: e.target.value })
+          }
+          className="mt-1 w-full border rounded px-3 py-2 text-sm"
+        />
+      </div>
+
+      <div>
+        <label className="text-sm text-gray-600">Phone Number</label>
+        <input
+          value={profile.phone}
+          onChange={(e) =>
+            setProfile({ ...profile, phone: e.target.value })
+          }
+          className="mt-1 w-full border rounded px-3 py-2 text-sm"
+        />
+      </div>
+
+      <button
+        onClick={handleSave}
+        disabled={saving}
+        className="mt-4 bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 text-sm disabled:opacity-50 transition"
+      >
+        {saving ? "Saving…" : "Save Changes"}
+      </button>
+    </div>
+  </div>
+);
 }
