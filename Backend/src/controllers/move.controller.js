@@ -1,5 +1,32 @@
 const Move = require("../models/move.model");
 
+// POST /api/moves
+const createMove = async (req, res) => {
+  try {
+    const { pickup, dropoff, moveDate, service, price } = req.body;
+
+    // Basic validation
+    if (!pickup || !dropoff || !moveDate || !service || !price) {
+      return res.status(400).json({ message: "Please enter all required fields" });
+    }
+
+    const newMove = new Move({
+      user: req.user.id,
+      pickup,
+      dropoff,
+      moveDate,
+      service,
+      price,
+    });
+
+    const savedMove = await newMove.save();
+    res.status(201).json(savedMove);
+  } catch (error) {
+    console.error("Error creating move:", error);
+    res.status(500).json({ message: "Failed to create move" });
+  }
+};
+
 const getMyMoves = async (req, res) => {
   try {
     const moves = await Move.find({ user: req.user.id })
@@ -52,6 +79,7 @@ const acceptMove = async (req, res) => {
 };
 
 module.exports = {
+  createMove,
   getMyMoves,
   getAvailableMoves,
   acceptMove,

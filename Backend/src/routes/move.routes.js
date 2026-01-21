@@ -1,5 +1,6 @@
 const express = require("express");
 const {
+  createMove,
   getMyMoves,
   getAvailableMoves,
   acceptMove,
@@ -11,6 +12,7 @@ const allowRoles = require("../middleware/role.middleware");
 const router = express.Router();
 
 // USER
+router.post("/", protect, allowRoles("user"), createMove); // New route to create a move
 router.get("/my", protect, allowRoles("user"), getMyMoves);
 
 // PROVIDER
