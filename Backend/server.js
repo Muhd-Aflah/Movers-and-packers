@@ -20,6 +20,7 @@ app.use(
     origin: [
       "https://swiftmove-movers-and-packers.vercel.app",
       "http://localhost:5173",
+      "https://movers-and-packers-fppm.onrender.com", 
     ],
     credentials: true,
     methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
@@ -34,6 +35,8 @@ app.use("/api/auth", require("./src/routes/auth.routes"));
 app.use("/api/users", require("./src/routes/user.routes"));
 app.use("/api/moves", require("./src/routes/move.routes"));
 app.use("/api/dashboard", require("./src/routes/dashboard.routes"));
+app.use("/api/admin", require("./src/routes/admin.routes"));
+app.use("/api/provider", require("./src/routes/provider.routes"));
 
 app.get("/", (_, res) => res.send("Backend running"));
 
