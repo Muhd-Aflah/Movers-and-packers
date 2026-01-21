@@ -21,12 +21,11 @@ function BalanceCard({ title, value, subtitle, icon: Icon }) {
   );
 }
 
-export function BalanceDashboard() {
-  // Dummy data (MongoDB-ready)
+export function BalanceDashboard({ payments }) {
   const balance = {
-    totalPaid: 4500,
-    pending: 0,
-    lastPayment: 2500,
+    totalPaid: payments.filter(p => p.paymentStatus === "paid").reduce((sum, p) => sum + p.amount, 0),
+    pending: payments.filter(p => p.paymentStatus === "created").reduce((sum, p) => sum + p.amount, 0),
+    lastPayment: payments.length > 0 ? payments[0].amount : 0,
   };
 
   return (

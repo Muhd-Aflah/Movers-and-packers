@@ -7,12 +7,16 @@ const allowRoles = require("../middleware/role.middleware");
 const {
   getAllUsers,
   getAllMoves,
+  getAdminDashboardStats,
 } = require("../controllers/admin.controller");
 
 // ADMIN: health check
 router.get("/check", protect, allowRoles("admin"), (req, res) => {
   res.json({ message: "Admin route working" });
 });
+
+// ADMIN: get dashboard stats
+router.get("/dashboard/stats", protect, allowRoles("admin"), getAdminDashboardStats);
 
 // ADMIN: get all users
 router.get("/users", protect, allowRoles("admin"), getAllUsers);

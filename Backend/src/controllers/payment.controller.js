@@ -7,10 +7,12 @@ const razorpay = new Razorpay({
 });
 
 exports.createOrder = async (req, res) => {
+  console.log("createOrder function called");
   try {
     const { amount } = req.body;
 
     if (!amount || amount <= 0) {
+      console.log("Invalid amount:", amount);
       return res.status(400).json({ message: "Invalid amount" });
     }
 
@@ -19,6 +21,8 @@ exports.createOrder = async (req, res) => {
       currency: "INR",
       receipt: `rcpt_${Date.now()}`,
     });
+
+    console.log("Razorpay Order created:", order);
 
     res.status(200).json({
       id: order.id,
@@ -32,6 +36,7 @@ exports.createOrder = async (req, res) => {
 };
 
 exports.verifyPayment = (req, res) => {
+  console.log("verifyPayment function called");
   try {
     const {
       razorpay_order_id,
@@ -40,15 +45,20 @@ exports.verifyPayment = (req, res) => {
     } = req.body;
 
     if (!razorpay_order_id || !razorpay_payment_id || !razorpay_signature) {
+      console.log("Missing payment data:", { razorpay_order_id, razorpay_payment_id, razorpay_signature });
       return res.status(400).json({ message: "Missing payment data" });
     }
 
     const body = `${razorpay_order_id}|${razorpay_payment_id}`;
+    console.log("Signature body:", body);
 
     const expectedSignature = crypto
       .createHmac("sha256", process.env.RAZORPAY_KEY_SECRET)
       .update(body)
       .digest("hex");
+
+    console.log("Expected signature:", expectedSignature);
+    console.log("Received signature:", razorpay_signature);
 
     if (expectedSignature !== razorpay_signature) {
       return res.status(400).json({ success: false, message: "Invalid signature" });

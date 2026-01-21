@@ -1,9 +1,35 @@
+import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { DashboardCards } from "./DashboardCards";
 import { MyMoves } from "../components/moves/MyMoves";
 import { BalanceDashboard } from "./BalanceDashboard";
+import { MyOrders } from "./MyOrders";
+import { dashboardService } from "../services/dashboard.service";
 
 export function UserDashboard() {
+  const [dashboardData, setDashboardData] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    const fetchDashboardData = async () => {
+      try {
+        const data = await dashboardService.getUserDashboard();
+        setDashboardData(data);
+      } catch (err) {
+        setError(err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchDashboardData();
+  }, []);
+
+  if (loading) return <div>Loading dashboard...</div>;
+  if (error) return <div>Error: {error.message}</div>;
+  if (!dashboardData) return <div>No dashboard data available.</div>;
+
   return (
     <div className="space-y-8">
       {/* Overview / stats */}
@@ -19,14 +45,17 @@ export function UserDashboard() {
         </Link>
       </div>
 
-      {/* My Moves */}
+      {/* My Orders */}
       <section>
-        <h2 className="mb-4 text-lg font-semibold">My Moves</h2>
-        <MyMoves />
+        <h2 className="mb-4 text-lg font-semibold">My Orders</h2>
+        <MyOrders orders={dashboardData.orders} />
       </section>
 
       {/* Payments / balance */}
-      <BalanceDashboard />
+      <section>
+        <h2 className="mb-4 text-lg font-semibold">My Payments</h2>
+        <BalanceDashboard payments={dashboardData.payments} />
+      </section>
     </div>
   );
 }

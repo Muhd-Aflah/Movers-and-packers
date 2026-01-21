@@ -105,6 +105,10 @@ export const router = createBrowserRouter([
             <ProviderDashboard />
           </ProtectedRoute>
         ),
+        children: [
+          { path: "available-moves", element: <div>Provider Available Moves (TODO)</div> },
+          { path: "my-jobs", element: <div>Provider My Jobs (TODO)</div> },
+        ],
       },
       {
         path: "dashboard/admin",
@@ -113,6 +117,12 @@ export const router = createBrowserRouter([
             <AdminDashboard />
           </ProtectedRoute>
         ),
+        children: [
+          { path: "users", element: <div>Admin Users Page (TODO)</div> },
+          { path: "providers", element: <div>Admin Providers Page (TODO)</div> },
+          { path: "orders", element: <div>Admin Orders Page (TODO)</div> },
+          { path: "payments", element: <div>Admin Payments Page (TODO)</div> },
+        ],
       },
 
       { path: "*", element: <NotFoundPage /> },

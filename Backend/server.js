@@ -12,16 +12,20 @@ const app = express();
 app.post(
   "/api/payments/webhook",
   express.raw({ type: "application/json" }),
-  require("./src/routes/payment.routes")
+  require("./src/routes/payment.routes"),
 );
 
-app.use(cors({
-  origin: [
-    "https://swiftmove-movers-and-packers.vercel.app",
-    "http://localhost:5173"
-  ],
-  credentials: true
-}));
+app.use(
+  cors({
+    origin: [
+      "https://swiftmove-movers-and-packers.vercel.app",
+      "http://localhost:5173",
+    ],
+    credentials: true,
+    methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization"],
+  }),
+);
 
 app.use(express.json());
 
@@ -34,6 +38,4 @@ app.use("/api/dashboard", require("./src/routes/dashboard.routes"));
 app.get("/", (_, res) => res.send("Backend running"));
 
 const PORT = process.env.PORT || 5000;
-app.listen(PORT, () =>
-  console.log(`Server running on port ${PORT}`)
-);
+app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
