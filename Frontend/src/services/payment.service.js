@@ -7,7 +7,7 @@ export const createOrder = async (amount, notes = {}) => {
   const token = localStorage.getItem("token");
 
   const response = await fetch(
-    `${API_BASE_URL}/payments/create-order`,
+    `${API_BASE_URL}/api/payments/create-order`,
     {
       method: "POST",
       headers: {
@@ -39,7 +39,7 @@ export const verifyPayment = async (paymentData) => {
   const token = localStorage.getItem("token");
 
   const response = await fetch(
-    `${API_BASE_URL}/payments/verify`,
+    `${API_BASE_URL}/api/payments/verify`,
     {
       method: "POST",
       headers: {
@@ -57,7 +57,7 @@ export const verifyPayment = async (paymentData) => {
   }
 
   const data = await response.json();
-  return data.data;
+  return data;
 };
 
 /**
@@ -67,7 +67,7 @@ export const getPaymentDetails = async (paymentId) => {
   const token = localStorage.getItem("token");
 
   const response = await fetch(
-    `${API_BASE_URL}/payments/${paymentId}`,
+    `${API_BASE_URL}/api/payments/${paymentId}`,
     {
       headers: {
         Authorization: `Bearer ${token}`,
@@ -90,7 +90,7 @@ export const getOrderDetails = async (orderId) => {
   const token = localStorage.getItem("token");
 
   const response = await fetch(
-    `${API_BASE_URL}/payments/order/${orderId}`,
+    `${API_BASE_URL}/api/payments/order/${orderId}`,
     {
       headers: {
         Authorization: `Bearer ${token}`,
@@ -113,7 +113,7 @@ export const refundPayment = async (paymentId, amount) => {
   const token = localStorage.getItem("token");
 
   const response = await fetch(
-    `${API_BASE_URL}/payments/refund`,
+    `${API_BASE_URL}/api/payments/refund`,
     {
       method: "POST",
       headers: {
