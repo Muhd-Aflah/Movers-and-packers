@@ -3,6 +3,7 @@ const router = express.Router();
 
 const authController = require("../controllers/auth.controller");
 const { protect } = require("../middleware/auth.middleware");
+const allowRoles = require("../middleware/role.middleware");
 const role = require("../middleware/role.middleware");
 
 // Public routes

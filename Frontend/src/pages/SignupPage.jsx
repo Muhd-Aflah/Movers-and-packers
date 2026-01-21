@@ -1,15 +1,19 @@
 import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useLocation } from "react-router-dom";
 import { signup } from "../services/auth.service";
 import { setAuth } from "../utils/auth";
 
 export function SignupPage() {
   const navigate = useNavigate();
+  const location = useLocation();
+
+  const role = location.pathname.startsWith("/provider")
+    ? "provider"
+    : "user";
 
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [role, setRole] = useState("user");
   const [error, setError] = useState("");
 
   const handleSubmit = async (e) => {
@@ -24,34 +28,29 @@ export function SignupPage() {
     try {
       const data = await signup(name, email, password, role);
 
-      localStorage.setItem("token", data.token);
-
-      if (data?.token && data?.user) {
+      if (data?.token) {
         setAuth({
           token: data.token,
           user: data.user,
         });
+
+        navigate(`/dashboard/${data.user.role}`);
       }
-
-      console.log("Signup success:", data);
-
-      navigate("/login");
     } catch (err) {
-      setError(err.message);
+      setError(err.message || "Signup failed");
     }
   };
 
   return (
     <div className="flex justify-center items-center min-h-[80vh]">
       <form onSubmit={handleSubmit} className="w-96 p-6 shadow-lg rounded">
-        <h2 className="text-2xl font-bold mb-4">Create Account</h2>
+        <h2 className="text-2xl font-bold mb-4">
+          {role === "provider" ? "Provider Signup" : "Create Account"}
+        </h2>
 
-        {error && (
-          <p className="mb-3 text-red-600 text-sm text-center">{error}</p>
-        )}
+        {error && <p className="text-red-600 text-sm mb-3">{error}</p>}
 
         <input
-          type="text"
           placeholder="Full Name"
           value={name}
           onChange={(e) => setName(e.target.value)}
@@ -59,49 +58,33 @@ export function SignupPage() {
         />
 
         <input
-          type="email"
           placeholder="Email"
+          type="email"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           className="w-full mb-3 p-2 border rounded"
         />
 
         <input
-          type="password"
           placeholder="Password"
+          type="password"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
-          className="w-full mb-3 p-2 border rounded"
+          className="w-full mb-4 p-2 border rounded"
         />
 
-        <div className="mb-4">
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            Role
-          </label>
-          <select
-            value={role}
-            onChange={(e) => setRole(e.target.value)}
-            className="w-full p-2 border rounded"
-          >
-            <option value="user">User</option>
-            <option value="admin">Admin</option>
-            <option value="provider">Provider</option>
-          </select>
-        </div>
-
-        <button
-          type="submit"
-          className="w-full bg-indigo-600 text-white py-2 rounded hover:bg-indigo-700"
-        >
+        <button className="w-full bg-indigo-600 text-white py-2 rounded">
           Sign Up
         </button>
 
-        <p className="text-sm text-center mt-4">
-          Already have an account?{" "}
-          <Link to="/login" className="text-indigo-600 font-semibold">
-            Sign In
-          </Link>
-        </p>
+        {role === "user" && (
+          <p className="text-sm text-center mt-4">
+            Already have an account?{" "}
+            <Link to="/login" className="text-indigo-600 font-semibold">
+              Sign In
+            </Link>
+          </p>
+        )}
       </form>
     </div>
   );

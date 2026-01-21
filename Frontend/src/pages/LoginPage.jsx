@@ -1,11 +1,9 @@
 import { useState } from "react";
-import { useLocation } from "react-router-dom";
 import { Link, useNavigate } from "react-router-dom";
 import { login } from "../services/auth.service";
 import { setAuth } from "../utils/auth";
 
 export function LoginPage() {
-  const location = useLocation();
   const navigate = useNavigate();
 
   const [email, setEmail] = useState("");
@@ -24,23 +22,17 @@ export function LoginPage() {
     try {
       const data = await login(email, password);
 
-      localStorage.setItem("token", data.token);
-
       if (data?.token && data?.user) {
         setAuth({
           token: data.token,
           user: data.user,
         });
+
+        // 🔑 Always go to dashboard
+        navigate("/dashboard");
       }
-
-      console.log("Logged in user:", data);
-
-      const redirectTo = location.state?.redirectTo || "/";
-      navigate(redirectTo, {
-        state: location.state?.bookingData || null,
-      });
     } catch (err) {
-      setError(err.message);
+      setError(err.message || "Login failed");
     }
   };
 
@@ -77,7 +69,7 @@ export function LoginPage() {
         </button>
 
         <p className="text-sm text-center mt-4">
-          Don't have an account?{" "}
+          Don&apos;t have an account?{" "}
           <Link to="/signup" className="text-indigo-600 font-semibold">
             Sign Up
           </Link>

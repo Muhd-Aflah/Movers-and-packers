@@ -30,7 +30,9 @@ const NotFoundPage = () => <div className="p-8">404</div>;
 // Smart redirect for /dashboard
 function DashboardRedirect() {
   const { role } = getAuthFromStorage();
-  return role ? <Navigate to={roleHome[role]} replace /> : <Navigate to="/login" replace />;
+  return role
+    ? <Navigate to={roleHome[role]} replace />
+    : <Navigate to="/login" replace />;
 }
 
 export const router = createBrowserRouter([
@@ -44,7 +46,10 @@ export const router = createBrowserRouter([
       { path: "solutions", element: <SolutionsPage /> },
       { path: "contact", element: <ContactPage /> },
       { path: "login", element: <LoginPage /> },
+
+      // SIGNUP ROUTES
       { path: "signup", element: <SignupPage /> },
+      { path: "provider/signup", element: <SignupPage /> },
 
       {
         path: "booking",

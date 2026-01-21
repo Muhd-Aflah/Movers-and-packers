@@ -12,7 +12,7 @@ const protect = (req, res, next) => {
 
       const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
-      // Attach ONLY what you need
+      // Attach only what you need
       req.user = {
         id: decoded.id,
         role: decoded.role,
@@ -27,14 +27,4 @@ const protect = (req, res, next) => {
   return res.status(401).json({ message: "Not authorized, no token" });
 };
 
-// Role-based guard (replaces admin-only)
-const allowRoles = (...roles) => {
-  return (req, res, next) => {
-    if (!req.user || !roles.includes(req.user.role)) {
-      return res.status(403).json({ message: "Access denied" });
-    }
-    next();
-  };
-};
-
-module.exports = { protect, allowRoles };
+module.exports = { protect };
