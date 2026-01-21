@@ -25,11 +25,12 @@ export const createOrder = async (amount, notes = {}) => {
   if (!response.ok) {
     const text = await response.text();
     console.error("Create Order Error:", text);
-    throw new Error(`HTTP ${response.status}`);
+    throw new Error("Invalid payment order");
   }
 
+  // 🔥 FIX IS HERE
   const data = await response.json();
-  return data.data;
+  return data; // ✅ NOT data.data
 };
 
 /**
@@ -53,81 +54,8 @@ export const verifyPayment = async (paymentData) => {
   if (!response.ok) {
     const text = await response.text();
     console.error("Verify Payment Error:", text);
-    throw new Error(`HTTP ${response.status}`);
+    throw new Error("Payment verification failed");
   }
 
-  const data = await response.json();
-  return data;
-};
-
-/**
- * Fetch Payment Details
- */
-export const getPaymentDetails = async (paymentId) => {
-  const token = localStorage.getItem("token");
-
-  const response = await fetch(
-    `${API_BASE_URL}/api/payments/${paymentId}`,
-    {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    }
-  );
-
-  if (!response.ok) {
-    throw new Error("Failed to fetch payment details");
-  }
-
-  const data = await response.json();
-  return data.data;
-};
-
-/**
- * Fetch Order Details
- */
-export const getOrderDetails = async (orderId) => {
-  const token = localStorage.getItem("token");
-
-  const response = await fetch(
-    `${API_BASE_URL}/api/payments/order/${orderId}`,
-    {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    }
-  );
-
-  if (!response.ok) {
-    throw new Error("Failed to fetch order details");
-  }
-
-  const data = await response.json();
-  return data.data;
-};
-
-/**
- * Refund Payment
- */
-export const refundPayment = async (paymentId, amount) => {
-  const token = localStorage.getItem("token");
-
-  const response = await fetch(
-    `${API_BASE_URL}/api/payments/refund`,
-    {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
-      },
-      body: JSON.stringify({ paymentId, amount }),
-    }
-  );
-
-  if (!response.ok) {
-    throw new Error("Refund failed");
-  }
-
-  const data = await response.json();
-  return data.data;
+  return await response.json();
 };

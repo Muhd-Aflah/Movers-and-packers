@@ -7,6 +7,7 @@ export function PaymentPage() {
   const [bookingData, setBookingData] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [razorpayReady, setRazorpayReady] = useState(false);
 
   useEffect(() => {
     const saved = localStorage.getItem("currentBooking");
@@ -14,46 +15,47 @@ export function PaymentPage() {
       navigate("/booking");
       return;
     }
-
     setBookingData(JSON.parse(saved));
 
-    if (!window.Razorpay) {
-      const script = document.createElement("script");
-      script.src = "https://checkout.razorpay.com/v1/checkout.js";
-      script.onload = () => console.log("Razorpay loaded");
-      document.body.appendChild(script);
+    if (window.Razorpay) {
+      setRazorpayReady(true);
+      return;
     }
+
+    const script = document.createElement("script");
+    script.src = "https://checkout.razorpay.com/v1/checkout.js";
+    script.onload = () => {
+      console.log("Razorpay loaded");
+      setRazorpayReady(true);
+    };
+    script.onerror = () => setError("Failed to load payment gateway");
+    document.body.appendChild(script);
   }, [navigate]);
 
   if (!bookingData) return null;
 
   const handlePayment = async () => {
-    if (loading) return;
+    if (!razorpayReady || loading) return;
 
     setLoading(true);
     setError("");
 
     try {
-      // 🔹 CREATE ORDER (backend)
-      const response = await createOrder(
-        bookingData.price,
-        {
-          origin: bookingData.origin,
-          destination: bookingData.destination,
-          service: bookingData.service,
-        }
-      );
-
-      const order = response;
+      const order = await createOrder(bookingData.price);
 
       if (!order?.id || !order?.amount) {
         throw new Error("Invalid payment order");
       }
 
-      const razorpay = new window.Razorpay({
-        key: import.meta.env.VITE_RAZORPAY_KEY_ID,
+      const razorpayKey = import.meta.env.VITE_RAZORPAY_KEY_ID;
+      if (!razorpayKey) {
+        throw new Error("Razorpay key missing");
+      }
+
+      const rzp = new window.Razorpay({
+        key: razorpayKey,
         order_id: order.id,
-        amount: order.amount, 
+        amount: order.amount,
         currency: "INR",
         name: "SwiftMove",
         description: "Move Booking Payment",
@@ -64,13 +66,8 @@ export function PaymentPage() {
           contact: bookingData.phone || "",
         },
 
-        handler: async (response) => {
-          await verifyPayment({
-            razorpay_order_id: response.razorpay_order_id,
-            razorpay_payment_id: response.razorpay_payment_id,
-            razorpay_signature: response.razorpay_signature,
-          });
-
+        handler: async (res) => {
+          await verifyPayment(res);
           localStorage.removeItem("currentBooking");
           navigate("/dashboard");
         },
@@ -80,7 +77,7 @@ export function PaymentPage() {
         },
       });
 
-      razorpay.open();
+      rzp.open();
     } catch (err) {
       console.error(err);
       setError(err.message || "Payment failed");
@@ -99,16 +96,14 @@ export function PaymentPage() {
           <p><b>From:</b> {bookingData.origin}</p>
           <p><b>To:</b> {bookingData.destination}</p>
           <p><b>Service:</b> {bookingData.service}</p>
-          <p className="text-lg font-bold">
-            Amount: ₹{bookingData.price}
-          </p>
+          <p className="text-lg font-bold">Amount: ₹{bookingData.price}</p>
         </div>
 
         {error && <p className="mt-4 text-red-600">{error}</p>}
 
         <button
           onClick={handlePayment}
-          disabled={loading}
+          disabled={loading || !razorpayReady}
           className="w-full mt-6 bg-green-600 text-white py-3 rounded-lg disabled:opacity-50"
         >
           {loading ? "Processing..." : "Pay Now"}
