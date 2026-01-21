@@ -18,8 +18,11 @@ const updateUser = async (req, res) => {
 
   const user = await User.findByIdAndUpdate(
     req.params.id,
-    { name: req.body.name },
-    { new: true }
+    {
+      name: req.body.name,
+      phone: req.body.phone,
+    },
+    { new: true },
   ).select("-password");
 
   res.json(user);

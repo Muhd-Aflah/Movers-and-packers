@@ -21,8 +21,12 @@ const userSchema = new mongoose.Schema(
       enum: ["user", "admin", "mover"],
       default: "user",
     },
+    phone: {
+      type: String,
+      default: "",
+    },
   },
-  { timestamps: true }
+  { timestamps: true },
 );
 
 userSchema.pre("save", async function (next) {
