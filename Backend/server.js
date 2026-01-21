@@ -20,7 +20,7 @@ app.use(
     origin: [
       "https://swiftmove-movers-and-packers.vercel.app",
       "http://localhost:5173",
-      "https://movers-and-packers-fppm.onrender.com", 
+      "https://movers-and-packers-fppm.onrender.com", // Assuming this is your frontend URL on Render
     ],
     credentials: true,
     methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],

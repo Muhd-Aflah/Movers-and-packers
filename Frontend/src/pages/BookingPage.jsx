@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
+import { moveService } from "../services/move.service";
 
 export function BookingPage() {
   const navigate = useNavigate();
@@ -63,26 +64,39 @@ export function BookingPage() {
     }, 1000);
   };
 
-  const bookNow = () => {
-    const bookingData = {
-      ...formData,
-      price,
-    };
+  const bookNow = async () => {
+    const { origin, destination, moveDate, service, price } = formData;
 
-    const token = localStorage.getItem("token");
+    // Create the move in the backend first
+    try {
+      const newMove = await moveService.createMove({
+        pickup: origin,
+        dropoff: destination,
+        moveDate,
+        service,
+        price,
+        // The user is automatically attached on the backend via the protect middleware
+      });
 
-    localStorage.setItem("currentBooking", JSON.stringify(bookingData));
+      // Store current booking data with the actual _id for payment
+      localStorage.setItem(
+        "currentBooking",
+        JSON.stringify({
+          orderId: newMove._id,
+          amount: newMove.price,
+        })
+      );
 
-    if (!token) {
-      navigate("/login", {
+      navigate("/payment", {
         state: {
-          redirectTo: "/payment",
+          orderId: newMove._id,
+          amount: newMove.price,
         },
       });
-      return;
+    } catch (error) {
+      console.error("Error creating move:", error);
+      alert("Failed to create booking. Please try again.");
     }
-
-    navigate("/payment");
   };
 
   return (

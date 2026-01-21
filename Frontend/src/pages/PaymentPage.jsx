@@ -1,22 +1,32 @@
 import { useEffect, useState } from "react";
-import { useNavigate, Link } from "react-router-dom";
+import { useNavigate, Link, useLocation } from "react-router-dom"; // Import useLocation
 import { createOrder, verifyPayment } from "../services/payment.service";
 
 export function PaymentPage() {
   const navigate = useNavigate();
-  const [bookingData, setBookingData] = useState(null);
+  const location = useLocation(); // Initialize useLocation
+  const [bookingDetails, setBookingDetails] = useState(null); // Renamed from bookingData
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [razorpayReady, setRazorpayReady] = useState(false);
 
   useEffect(() => {
-    const saved = localStorage.getItem("currentBooking");
-    if (!saved) {
-      navigate("/booking");
-      return;
-    }
-    setBookingData(JSON.parse(saved));
+    // Retrieve orderId and amount from navigation state
+    const { orderId, amount } = location.state || {};
 
+    if (!orderId || !amount) {
+      const saved = localStorage.getItem("currentBooking");
+      if (!saved) {
+        navigate("/booking");
+        return;
+      }
+      const parsed = JSON.parse(saved);
+      setBookingDetails({ orderId: parsed.orderId, amount: parsed.amount, ...parsed }); // Set from localStorage if state is empty
+    } else {
+      setBookingDetails({ orderId, amount }); // Set from state
+    }
+
+    // Existing Razorpay script loading logic
     if (window.Razorpay) {
       setRazorpayReady(true);
       return;
@@ -30,9 +40,9 @@ export function PaymentPage() {
     };
     script.onerror = () => setError("Failed to load payment gateway");
     document.body.appendChild(script);
-  }, [navigate]);
+  }, [navigate, location.state]); // Added location.state to dependencies
 
-  if (!bookingData) return null;
+  if (!bookingDetails) return null;
 
   const handlePayment = async () => {
     if (!razorpayReady || loading) return;
@@ -41,7 +51,8 @@ export function PaymentPage() {
     setError("");
 
     try {
-      const order = await createOrder(bookingData.price);
+      // Pass orderId to createOrder
+      const order = await createOrder(bookingDetails.amount, bookingDetails.orderId);
 
       if (!order?.id || !order?.amount) {
         throw new Error("Invalid payment order");
@@ -61,15 +72,16 @@ export function PaymentPage() {
         description: "Move Booking Payment",
 
         prefill: {
-          name: bookingData.name || "",
-          email: bookingData.email || "",
-          contact: bookingData.phone || "",
+          // Use bookingDetails for prefill, assuming it includes name, email, phone
+          name: bookingDetails.name || "",
+          email: bookingDetails.email || "",
+          contact: bookingDetails.phone || "",
         },
 
         handler: async (res) => {
-          await verifyPayment(res);
+          await verifyPayment(res); // This function will now handle database updates
           localStorage.removeItem("currentBooking");
-          navigate("/dashboard");
+          navigate("/dashboard"); // Navigate to dashboard after successful payment
         },
 
         modal: {
@@ -93,10 +105,12 @@ export function PaymentPage() {
         <h1 className="text-2xl font-bold mt-4 mb-4">Payment</h1>
 
         <div className="space-y-2 text-sm">
-          <p><b>From:</b> {bookingData.origin}</p>
-          <p><b>To:</b> {bookingData.destination}</p>
-          <p><b>Service:</b> {bookingData.service}</p>
-          <p className="text-lg font-bold">Amount: ₹{bookingData.price}</p>
+          {/* Display details from bookingDetails */}
+          <p><b>Order ID:</b> {bookingDetails.orderId}</p>
+          <p><b>Amount:</b> ₹{bookingDetails.amount}</p>
+          {bookingDetails.origin && <p><b>From:</b> {bookingDetails.origin}</p>}
+          {bookingDetails.destination && <p><b>To:</b> {bookingDetails.destination}</p>}
+          {bookingDetails.service && <p><b>Service:</b> {bookingDetails.service}</p>}
         </div>
 
         {error && <p className="mt-4 text-red-600">{error}</p>}
