@@ -15,6 +15,12 @@ import { ContactPage } from "../pages/ContactPage";
 import { LoginPage } from "../pages/LoginPage";
 import { SignupPage } from "../pages/SignupPage";
 
+// Admin Pages
+import { AdminUsersPage } from "../pages/admin/AdminUsersPage";
+import { AdminOrdersPage } from "../pages/admin/AdminOrdersPage";
+import { AdminPaymentsPage } from "../pages/admin/AdminPaymentsPage";
+import { AdminProvidersPage } from "../pages/admin/AdminProvidersPage";
+
 // Dashboards
 import { ProfilePage } from "../pages/ProfilePage";
 import { UserDashboard } from "../dashboards/UserDashboard";
@@ -118,10 +124,10 @@ export const router = createBrowserRouter([
           </ProtectedRoute>
         ),
         children: [
-          { path: "users", element: <div>Admin Users Page (TODO)</div> },
-          { path: "providers", element: <div>Admin Providers Page (TODO)</div> },
-          { path: "orders", element: <div>Admin Orders Page (TODO)</div> },
-          { path: "payments", element: <div>Admin Payments Page (TODO)</div> },
+          { path: "users", element: <AdminUsersPage /> },
+          { path: "providers", element: <AdminProvidersPage /> },
+          { path: "orders", element: <AdminOrdersPage /> },
+          { path: "payments", element: <AdminPaymentsPage /> },
         ],
       },
 
