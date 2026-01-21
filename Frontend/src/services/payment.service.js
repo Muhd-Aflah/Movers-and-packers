@@ -3,7 +3,7 @@ const API_BASE_URL = import.meta.env.VITE_API_URL;
 /**
  * Create Razorpay Order
  */
-export const createOrder = async (amount, orderId, notes = {}) => {
+export const createOrder = async (amount, notes = {}) => {
   const token = localStorage.getItem("token");
 
   const response = await fetch(
@@ -17,7 +17,7 @@ export const createOrder = async (amount, orderId, notes = {}) => {
       body: JSON.stringify({
         amount,
         currency: "INR",
-        notes: { ...notes, orderId }, // Pass orderId in notes
+        notes,
       }),
     }
   );
@@ -28,8 +28,9 @@ export const createOrder = async (amount, orderId, notes = {}) => {
     throw new Error("Invalid payment order");
   }
 
+  // 🔥 FIX IS HERE
   const data = await response.json();
-  return data;
+  return data; // ✅ NOT data.data
 };
 
 /**

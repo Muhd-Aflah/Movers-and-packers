@@ -6,8 +6,10 @@ const createMove = async (req, res) => {
     const { pickup, dropoff, moveDate, service, price } = req.body;
 
     // Basic validation
-    if (!pickup || !dropoff || !moveDate || !service || !price) {
-      return res.status(400).json({ message: "Please enter all required fields" });
+    if (!pickup || !dropoff || !moveDate || !service || price === undefined) {
+      return res
+        .status(400)
+        .json({ message: "Please enter all required fields" });
     }
 
     const newMove = new Move({
@@ -29,15 +31,15 @@ const createMove = async (req, res) => {
 
 const getMyMoves = async (req, res) => {
   try {
-    const moves = await Move.find({ user: req.user.id })
-      .sort({ createdAt: -1 });
+    const moves = await Move.find({ user: req.user.id }).sort({
+      createdAt: -1,
+    });
 
     res.json(moves);
   } catch (error) {
     res.status(500).json({ message: "Failed to fetch moves" });
   }
 };
-
 
 const getAvailableMoves = async (req, res) => {
   try {
@@ -52,7 +54,6 @@ const getAvailableMoves = async (req, res) => {
   }
 };
 
-
 const acceptMove = async (req, res) => {
   try {
     const move = await Move.findById(req.params.id);
@@ -62,9 +63,7 @@ const acceptMove = async (req, res) => {
     }
 
     if (move.status !== "requested" || move.provider) {
-      return res
-        .status(400)
-        .json({ message: "This move cannot be accepted" });
+      return res.status(400).json({ message: "This move cannot be accepted" });
     }
 
     move.status = "accepted";
