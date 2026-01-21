@@ -1,4 +1,4 @@
-import { Link } from "react-router-dom";
+import { Link, Outlet } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { adminService } from "../services/admin.service";
 
@@ -74,6 +74,11 @@ export function AdminDashboard() {
           description="All payment transactions"
           to="/dashboard/admin/payments"
         />
+      </div>
+
+      {/* Renders child routes */}
+      <div className="mt-6">
+        <Outlet />
       </div>
     </div>
   );
