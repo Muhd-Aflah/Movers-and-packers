@@ -2,40 +2,37 @@ const express = require("express");
 const dotenv = require("dotenv");
 const cors = require("cors");
 
+dotenv.config();
+
 const connectDB = require("./src/config/db");
 const errorHandler = require("./src/middleware/error.middleware");
 
-const quoteRoutes = require("./src/routes/quote.routes");
-const paymentRoutes = require("./src/routes/payment.routes");
-const userRoutes = require("./src/routes/user.routes"); 
-const moveRoutes = require("./src/routes/move.routes");
-
-dotenv.config();
-connectDB();
-
 const app = express();
 
-// Razorpay webhook
-app.post(
-  "/api/payments/webhook",
-  express.raw({ type: "application/json" }),
-  paymentRoutes
+app.use(
+  cors({
+    origin: [
+      "https://swiftmove-movers-and-packers.vercel.app",
+      "http://localhost:5173",
+    ],
+    methods: ["GET", "POST", "PUT", "PATCH", "DELETE"],
+    allowedHeaders: ["Content-Type", "Authorization"],
+    credentials: true,
+  })
 );
 
-// Middleware
-app.use(cors());
 app.use(express.json());
 
-// Routes
-app.use("/api/quotes", quoteRoutes);
+connectDB();
+
 app.use("/api/auth", require("./src/routes/auth.routes"));
-app.use("/api/users", userRoutes); 
+app.use("/api/users", require("./src/routes/user.routes"));
+app.use("/api/quotes", require("./src/routes/quote.routes"));
+app.use("/api/moves", require("./src/routes/move.routes"));
 app.use("/api/admin", require("./src/routes/admin.routes"));
 app.use("/api/service-requests", require("./src/routes/serviceRequest.routes"));
-app.use("/api/payments", paymentRoutes);
-app.use("/api/payments", require("./src/routes/payment.routes"));
-app.use("/api/moves", moveRoutes);
 app.use("/api/dashboard", require("./src/routes/dashboard.routes"));
+app.use("/api/payments", require("./src/routes/payment.routes"));
 
 app.get("/", (req, res) => {
   res.send("Backend running");
@@ -44,6 +41,6 @@ app.get("/", (req, res) => {
 app.use(errorHandler);
 
 const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
-});
+app.listen(PORT, () =>
+  console.log(`Server running on port ${PORT}`)
+);
