@@ -57,22 +57,22 @@ export function AdminDashboard() {
         <ActionCard
           title="Manage Users"
           description="View and manage customer accounts"
-          to="/admin/users"
+          to="/dashboard/admin/users"
         />
         <ActionCard
           title="Manage Providers"
           description="Approve & manage service providers"
-          to="/admin/providers"
+          to="/dashboard/admin/providers"
         />
         <ActionCard
           title="View Orders"
           description="All bookings and moves"
-          to="/admin/orders"
+          to="/dashboard/admin/orders"
         />
         <ActionCard
           title="Payments"
           description="All payment transactions"
-          to="/admin/payments"
+          to="/dashboard/admin/payments"
         />
       </div>
     </div>
