@@ -74,8 +74,33 @@ const getAllMoves = async (req, res) => {
   }
 };
 
+// GET /api/admin/providers
+const getAllProviders = async (req, res) => {
+  try {
+    const providers = await User.find({ role: "mover" }).select("-password");
+    res.json(providers);
+  } catch (error) {
+    res.status(500).json({ message: "Failed to fetch providers" });
+  }
+};
+
+// GET /api/admin/payments
+const getAllPayments = async (req, res) => {
+  try {
+    const payments = await Payment.find()
+      .populate("user", "name email")
+      .populate("order", "service price")
+      .sort({ createdAt: -1 });
+    res.json(payments);
+  } catch (error) {
+    res.status(500).json({ message: "Failed to fetch payments" });
+  }
+};
+
 module.exports = {
   getAllUsers,
   getAllMoves,
   getAdminDashboardStats,
+  getAllProviders,
+  getAllPayments,
 };

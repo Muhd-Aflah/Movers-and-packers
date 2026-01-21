@@ -10,6 +10,7 @@ export function ProviderDashboard() {
   useEffect(() => {
     const fetchCurrentJob = async () => {
       try {
+        // This endpoint needs to be created on the backend
         const data = await providerService.getCurrentJob(); 
         setCurrentJob(data);
       } catch (err) {

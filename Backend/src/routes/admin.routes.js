@@ -8,6 +8,8 @@ const {
   getAllUsers,
   getAllMoves,
   getAdminDashboardStats,
+  getAllProviders,
+  getAllPayments,
 } = require("../controllers/admin.controller");
 
 // ADMIN: health check
@@ -23,5 +25,11 @@ router.get("/users", protect, allowRoles("admin"), getAllUsers);
 
 // ADMIN: get all moves
 router.get("/moves", protect, allowRoles("admin"), getAllMoves);
+
+// ADMIN: get all providers
+router.get("/providers", protect, allowRoles("admin"), getAllProviders);
+
+// ADMIN: get all payments
+router.get("/payments", protect, allowRoles("admin"), getAllPayments);
 
 module.exports = router;

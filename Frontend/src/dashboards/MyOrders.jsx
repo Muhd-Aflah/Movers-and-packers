@@ -1,7 +1,7 @@
 export function MyOrders({ orders }) {
+  // Empty first = realistic
   return (
     <div className="space-y-4">
-      
       {orders?.length === 0 ? (
         <div className="rounded-lg border bg-white p-6 text-gray-600">
           You don’t have any bookings yet.

@@ -22,6 +22,7 @@ function BalanceCard({ title, value, subtitle, icon: Icon }) {
 }
 
 export function BalanceDashboard({ payments }) {
+  // Dummy data (MongoDB-ready)
   const balance = {
     totalPaid: payments.filter(p => p.paymentStatus === "paid").reduce((sum, p) => sum + p.amount, 0),
     pending: payments.filter(p => p.paymentStatus === "created").reduce((sum, p) => sum + p.amount, 0),
