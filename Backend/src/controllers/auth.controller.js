@@ -1,7 +1,6 @@
 const User = require("../models/User.model");
 const jwt = require("jsonwebtoken");
 
-// Generate token
 const generateToken = (id) => {
   return jwt.sign({ id }, process.env.JWT_SECRET, {
     expiresIn: "1d",
@@ -12,6 +11,13 @@ const generateToken = (id) => {
 exports.signup = async (req, res) => {
   try {
     const { name, email, password, role } = req.body;
+
+    const user = await User.create({
+      name,
+      email,
+      password,
+      role: role || "user", 
+    });
 
     const userExists = await User.findOne({ email });
     if (userExists) {
