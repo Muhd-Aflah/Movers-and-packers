@@ -1,47 +1,47 @@
-const mongoose = require('mongoose');
+const mongoose = require("mongoose");
 
-const paymentSchema = new mongoose.Schema({
-    requestId: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'ServiceRequest',
-        required: true,
-        unique: true,
+const paymentSchema = new mongoose.Schema(
+  {
+    user: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      required: true,
     },
-    clientId: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'Client',
-        required: true,
+
+    order: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Order",
+      required: true,
     },
-    providerId: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'Provider',
-        required: true,
-    },
+
     amount: {
-        type: Number,
-        required: true,
+      type: Number,
+      required: true,
     },
-    method: {
-        type: String,
-        enum: ['card', 'cash', 'upi'],
-        required: true,
+
+    gateway: {
+      type: String,
+      enum: ["razorpay", "cash"],
+      default: "razorpay",
     },
+
+    razorpayOrderId: String,
+    razorpayPaymentId: String,
+    razorpaySignature: String,
+
     paymentStatus: {
-        type: String,
-        enum: ['pending', 'completed', 'failed'],
-        default: 'pending',
+      type: String,
+      enum: ["created", "paid", "failed", "refunded"],
+      default: "created",
     },
+
     releaseStatus: {
-        type: String, 
-        default: 'held',
+      type: String,
+      enum: ["held", "released"],
+      default: "held", // escrow-ready
     },
-    transactionId: {
-        type: String,
-    }
-}, {
-    timestamps: true,
-});
+  },
+  { timestamps: true }
+);
 
-const Payment = mongoose.model('Payment', paymentSchema);
-
-module.exports = Payment;
+module.exports = mongoose.model("Payment", paymentSchema);

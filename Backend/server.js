@@ -35,13 +35,12 @@ app.use("/api/service-requests", require("./src/routes/serviceRequest.routes"));
 app.use("/api/payments", paymentRoutes);
 app.use("/api/payments", require("./src/routes/payment.routes"));
 app.use("/api/moves", moveRoutes);
+app.use("/api/dashboard", require("./src/routes/dashboard.routes"));
 
-// Test route
 app.get("/", (req, res) => {
   res.send("Backend running");
 });
 
-// Error handler
 app.use(errorHandler);
 
 const PORT = process.env.PORT || 5000;
