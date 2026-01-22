@@ -1,6 +1,5 @@
 const Move = require("../models/move.model");
 const Payment = require("../models/payment.model");
-
 exports.getUserDashboard = async (req, res) => {
   try {
     const moves = await Move.find({ user: req.user.id })

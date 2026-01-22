@@ -1,7 +1,6 @@
 const User = require("../models/User.model");
 const Move = require("../models/move.model");
-const Payment = require("../models/Payment.model");
-
+const Payment = require("../models/payment.model");
 // GET /api/admin/dashboard/stats
 const getAdminDashboardStats = async (req, res) => {
   try {
