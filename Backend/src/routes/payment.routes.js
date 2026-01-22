@@ -10,10 +10,4 @@ router.post("/verify", protect, paymentController.verifyPayment);
 
 router.get("/my", protect, paymentController.getMyPayments);
 
-router.post(
-  "/webhook",
-  express.raw({ type: "application/json" }),
-  paymentController.webhook
-);
-
 module.exports = router;
