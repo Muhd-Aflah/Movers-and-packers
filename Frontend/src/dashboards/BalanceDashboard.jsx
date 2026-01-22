@@ -21,13 +21,27 @@ function BalanceCard({ title, value, subtitle, icon: Icon }) {
   );
 }
 
-export function BalanceDashboard({ payments }) {
-  // Dummy data (MongoDB-ready)
-  const balance = {
-    totalPaid: payments.filter(p => p.paymentStatus === "paid").reduce((sum, p) => sum + p.amount, 0),
-    pending: payments.filter(p => p.paymentStatus === "created").reduce((sum, p) => sum + p.amount, 0),
-    lastPayment: payments.length > 0 ? payments[0].amount : 0,
-  };
+export function BalanceDashboard({ payments = [] }) {
+  const paidPayments = payments.filter(
+    p => p.paymentStatus === "paid"
+  );
+
+  const pendingPayments = payments.filter(
+    p => p.paymentStatus === "created"
+  );
+
+  const totalPaid = paidPayments.reduce(
+    (sum, p) => sum + p.amount,
+    0
+  );
+
+  const pendingAmount = pendingPayments.reduce(
+    (sum, p) => sum + p.amount,
+    0
+  );
+
+  const lastPaymentAmount =
+    paidPayments.length > 0 ? paidPayments[0].amount : 0;
 
   return (
     <div className="space-y-4">
@@ -38,24 +52,24 @@ export function BalanceDashboard({ payments }) {
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <BalanceCard
           title="Total Paid"
-          value={balance.totalPaid}
+          value={totalPaid}
           subtitle="All completed payments"
           icon={Wallet}
         />
 
         <BalanceCard
           title="Pending Amount"
-          value={balance.pending}
+          value={pendingAmount}
           subtitle={
-            balance.pending === 0 ? "No dues" : "Payment pending"
+            pendingAmount === 0 ? "No dues" : "Payment pending"
           }
           icon={Clock}
         />
 
         <BalanceCard
           title="Last Payment"
-          value={balance.lastPayment}
-          subtitle="Most recent transaction"
+          value={lastPaymentAmount}
+          subtitle="Most recent successful payment"
           icon={ArrowUpRight}
         />
       </div>

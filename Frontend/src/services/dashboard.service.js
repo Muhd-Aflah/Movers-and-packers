@@ -2,6 +2,7 @@ import { apiRequest } from "./api";
 
 export const dashboardService = {
   getUserDashboard: async () => {
-    return apiRequest("/api/dashboard/user");
+    const res = await apiRequest("/api/dashboard/user");
+    return res.data ?? res; 
   },
 };

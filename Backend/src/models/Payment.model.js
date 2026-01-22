@@ -6,17 +6,21 @@ const paymentSchema = new mongoose.Schema(
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
       required: true,
+      index: true,
     },
 
-    order: {
+    move: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: "Order",
+      ref: "Move",
       required: true,
+      index: true,
     },
 
+    // Amount in INR
     amount: {
       type: Number,
       required: true,
+      min: 0,
     },
 
     gateway: {
@@ -25,23 +29,38 @@ const paymentSchema = new mongoose.Schema(
       default: "razorpay",
     },
 
-    razorpayOrderId: String,
-    razorpayPaymentId: String,
-    razorpaySignature: String,
+    razorpayOrderId: {
+      type: String,
+      required: true,
+      index: true,
+    },
+
+    razorpayPaymentId: {
+      type: String,
+      required: true,
+      unique: true,
+      index: true,
+    },
+
+    razorpaySignature: {
+      type: String,
+      required: true,
+    },
 
     paymentStatus: {
       type: String,
       enum: ["created", "paid", "failed", "refunded"],
-      default: "created",
+      default: "paid",
     },
-
     releaseStatus: {
       type: String,
       enum: ["held", "released"],
-      default: "held", // escrow-ready
+      default: "held",
     },
   },
-  { timestamps: true }
+  {
+    timestamps: true,
+  }
 );
 
 module.exports = mongoose.model("Payment", paymentSchema);
