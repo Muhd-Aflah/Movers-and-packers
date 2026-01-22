@@ -22,7 +22,7 @@ exports.createOrder = async (req, res) => {
     });
 
     res.status(200).json({
-      orderId: order.id,
+      order_id: order.id,
       amount: order.amount,
       currency: order.currency,
     });
