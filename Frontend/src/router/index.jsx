@@ -1,7 +1,6 @@
 import {
   createBrowserRouter,
   RouterProvider,
-  Navigate,
 } from "react-router-dom";
 
 import { Layout } from "../components/layout/Layout";
@@ -22,6 +21,7 @@ import { AdminPaymentsPage } from "../pages/admin/AdminPaymentsPage";
 import { AdminProvidersPage } from "../pages/admin/AdminProvidersPage";
 
 // Dashboards
+import { DashboardRedirect } from "./DashboardRedirect";
 import { ProfilePage } from "../pages/ProfilePage";
 import { UserDashboard } from "../dashboards/UserDashboard";
 import { ProviderDashboard } from "../dashboards/ProviderDashboard";
@@ -33,37 +33,25 @@ import { PaymentPage } from "../pages/PaymentPage";
 
 // Auth
 import { ProtectedRoute } from "../components/auth/ProtectedRoute";
-import { getAuthFromStorage } from "../utils/auth";
-import { roleHome } from "../utils/roleRedirect";
 
 const NotFoundPage = () => <div className="p-8">404</div>;
-
-// Smart redirect for /dashboard
-function DashboardRedirect() {
-  const { role } = getAuthFromStorage();
-  return role ? (
-    <Navigate to={roleHome[role]} replace />
-  ) : (
-    <Navigate to="/login" replace />
-  );
-}
 
 export const router = createBrowserRouter([
   {
     path: "/",
     element: <Layout />,
     children: [
+      // Public
       { index: true, element: <HomePage /> },
       { path: "about", element: <AboutPage /> },
       { path: "services", element: <ServicesPage /> },
       { path: "solutions", element: <SolutionsPage /> },
       { path: "contact", element: <ContactPage /> },
       { path: "login", element: <LoginPage /> },
-
-      // SIGNUP ROUTES
       { path: "signup", element: <SignupPage /> },
       { path: "provider/signup", element: <SignupPage /> },
 
+      // User features
       {
         path: "booking",
         element: (
@@ -72,7 +60,6 @@ export const router = createBrowserRouter([
           </ProtectedRoute>
         ),
       },
-
       {
         path: "payment",
         element: (
@@ -81,6 +68,8 @@ export const router = createBrowserRouter([
           </ProtectedRoute>
         ),
       },
+
+      // Shared profile
       {
         path: "profile",
         element: (
@@ -89,13 +78,14 @@ export const router = createBrowserRouter([
           </ProtectedRoute>
         ),
       },
-      // Dashboard redirect
+
+      // Dashboard entry point (ROLE REDIRECT)
       {
         path: "dashboard",
         element: <DashboardRedirect />,
       },
 
-      // Role dashboards
+      // USER DASHBOARD
       {
         path: "dashboard/user",
         element: (
@@ -104,6 +94,8 @@ export const router = createBrowserRouter([
           </ProtectedRoute>
         ),
       },
+
+      // PROVIDER DASHBOARD
       {
         path: "dashboard/provider",
         element: (
@@ -112,10 +104,18 @@ export const router = createBrowserRouter([
           </ProtectedRoute>
         ),
         children: [
-          { path: "available-moves", element: <div>Provider Available Moves (TODO)</div> },
-          { path: "my-jobs", element: <div>Provider My Jobs (TODO)</div> },
+          {
+            path: "available-moves",
+            element: <div>Provider Available Moves (TODO)</div>,
+          },
+          {
+            path: "my-jobs",
+            element: <div>Provider My Jobs (TODO)</div>,
+          },
         ],
       },
+
+      // ADMIN DASHBOARD
       {
         path: "dashboard/admin",
         element: (
