@@ -43,7 +43,7 @@ export function PaymentPage() {
     try {
       const order = await createOrder(bookingData.price);
 
-      if (!order?.id || !order?.amount) {
+      if (!order?.order_id || !order?.amount) {
         throw new Error("Invalid payment order");
       }
 
@@ -54,7 +54,7 @@ export function PaymentPage() {
 
       const rzp = new window.Razorpay({
         key: razorpayKey,
-        order_id: order.order_id, 
+        order_id: order.order_id,
         amount: order.amount,
         currency: "INR",
         name: "SwiftMove",
