@@ -43,8 +43,14 @@ export function PaymentPage() {
     try {
       const order = await createOrder(bookingData.price);
 
-      if (!order?.order_id || !order?.amount) {
-        throw new Error("Invalid payment order");
+      // Handle variations in how the order data might be returned
+      const orderId = order?.order_id || order?.id || order?.razorpay_order_id;
+      const orderAmount = order?.amount;
+
+      if (!orderId || !orderAmount) {
+        throw new Error(
+          `Invalid payment order data received: ${JSON.stringify(order).substring(0, 100)}`
+        );
       }
 
       const razorpayKey = import.meta.env.VITE_RAZORPAY_KEY_ID;
@@ -54,9 +60,9 @@ export function PaymentPage() {
 
       const rzp = new window.Razorpay({
         key: razorpayKey,
-        order_id: order.order_id,
-        amount: order.amount,
-        currency: "INR",
+        order_id: orderId,
+        amount: orderAmount,
+        currency: order?.currency || "INR",
         name: "SwiftMove",
         description: "Move Booking Payment",
 

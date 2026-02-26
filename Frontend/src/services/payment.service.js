@@ -23,14 +23,24 @@ export const createOrder = async (amount, notes = {}) => {
   );
 
   if (!response.ok) {
-    const text = await response.text();
-    console.error("Create Order Error:", text);
-    throw new Error("Invalid payment order");
+    let errorMessage = "Invalid payment order";
+    try {
+      const text = await response.text();
+      try {
+        const errorData = JSON.parse(text);
+        errorMessage = errorData.message || text;
+      } catch (e) {
+        errorMessage = text || errorMessage;
+      }
+    } catch (e) { }
+
+    console.error("Create Order Error:", errorMessage);
+    throw new Error(errorMessage);
   }
 
-  // 🔥 FIX IS HERE
+  // Handle various possible response structures seamlessly
   const data = await response.json();
-  return data; // ✅ NOT data.data
+  return data?.data || data?.order || data;
 };
 
 /**
