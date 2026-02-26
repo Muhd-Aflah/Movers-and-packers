@@ -54,7 +54,7 @@ export function PaymentPage() {
 
       const rzp = new window.Razorpay({
         key: razorpayKey,
-        order_id: order.id,
+        order_id: order.order_id, 
         amount: order.amount,
         currency: "INR",
         name: "SwiftMove",
@@ -88,14 +88,22 @@ export function PaymentPage() {
   return (
     <div className="min-h-screen bg-gray-50 py-12">
       <div className="max-w-xl mx-auto bg-white p-6 rounded-xl shadow">
-        <Link to="/booking" className="text-blue-600">← Back</Link>
+        <Link to="/booking" className="text-blue-600">
+          ← Back
+        </Link>
 
         <h1 className="text-2xl font-bold mt-4 mb-4">Payment</h1>
 
         <div className="space-y-2 text-sm">
-          <p><b>From:</b> {bookingData.origin}</p>
-          <p><b>To:</b> {bookingData.destination}</p>
-          <p><b>Service:</b> {bookingData.service}</p>
+          <p>
+            <b>From:</b> {bookingData.origin}
+          </p>
+          <p>
+            <b>To:</b> {bookingData.destination}
+          </p>
+          <p>
+            <b>Service:</b> {bookingData.service}
+          </p>
           <p className="text-lg font-bold">Amount: ₹{bookingData.price}</p>
         </div>
 
