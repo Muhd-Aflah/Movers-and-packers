@@ -76,7 +76,7 @@ export const SearchBarSection = () => {
         {/* BOTTOM LOGO */}
         <div className="flex justify-center">
           <img
-            src="/logo.png"
+            src="/swiftmove-logo.png"
             alt="SwiftMove"
             className="h-9 w-auto object-contain"
           />

@@ -1,10 +1,11 @@
 import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { login } from "../services/auth.service";
 import { setAuth } from "../utils/auth";
 
 export function LoginPage() {
   const navigate = useNavigate();
+  const location = useLocation();
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -28,8 +29,19 @@ export function LoginPage() {
           user: data.user,
         });
 
+        if (data.user.role === "mover" && data.user.moverApprovalStatus !== "approved") {
+          navigate("/mover/application", { replace: true });
+          return;
+        }
+
         // 🔑 Always go to dashboard
-        navigate("/dashboard");
+        const redirectTo = location.state?.redirectTo;
+        navigate(
+          typeof redirectTo === "string" && redirectTo.startsWith("/") && !redirectTo.startsWith("//")
+            ? redirectTo
+            : "/dashboard",
+          { replace: true },
+        );
       }
     } catch (err) {
       setError(err.message || "Login failed");
@@ -70,7 +82,7 @@ export function LoginPage() {
 
         <p className="text-sm text-center mt-4">
           Don&apos;t have an account?{" "}
-          <Link to="/signup" className="text-indigo-600 font-semibold">
+          <Link to="/signup" state={location.state} className="text-indigo-600 font-semibold">
             Sign Up
           </Link>
         </p>

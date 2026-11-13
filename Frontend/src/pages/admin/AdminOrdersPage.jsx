@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { adminService } from "../../services/admin.service";
+import { formatCurrency } from "../../utils/currency";
 
 export function AdminOrdersPage() {
   const [moves, setMoves] = useState([]);
@@ -38,7 +39,7 @@ export function AdminOrdersPage() {
               <p className="text-sm text-gray-700">Provider: {move.provider?.name || "Unassigned"}</p>
               <p className="text-sm text-gray-700">Service: {move.service}</p>
               <p className="text-sm text-gray-700">Status: {move.status}</p>
-              <p className="text-sm text-gray-700">Price: ₹{move.price?.toLocaleString()}</p>
+              <p className="text-sm text-gray-700">Price: {formatCurrency(move.price, move.pricing?.currency)}</p>
               <p className="text-xs text-gray-500">Move Date: {new Date(move.moveDate)?.toLocaleDateString()}</p>
             </div>
           ))}

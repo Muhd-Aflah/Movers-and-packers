@@ -1,3 +1,5 @@
+import { formatCurrency } from "../utils/currency";
+
 export function MyOrders({ orders }) {
   // Empty first = realistic
   return (
@@ -16,7 +18,7 @@ export function MyOrders({ orders }) {
               <p className="text-md font-semibold">Order ID: {order._id}</p>
               <p className="text-sm text-gray-700">Service: {order.service}</p>
               <p className="text-sm text-gray-700">Status: {order.status}</p>
-              <p className="text-sm text-gray-700">Price: ₹{order.price?.toLocaleString()}</p>
+              <p className="text-sm text-gray-700">Price: {formatCurrency(order.price, order.pricing?.currency)}</p>
               <p className="text-xs text-gray-500">Move Date: {new Date(order.moveDate)?.toLocaleDateString()}</p>
             </div>
           ))}

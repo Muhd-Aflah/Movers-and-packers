@@ -1,126 +1,160 @@
 import { useEffect, useState } from "react";
-import { useNavigate, Link } from "react-router-dom";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
+import { getMove } from "../services/booking.service";
 import { createOrder, verifyPayment } from "../services/payment.service";
+
+const currency = (amount, code) =>
+  new Intl.NumberFormat(undefined, { style: "currency", currency: code }).format(amount);
 
 export function PaymentPage() {
   const navigate = useNavigate();
-  const [bookingData, setBookingData] = useState(null);
+  const [searchParams] = useSearchParams();
+  const moveId = searchParams.get("moveId");
+  const [move, setMove] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [razorpayReady, setRazorpayReady] = useState(Boolean(window.Razorpay));
   const [error, setError] = useState("");
-  const [razorpayReady, setRazorpayReady] = useState(false);
 
   useEffect(() => {
-    const saved = localStorage.getItem("currentBooking");
-    if (!saved) {
-      navigate("/booking");
-      return;
-    }
-    setBookingData(JSON.parse(saved));
-
-    if (window.Razorpay) {
-      setRazorpayReady(true);
-      return;
+    let active = true;
+    if (!moveId) {
+      navigate("/booking", { replace: true });
+      return () => { active = false; };
     }
 
-    const script = document.createElement("script");
-    script.src = "https://checkout.razorpay.com/v1/checkout.js";
-    script.onload = () => {
-      console.log("Razorpay loaded");
-      setRazorpayReady(true);
-    };
-    script.onerror = () => setError("Failed to load payment gateway");
-    document.body.appendChild(script);
-  }, [navigate]);
+    getMove(moveId)
+      .then((data) => {
+        if (!active) return;
+        setMove(data);
+        if (data.pricingStatus !== "priced" || !data.pricing?.currency) {
+          setError("This move does not have a server-calculated price.");
+        }
+      })
+      .catch((requestError) => active && setError(requestError.message || "Could not load this move"));
 
-  if (!bookingData) return null;
+    if (!window.Razorpay) {
+      const existing = document.getElementById("razorpay-checkout");
+      if (existing) {
+        existing.addEventListener("load", () => active && setRazorpayReady(true), { once: true });
+        existing.addEventListener("error", () => active && setError("Payment gateway failed to load"), { once: true });
+      } else {
+        const script = document.createElement("script");
+        script.id = "razorpay-checkout";
+        script.src = "https://checkout.razorpay.com/v1/checkout.js";
+        script.onload = () => active && setRazorpayReady(true);
+        script.onerror = () => active && setError("Payment gateway failed to load");
+        document.body.appendChild(script);
+      }
+    }
+
+    return () => { active = false; };
+  }, [moveId, navigate]);
 
   const handlePayment = async () => {
-    if (!razorpayReady || loading) return;
-
+    if (!move || !razorpayReady || loading || move.paid) return;
     setLoading(true);
     setError("");
 
     try {
-      const order = await createOrder(bookingData.price);
-
-      // Handle variations in how the order data might be returned
-      const orderId = order?.order_id || order?.id || order?.razorpay_order_id;
-      const orderAmount = order?.amount;
-
-      if (!orderId || !orderAmount) {
-        throw new Error(
-          `Invalid payment order data received: ${JSON.stringify(order).substring(0, 100)}`
-        );
+      const order = await createOrder(move._id);
+      const key = import.meta.env.VITE_RAZORPAY_KEY_ID;
+      if (!key || !order.order_id || !Number.isSafeInteger(order.amount) || !order.currency) {
+        throw new Error("Payment order details are incomplete");
       }
 
-      const razorpayKey = import.meta.env.VITE_RAZORPAY_KEY_ID;
-      if (!razorpayKey) {
-        throw new Error("Razorpay key missing");
-      }
-
-      const rzp = new window.Razorpay({
-        key: razorpayKey,
-        order_id: orderId,
-        amount: orderAmount,
-        currency: order?.currency || "INR",
+      const checkout = new window.Razorpay({
+        key,
+        order_id: order.order_id,
+        amount: order.amount,
+        currency: order.currency,
         name: "SwiftMove",
-        description: "Move Booking Payment",
-
+        description: "Move booking payment",
         prefill: {
-          name: bookingData.name || "",
-          email: bookingData.email || "",
-          contact: bookingData.phone || "",
+          name: move.user?.name || "",
+          email: move.user?.email || "",
+          contact: move.user?.phone || "",
         },
-
-        handler: async (res) => {
-          await verifyPayment(res);
-          localStorage.removeItem("currentBooking");
-          navigate("/dashboard");
+        handler: async (result) => {
+          try {
+            await verifyPayment(result);
+            localStorage.removeItem("pendingBooking");
+            navigate("/dashboard", { replace: true });
+          } catch (verificationError) {
+            setError(verificationError.message || "Payment verification failed. Do not retry until payment status is checked.");
+          } finally {
+            setLoading(false);
+          }
         },
-
         modal: {
           ondismiss: () => setLoading(false),
         },
       });
 
-      rzp.open();
-    } catch (err) {
-      console.error(err);
-      setError(err.message || "Payment failed");
+      checkout.on("payment.failed", () => {
+        setError("Payment failed or was not captured. You can try again.");
+        setLoading(false);
+      });
+      checkout.open();
+    } catch (requestError) {
+      setError(requestError.message || "Could not start payment");
       setLoading(false);
     }
   };
 
+  if (!move && !error) return <div className="p-8">Loading move...</div>;
+
+  const breakdown = move?.pricing?.breakdown;
+  const breakdownLabels = {
+    baseBookingCharge: "Base booking charge",
+    distanceCharge: "Road distance charge",
+    serviceCharge: "Service charge",
+    loadingCharge: "Loading",
+    unloadingCharge: "Unloading",
+    minimumAdjustment: "Minimum charge adjustment",
+  };
+
   return (
     <div className="min-h-screen bg-gray-50 py-12">
-      <div className="max-w-xl mx-auto bg-white p-6 rounded-xl shadow">
-        <Link to="/booking" className="text-blue-600">
-          ← Back
-        </Link>
+      <div className="mx-auto max-w-xl rounded-xl bg-white p-6 shadow">
+        <Link to="/booking" className="text-blue-600">← Back to booking</Link>
+        <h1 className="mb-4 mt-4 text-2xl font-bold">Payment</h1>
+        {move && (
+          <>
+            <div className="space-y-2 text-sm">
+              <p><b>From:</b> {move.pickup?.address}</p>
+              <p><b>To:</b> {move.dropoff?.address}</p>
+              <p><b>Service:</b> {move.service}</p>
+              <p><b>Road distance:</b> {move.pricing?.distanceKm?.toLocaleString()} km</p>
+            </div>
+            {breakdown && (
+              <dl className="mt-5 space-y-2 border-t pt-4">
+                <div className="mb-3 text-xs text-gray-600">
+                  Rate: {currency(breakdown.pricePerKilometre, move.pricing.currency)} per km ·
+                  Minimum booking charge: {currency(breakdown.minimumBookingCharge, move.pricing.currency)}
+                </div>
+                {Object.entries(breakdownLabels).map(([field, label]) => (
+                  <div key={field} className="flex justify-between gap-4 text-sm">
+                    <dt>{label}</dt>
+                    <dd>{currency(breakdown[field] || 0, move.pricing.currency)}</dd>
+                  </div>
+                ))}
+                <div className="flex justify-between border-t pt-3 text-lg font-bold">
+                  <dt>Total</dt>
+                  <dd>{currency(move.price, move.pricing.currency)}</dd>
+                </div>
+              </dl>
+            )}
+            {move.paid && <p className="mt-4 text-green-700">This move is already paid.</p>}
+          </>
+        )}
 
-        <h1 className="text-2xl font-bold mt-4 mb-4">Payment</h1>
-
-        <div className="space-y-2 text-sm">
-          <p>
-            <b>From:</b> {bookingData.origin}
-          </p>
-          <p>
-            <b>To:</b> {bookingData.destination}
-          </p>
-          <p>
-            <b>Service:</b> {bookingData.service}
-          </p>
-          <p className="text-lg font-bold">Amount: ₹{bookingData.price}</p>
-        </div>
-
-        {error && <p className="mt-4 text-red-600">{error}</p>}
-
+        {error && <p role="alert" className="mt-4 text-red-600">{error}</p>}
         <button
           onClick={handlePayment}
-          disabled={loading || !razorpayReady}
-          className="w-full mt-6 bg-green-600 text-white py-3 rounded-lg disabled:opacity-50"
+          disabled={loading || !razorpayReady || !move || move.paid || move.pricingStatus !== "priced"}
+          className="mt-6 w-full rounded-lg bg-green-600 py-3 text-white disabled:opacity-50"
         >
-          {loading ? "Processing..." : "Pay Now"}
+          {loading ? "Processing..." : !razorpayReady ? "Loading payment gateway..." : "Pay Now"}
         </button>
       </div>
     </div>

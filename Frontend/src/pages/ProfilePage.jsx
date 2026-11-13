@@ -1,13 +1,13 @@
 import { useEffect, useState } from "react";
 import { getAuthFromStorage } from "../utils/auth";
-
-const API_BASE_URL = import.meta.env.VITE_API_URL;
+import { apiRequest } from "../services/api";
 
 export function ProfilePage() {
   const { token, user, role } = getAuthFromStorage();
   const userId = user?._id;
 
   const [profile, setProfile] = useState({ name: "", email: "", phone: "" });
+  const [savedProfile, setSavedProfile] = useState({ name: "", email: "", phone: "" });
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
@@ -15,22 +15,22 @@ export function ProfilePage() {
   const [isEditing, setIsEditing] = useState(false);
 
   useEffect(() => {
-    if (!token || !userId) return;
+    if (!token || !userId) {
+      setError("Could not identify this account");
+      setLoading(false);
+      return;
+    }
 
     async function fetchProfile() {
       try {
-        const res = await fetch(`${API_BASE_URL}/api/users/${userId}`, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-
-        if (!res.ok) throw new Error();
-        
-        const data = await res.json();
-        setProfile({ 
+        const data = await apiRequest(`/api/users/${userId}`);
+        const loadedProfile = {
           name: data.name || "", 
           email: data.email || "",
           phone: data.phone || ""
-        });
+        };
+        setProfile(loadedProfile);
+        setSavedProfile(loadedProfile);
       } catch {
         setError("Could not load profile");
       } finally {
@@ -52,22 +52,28 @@ export function ProfilePage() {
       setError("");
       setSuccess("");
 
-      const res = await fetch(`${API_BASE_URL}/api/users/${userId}`, {
+      const updatedUser = await apiRequest(`/api/users/${userId}`, {
         method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
         body: JSON.stringify({ 
           name: profile.name,
           phone: profile.phone 
         }),
       });
 
-      if (!res.ok) throw new Error();
+      const nextProfile = {
+        name: updatedUser.name || "",
+        email: updatedUser.email || "",
+        phone: updatedUser.phone || "",
+      };
+      setProfile(nextProfile);
+      setSavedProfile(nextProfile);
+      const storedUser = JSON.parse(localStorage.getItem("user") || "{}");
+      localStorage.setItem("user", JSON.stringify({ ...storedUser, ...updatedUser }));
       setSuccess("Profile saved!");
+      return true;
     } catch {
       setError("Failed to save");
+      return false;
     } finally {
       setSaving(false);
     }
@@ -159,6 +165,7 @@ export function ProfilePage() {
           <>
             <button
               onClick={() => {
+                setProfile(savedProfile);
                 setIsEditing(false);
                 setError("");
                 setSuccess("");
@@ -170,8 +177,7 @@ export function ProfilePage() {
 
             <button
               onClick={async () => {
-                await handleSave();
-                setIsEditing(false);
+                if (await handleSave()) setIsEditing(false);
               }}
               disabled={saving}
               className="text-sm px-4 py-2 rounded-md bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-50"

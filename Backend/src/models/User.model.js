@@ -21,6 +21,24 @@ const userSchema = new mongoose.Schema(
       enum: ["user", "admin", "mover"],
       default: "user",
     },
+    // Optional for customer/admin accounts. New mover signups explicitly start
+    // pending; legacy movers stay fail-closed until the controlled migration.
+    moverApprovalStatus: {
+      type: String,
+      enum: ["pending", "approved", "rejected"],
+    },
+    moverReviewedBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+    },
+    moverReviewedAt: {
+      type: Date,
+    },
+    moverReviewReason: {
+      type: String,
+      trim: true,
+      maxlength: 500,
+    },
     phone: {
       type: String,
       default: "",

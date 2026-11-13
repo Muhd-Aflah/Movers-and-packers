@@ -32,14 +32,11 @@ export const NAVIGATION_ITEMS = [
 export const FOOTER_LINKS = {
   explore: [
     { label: "About Us", href: "/about" },
-    { label: "Our Warehouses", href: "/warehouses" },
-    { label: "Blog", href: "/blog" },
-    { label: "News and Media", href: "/news" },
+    { label: "Services", href: "/services" },
+    { label: "Solutions", href: "/solutions" },
+    { label: "Contact", href: "/contact" },
   ],
-  legal: [
-    { label: "Terms", href: "/terms" },
-    { label: "Privacy", href: "/privacy" },
-  ],
+  legal: [],
 };
 
 export const SERVICES = [

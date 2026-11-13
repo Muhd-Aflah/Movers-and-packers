@@ -29,7 +29,7 @@ export const APP_CONFIG = {
 
   // API Configuration
   api: {
-    baseUrl: import.meta.env.VITE_API_BASE_URL || "https://api.swiftmove.ng",
+    baseUrl: import.meta.env.VITE_API_URL || "",
     timeout: 10000,
   },
 

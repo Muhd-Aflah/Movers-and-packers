@@ -1,5 +1,5 @@
 export const roleHome = {
   user: "/dashboard/user",
-  provider: "/dashboard/provider",
+  mover: "/dashboard/provider",
   admin: "/dashboard/admin",
 };

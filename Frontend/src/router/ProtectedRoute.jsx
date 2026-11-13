@@ -1,6 +1,6 @@
 import { Navigate } from "react-router-dom";
-import { getAuthFromStorage } from "../../utils/auth";
-import { roleHome } from "../../utils/roleRedirect";
+import { getAuthFromStorage } from "../utils/auth";
+import { roleHome } from "../utils/roleRedirect";
 
 export function ProtectedRoute({ children, allowedRoles }) {
   const { token, role } = getAuthFromStorage();
@@ -10,7 +10,7 @@ export function ProtectedRoute({ children, allowedRoles }) {
   }
 
   if (allowedRoles && !allowedRoles.includes(role)) {
-    return <Navigate to={roleHome[role]} replace />;
+    return <Navigate to={roleHome[role] || "/"} replace />;
   }
 
   return children;

@@ -1,6 +1,6 @@
-import { Link } from "react-router-dom";
+import { Link, Outlet } from "react-router-dom";
 import { useEffect, useState } from "react";
-import { providerService } from "../services/provider.service"; // Assuming a provider service exists
+import { providerService } from "../services/provider.service";
 
 export function ProviderDashboard() {
   const [currentJob, setCurrentJob] = useState(null);
@@ -10,7 +10,6 @@ export function ProviderDashboard() {
   useEffect(() => {
     const fetchCurrentJob = async () => {
       try {
-        // This endpoint needs to be created on the backend
         const data = await providerService.getCurrentJob(); 
         setCurrentJob(data);
       } catch (err) {
@@ -46,8 +45,8 @@ export function ProviderDashboard() {
           <div>
             <p className="text-sm text-gray-700">Order ID: {currentJob._id}</p>
             <p className="text-sm text-gray-700">Status: {currentJob.status}</p>
-            <p className="text-sm text-gray-700">Pickup: {currentJob.pickup.address}, {currentJob.pickup.city}</p>
-            <p className="text-sm text-gray-700">Dropoff: {currentJob.dropoff.address}, {currentJob.dropoff.city}</p>
+            <p className="text-sm text-gray-700">Pickup: {currentJob.pickup?.address || "—"}, {currentJob.pickup?.city || ""}</p>
+            <p className="text-sm text-gray-700">Dropoff: {currentJob.dropoff?.address || "—"}, {currentJob.dropoff?.city || ""}</p>
             <p className="text-sm text-gray-700">Move Date: {new Date(currentJob.moveDate).toLocaleDateString()}</p>
             {/* Add more job details as needed */}
           </div>
@@ -63,12 +62,12 @@ export function ProviderDashboard() {
         <ActionCard
           title="Available Moves"
           description="View and accept new jobs"
-          to="/provider/available-moves"
+          to="/dashboard/provider/available-moves"
         />
         <ActionCard
           title="My Jobs"
           description="Track your accepted jobs"
-          to="/provider/my-jobs"
+          to="/dashboard/provider/my-jobs"
         />
       </div>
 
@@ -81,6 +80,7 @@ export function ProviderDashboard() {
           Earnings summary will appear here
         </p>
       </div>
+      <Outlet />
     </div>
   );
 }

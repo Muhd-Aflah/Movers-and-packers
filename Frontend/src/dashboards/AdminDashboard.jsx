@@ -1,6 +1,7 @@
 import { Link, Outlet } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { adminService } from "../services/admin.service";
+import { formatCurrency } from "../utils/currency";
 
 export function AdminDashboard() {
   const [stats, setStats] = useState({
@@ -20,7 +21,9 @@ export function AdminDashboard() {
           totalUsers: data.totalUsers,
           providers: data.totalProviders,
           activeOrders: data.activeMoves,
-          totalPayments: `₹${data.totalRevenue?.toLocaleString()}`,
+          totalPayments: Array.isArray(data.revenueByCurrency) && data.revenueByCurrency.length
+            ? data.revenueByCurrency.map(({ currency, amount }) => formatCurrency(amount, currency)).join(" · ")
+            : "No paid transactions",
         });
       } catch (err) {
         setError(err);
@@ -49,7 +52,7 @@ export function AdminDashboard() {
         <StatCard title="Total Users" value={stats.totalUsers} />
         <StatCard title="Providers" value={stats.providers} />
         <StatCard title="Active Orders" value={stats.activeOrders} />
-        <StatCard title="Total Payments" value={stats.totalPayments} />
+        <StatCard title="Paid Revenue" value={stats.totalPayments} />
       </div>
 
       {/* Actions */}
@@ -61,7 +64,7 @@ export function AdminDashboard() {
         />
         <ActionCard
           title="Manage Providers"
-          description="Approve & manage service providers"
+          description="View mover accounts and contact details"
           to="/dashboard/admin/providers"
         />
         <ActionCard

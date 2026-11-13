@@ -37,11 +37,19 @@ export function getAuthFromStorage() {
     return { token: null, role: null, user: null };
   }
 
-  const user = localStorage.getItem("user");
+  const storedUser = localStorage.getItem("user");
+  let user = null;
+  if (storedUser) {
+    try {
+      user = JSON.parse(storedUser);
+    } catch {
+      localStorage.removeItem("user");
+    }
+  }
 
   return {
     token,
     role: payload.role, // ONLY source of truth
-    user: user ? JSON.parse(user) : null,
+    user,
   };
 }

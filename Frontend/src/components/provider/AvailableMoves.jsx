@@ -1,71 +1,60 @@
 import { useEffect, useState } from "react";
-import { getAuthFromStorage } from "../../utils/auth";
+import { providerService } from "../../services/provider.service";
 
 export function AvailableMoves() {
   const [moves, setMoves] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+  const [acceptingId, setAcceptingId] = useState(null);
 
   useEffect(() => {
-    const fetchMoves = async () => {
-      const { token } = getAuthFromStorage();
-
-      const res = await fetch("/api/moves/available", {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-
-      const data = await res.json();
-      setMoves(data);
-      setLoading(false);
-    };
-
-    fetchMoves();
+    let active = true;
+    providerService
+      .getAvailableMoves()
+      .then((data) => active && setMoves(Array.isArray(data) ? data : []))
+      .catch((err) => active && setError(err.message || "Could not load available moves"))
+      .finally(() => active && setLoading(false));
+    return () => { active = false; };
   }, []);
 
-  if (loading) return <p>Loading available jobs...</p>;
-
-  if (!moves.length) {
-    return <p className="text-gray-500">No available jobs right now.</p>;
+  async function acceptMove(id) {
+    setAcceptingId(id);
+    setError("");
+    try {
+      await providerService.acceptJob(id);
+      setMoves((current) => current.filter((move) => move._id !== id));
+    } catch (err) {
+      setError(err.message || "Could not accept this move");
+    } finally {
+      setAcceptingId(null);
+    }
   }
 
+  if (loading) return <p>Loading available jobs...</p>;
   return (
-    <div className="space-y-4">
+    <section className="space-y-4">
+      <h2 className="text-lg font-semibold">Available Moves</h2>
+      {error && <p role="alert" className="text-sm text-red-600">{error}</p>}
+      {!moves.length && <p className="text-gray-500">No available jobs right now.</p>}
       {moves.map((move) => (
-        <div
-          key={move._id}
-          className="rounded-lg border p-4 flex justify-between items-center"
-        >
+        <article key={move._id} className="flex items-center justify-between gap-4 rounded-lg border bg-white p-4">
           <div>
             <p className="font-medium">
-              {move.pickup.city} → {move.dropoff.city}
+              {move.pickup?.city || move.pickup?.address || "Pickup"} → {move.dropoff?.city || move.dropoff?.address || "Dropoff"}
             </p>
             <p className="text-sm text-gray-500">
-              {new Date(move.moveDate).toDateString()}
+              {move.moveDate ? new Date(move.moveDate).toLocaleDateString() : "Date not set"}
             </p>
           </div>
-
           <button
-            className="rounded-md bg-blue-600 px-4 py-2 text-white text-sm"
+            className="rounded-md bg-blue-600 px-4 py-2 text-sm text-white disabled:opacity-50"
+            disabled={acceptingId !== null}
             onClick={() => acceptMove(move._id)}
           >
-            Accept Job
+            {acceptingId === move._id ? "Accepting..." : "Accept Job"}
           </button>
-        </div>
+        </article>
       ))}
-    </div>
+    </section>
   );
-
-  async function acceptMove(id) {
-    const { token } = getAuthFromStorage();
-
-    await fetch(`/api/moves/${id}/accept`, {
-      method: "PATCH",
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    });
-
-    setMoves((prev) => prev.filter((m) => m._id !== id));
-  }
 }

@@ -1,4 +1,5 @@
 import { CalendarDays, Truck, CreditCard } from "lucide-react";
+import { formatCurrency } from "../utils/currency";
 
 function Card({ title, value, subtitle, icon: Icon }) {
   return (
@@ -15,32 +16,27 @@ function Card({ title, value, subtitle, icon: Icon }) {
   );
 }
 
-export function DashboardCards() {
-  // Dummy user data (MongoDB-ready)
-  const data = {
-    moveDate: "Not scheduled",
-    status: "No active booking",
-    payment: 0,
-  };
-
+export function DashboardCards({ stats = {} }) {
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+    <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
       <Card
-        title="Move Date"
-        value="—"
-        subtitle={data.moveDate}
+        title="Total Moves"
+        value={stats.totalMoves ?? 0}
+        subtitle="All your move requests"
         icon={CalendarDays}
       />
       <Card
-        title="Move Status"
-        value={data.status}
-        subtitle="Create a booking to get started"
+        title="Paid Moves"
+        value={stats.paidMoves ?? 0}
+        subtitle="Moves with completed payment"
         icon={Truck}
       />
       <Card
-        title="Outstanding Payment"
-        value={`₹${data.payment}`}
-        subtitle="No dues"
+        title="Total Spent"
+        value={Array.isArray(stats.totalSpentByCurrency) && stats.totalSpentByCurrency.length
+          ? stats.totalSpentByCurrency.map(({ currency, amount }) => formatCurrency(amount, currency)).join(" · ")
+          : "No paid transactions"}
+        subtitle="Completed payments by currency"
         icon={CreditCard}
       />
     </div>

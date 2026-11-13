@@ -3,7 +3,11 @@ import { getAuthFromStorage } from "../utils/auth";
 import { roleHome } from "../utils/roleRedirect";
 
 export function DashboardRedirect() {
-  const { role } = getAuthFromStorage();
+  const { role, user } = getAuthFromStorage();
+
+  if (role === "mover" && user?.moverApprovalStatus !== "approved") {
+    return <Navigate to="/mover/application" replace />;
+  }
 
   return role && roleHome[role] ? (
     <Navigate to={roleHome[role]} replace />

@@ -19,12 +19,6 @@ export function HomePage() {
         className="hidden lg:block absolute top-[180px] right-[100px] w-[110px] h-[110px] opacity-20 pointer-events-none -z-10"
       />
 
-      <img
-        src="/gemini-generated-image-txpkkltxpkkltxpk-removebg-preview-2.png"
-        alt=""
-        className="hidden lg:block absolute top-0 left-0 w-[350px] h-[165px] opacity-20 pointer-events-none -z-10"
-      />
-
       {/* MAIN CONTENT */}
       <div className="relative z-10 flex flex-col w-full">
         <HeroSection />

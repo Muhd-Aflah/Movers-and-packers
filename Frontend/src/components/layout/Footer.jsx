@@ -44,25 +44,6 @@ export function Footer() {
             </div>
           </div>
 
-          {/* Legal Links */}
-          <div className="flex flex-col items-start gap-5 w-full lg:w-auto">
-            <div className="[font-family:'Lato',Helvetica] font-bold text-[#ffffff] text-base sm:text-lg tracking-[0] leading-[normal]">
-              Legal
-            </div>
-
-            <div className="flex flex-col gap-3">
-              {FOOTER_LINKS.legal.map((link) => (
-                <a
-                  key={link.label}
-                  href={link.href}
-                  className="[font-family:'Lato',Helvetica] font-medium text-[#ffffff] text-sm tracking-[0] leading-[normal] cursor-pointer hover:opacity-80 transition-opacity"
-                >
-                  {link.label}
-                </a>
-              ))}
-            </div>
-          </div>
-
           {/* Social Media */}
           <div className="flex flex-col items-start gap-5 w-full lg:w-auto">
             <div className="[font-family:'Lato',Helvetica] font-bold text-[#ffffff] text-base sm:text-lg tracking-[0] leading-[normal]">

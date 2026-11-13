@@ -1,26 +1,19 @@
 import { useEffect, useState } from "react";
 import { MyMoveCard } from "./MyMoveCard";
-import { getAuthFromStorage } from "../../utils/auth";
+import { apiRequest } from "../../services/api";
 
 export function MyMoves() {
   const [moves, setMoves] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
 
   useEffect(() => {
     const fetchMoves = async () => {
       try {
-        const { token } = getAuthFromStorage();
-
-        const res = await fetch("/api/moves/my", {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        });
-
-        const data = await res.json();
-        setMoves(data);
+        const data = await apiRequest("/api/moves/my");
+        setMoves(Array.isArray(data) ? data : []);
       } catch (err) {
-        console.error("Failed to load moves");
+        setError(err.message || "Failed to load moves");
       } finally {
         setLoading(false);
       }
@@ -32,6 +25,8 @@ export function MyMoves() {
   if (loading) {
     return <p className="text-gray-500">Loading moves...</p>;
   }
+
+  if (error) return <p role="alert" className="text-red-600">{error}</p>;
 
   if (!moves.length) {
     return <p className="text-gray-500">No moves yet.</p>;

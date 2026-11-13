@@ -30,6 +30,7 @@ export function Header({ dark, setDark }) {
       ],
     },
     { label: "Solutions", href: "/solutions" },
+    { label: "Industries", href: "/industries" },
     { label: "Contact", href: "/contact" },
   ];
 

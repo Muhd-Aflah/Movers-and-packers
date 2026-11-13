@@ -79,7 +79,7 @@ export const FooterSection = () => {
 
       <div className="flex flex-col sm:flex-row items-center gap-4 sm:gap-[30px]">
         {/* REQUEST QUOTE */}
-        <Link to="/request-quote" className="w-full sm:w-auto">
+        <Link to="/booking" className="w-full sm:w-auto">
           <Button
             variant="outline"
             className="px-6 sm:px-8 lg:px-[50px] py-3 sm:py-4 lg:py-[25px] h-auto rounded-xl border-[#2c2d5b] hover:bg-transparent w-full"

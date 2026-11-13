@@ -1,10 +1,6 @@
 const express = require("express");
 const router = express.Router();
 
-const { protect } = require("../middleware/auth.middleware");
-const allowRoles = require("../middleware/role.middleware");
-
-
 router.post("/", async (req, res) => {
   try {
     const { name, phone, pickup, drop, moveDate } = req.body;
@@ -13,14 +9,12 @@ router.post("/", async (req, res) => {
       return res.status(400).json({ message: "All fields required" });
     }
 
-    console.log("New Quote:", req.body);
-
     res.status(201).json({
       success: true,
       message: "Quote submitted successfully",
     });
-  } catch (error) {
-    next(error);
+  } catch {
+    res.status(500).json({ message: "Failed to submit quote" });
   }
 });
 

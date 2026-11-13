@@ -1,50 +1,24 @@
-# 🚚 SwiftMove Frontend
+# SwiftMove Frontend
 
-SwiftMove is a modern, responsive logistics and freight management frontend built with **React + Vite **.  
-It includes authentication pages, a price estimator, and a scalable UI architecture ready for backend integration.
+React and Vite frontend for SwiftMove.
 
-## 📌 Project Status: **In Development**
+## Development
 
-> ⚠️ This project is currently under active development.Features are being implemented step by step.
+From this directory, install the dependencies and run `npm run dev`. Create a local
+`.env` file with the backend URL and Razorpay's public checkout key:
 
----
+```text
+VITE_API_URL=http://localhost:5000
+VITE_RAZORPAY_KEY_ID=your_razorpay_key_id
+```
 
+The Geoapify key and all pricing rates belong on the backend. The browser requests
+a quote from `/api/pricing/quote`; the backend resolves the addresses and calculates
+road distance and the price breakdown. Booking creation recalculates the price on
+the backend, and payment orders use that saved amount.
 
-## ✨ Features
+Pricing is intentionally unavailable until the business pricing rules and currency
+are configured on the backend. The frontend does not contain fallback rates or
+estimate prices from address text.
 
-- ⚡ Fast setup with Vite
-- 🎨 Responsive UI using Tailwind CSS
-- 🔐 Authentication pages
-  - Login
-  - Signup
-- 📦 Price Estimator
-  - Origin
-  - Destination
-  - Weight
-- 🧩 Reusable UI components
-- 🧭 Client-side routing with React Router v6
-- 🧱 Scalable folder structure
-- 🚀 Ready for backend API integration
-
----
-
-## 🛠 Tech Stack
-
-- React 18
-- Vite
-- React Router DOM
-- Tailwind CSS
-- 
----
-
-## Install dependencies
-
-    npm install
-
-## Run the development server
-
-## npm run dev
-
-## 👨‍💻 Author
-
-Muhammed Aflah A
+Build the frontend with `npm run build`.

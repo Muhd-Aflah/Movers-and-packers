@@ -20,6 +20,8 @@ export const signup = async (name, email, password, role = "user") => {
   });
 };
 
+export const getCurrentProfile = () => apiRequest("/api/auth/profile");
+
 export const logout = () => {
   localStorage.removeItem("token");
   localStorage.removeItem("user");

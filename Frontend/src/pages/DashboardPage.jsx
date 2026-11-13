@@ -12,7 +12,7 @@ function DashboardContent() {
     case "admin":
       return <AdminDashboard />;
 
-    case "provider":
+    case "mover":
       return <ProviderDashboard />;
 
     case "user":
@@ -27,7 +27,7 @@ export function DashboardPage() {
   const title =
     role === "admin"
       ? "Admin Dashboard"
-      : role === "provider"
+      : role === "mover"
       ? "Provider Dashboard"
       : "Dashboard";
 

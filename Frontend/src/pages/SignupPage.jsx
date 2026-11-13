@@ -8,7 +8,7 @@ export function SignupPage() {
   const location = useLocation();
 
   const role = location.pathname.startsWith("/provider")
-    ? "provider"
+    ? "mover"
     : "user";
 
   const [name, setName] = useState("");
@@ -34,7 +34,18 @@ export function SignupPage() {
           user: data.user,
         });
 
-        navigate(`/dashboard/${data.user.role}`);
+        if (role === "mover") {
+          navigate("/mover/application", { replace: true });
+          return;
+        }
+
+        const redirectTo = location.state?.redirectTo;
+        navigate(
+          typeof redirectTo === "string" && redirectTo.startsWith("/") && !redirectTo.startsWith("//")
+            ? redirectTo
+            : "/dashboard",
+          { replace: true },
+        );
       }
     } catch (err) {
       setError(err.message || "Signup failed");
@@ -45,7 +56,7 @@ export function SignupPage() {
     <div className="flex justify-center items-center min-h-[80vh]">
       <form onSubmit={handleSubmit} className="w-96 p-6 shadow-lg rounded">
         <h2 className="text-2xl font-bold mb-4">
-          {role === "provider" ? "Provider Signup" : "Create Account"}
+          {role === "mover" ? "Mover Signup" : "Create Account"}
         </h2>
 
         {error && <p className="text-red-600 text-sm mb-3">{error}</p>}
@@ -80,7 +91,7 @@ export function SignupPage() {
         {role === "user" && (
           <p className="text-sm text-center mt-4">
             Already have an account?{" "}
-            <Link to="/login" className="text-indigo-600 font-semibold">
+            <Link to="/login" state={location.state} className="text-indigo-600 font-semibold">
               Sign In
             </Link>
           </p>

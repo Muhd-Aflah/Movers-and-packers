@@ -1,4 +1,5 @@
-import { Wallet, ArrowUpRight, Clock } from "lucide-react";
+import { Wallet, ArrowUpRight, CircleCheck } from "lucide-react";
+import { formatCurrency } from "../utils/currency";
 
 function BalanceCard({ title, value, subtitle, icon: Icon }) {
   return (
@@ -6,12 +7,8 @@ function BalanceCard({ title, value, subtitle, icon: Icon }) {
       <div className="flex items-center justify-between">
         <div>
           <p className="text-xs text-gray-500">{title}</p>
-          <p className="text-xl font-semibold text-gray-900">
-            ₹{value.toLocaleString()}
-          </p>
-          {subtitle && (
-            <p className="mt-1 text-xs text-gray-600">{subtitle}</p>
-          )}
+          <p className="text-xl font-semibold text-gray-900">{value}</p>
+          {subtitle && <p className="mt-1 text-xs text-gray-600">{subtitle}</p>}
         </div>
         <div className="rounded-lg bg-gray-100 p-2">
           <Icon className="h-5 w-5 text-gray-700" />
@@ -22,57 +19,55 @@ function BalanceCard({ title, value, subtitle, icon: Icon }) {
 }
 
 export function BalanceDashboard({ payments = [] }) {
-  const paidPayments = payments.filter(
-    p => p.paymentStatus === "paid"
-  );
+  const groups = new Map();
+  for (const payment of payments) {
+    const currency = payment.currency || "UNKNOWN";
+    const group = groups.get(currency) || { paid: 0, paidCount: 0, latestPaid: null };
+    if (payment.paymentStatus === "paid") group.paid += payment.amount || 0;
+    if (payment.paymentStatus === "paid") {
+      group.paidCount += 1;
+      if (!group.latestPaid || new Date(payment.createdAt) > new Date(group.latestPaid.createdAt)) {
+        group.latestPaid = payment;
+      }
+    }
+    groups.set(currency, group);
+  }
 
-  const pendingPayments = payments.filter(
-    p => p.paymentStatus === "created"
-  );
-
-  const totalPaid = paidPayments.reduce(
-    (sum, p) => sum + p.amount,
-    0
-  );
-
-  const pendingAmount = pendingPayments.reduce(
-    (sum, p) => sum + p.amount,
-    0
-  );
-
-  const lastPaymentAmount =
-    paidPayments.length > 0 ? paidPayments[0].amount : 0;
+  if (!groups.size) {
+    return <p className="text-sm text-gray-500">No payment records yet.</p>;
+  }
 
   return (
-    <div className="space-y-4">
-      <h2 className="text-lg font-semibold text-gray-900">
-        Payments Overview
-      </h2>
-
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <BalanceCard
-          title="Total Paid"
-          value={totalPaid}
-          subtitle="All completed payments"
-          icon={Wallet}
-        />
-
-        <BalanceCard
-          title="Pending Amount"
-          value={pendingAmount}
-          subtitle={
-            pendingAmount === 0 ? "No dues" : "Payment pending"
-          }
-          icon={Clock}
-        />
-
-        <BalanceCard
-          title="Last Payment"
-          value={lastPaymentAmount}
-          subtitle="Most recent successful payment"
-          icon={ArrowUpRight}
-        />
-      </div>
+    <div className="space-y-6">
+      {Array.from(groups.entries()).map(([currency, values]) => (
+        <section key={currency}>
+          <h3 className="mb-3 text-sm font-medium text-gray-600">
+            {currency === "UNKNOWN" ? "Currency unavailable" : currency}
+          </h3>
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+            <BalanceCard
+              title="Total Paid"
+              value={formatCurrency(values.paid, currency)}
+              subtitle="Successful payments"
+              icon={Wallet}
+            />
+            <BalanceCard
+              title="Paid Transactions"
+              value={values.paidCount.toLocaleString()}
+              subtitle="Verified payments"
+              icon={CircleCheck}
+            />
+            <BalanceCard
+              title="Most Recent Successful Payment"
+              value={values.latestPaid
+                ? formatCurrency(values.latestPaid.amount, currency)
+                : formatCurrency(0, currency)}
+              subtitle={values.latestPaid ? new Date(values.latestPaid.createdAt).toLocaleDateString() : "No payment"}
+              icon={ArrowUpRight}
+            />
+          </div>
+        </section>
+      ))}
     </div>
   );
 }

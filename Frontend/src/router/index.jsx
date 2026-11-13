@@ -9,7 +9,15 @@ import { Layout } from "../components/layout/Layout";
 import { HomePage } from "../pages/HomePage";
 import { AboutPage } from "../pages/AboutPage";
 import { ServicesPage } from "../pages/ServicesPage";
+import { WarehousingPage } from "../pages/services/WarehousingPage";
+import { FreightPage } from "../pages/services/FreightPage";
+import { PackagingPage } from "../pages/services/PackagingPage";
 import { SolutionsPage } from "../pages/SolutionsPage";
+import { EcommercePage } from "../pages/solutions/EcommercePage";
+import { EnterprisePage } from "../pages/solutions/EnterprisePage";
+import { IndustriesPage } from "../pages/IndustriesPage";
+import { RetailPage } from "../pages/industries/RetailPage";
+import { ManufacturingPage } from "../pages/industries/ManufacturingPage";
 import { ContactPage } from "../pages/ContactPage";
 import { LoginPage } from "../pages/LoginPage";
 import { SignupPage } from "../pages/SignupPage";
@@ -26,10 +34,13 @@ import { ProfilePage } from "../pages/ProfilePage";
 import { UserDashboard } from "../dashboards/UserDashboard";
 import { ProviderDashboard } from "../dashboards/ProviderDashboard";
 import { AdminDashboard } from "../dashboards/AdminDashboard";
+import { AvailableMoves } from "../components/provider/AvailableMoves";
+import { ProviderJobs } from "../components/provider/ProviderJobs";
 
 // Features
 import { BookingPage } from "../pages/BookingPage";
 import { PaymentPage } from "../pages/PaymentPage";
+import { MoverApplicationPage } from "../pages/MoverApplicationPage";
 
 // Auth
 import { ProtectedRoute } from "../components/auth/ProtectedRoute";
@@ -45,21 +56,23 @@ export const router = createBrowserRouter([
       { index: true, element: <HomePage /> },
       { path: "about", element: <AboutPage /> },
       { path: "services", element: <ServicesPage /> },
+      { path: "services/warehousing", element: <WarehousingPage /> },
+      { path: "services/freight", element: <FreightPage /> },
+      { path: "services/packaging", element: <PackagingPage /> },
       { path: "solutions", element: <SolutionsPage /> },
+      { path: "solutions/ecommerce", element: <EcommercePage /> },
+      { path: "solutions/enterprise", element: <EnterprisePage /> },
+      { path: "industries", element: <IndustriesPage /> },
+      { path: "industries/retail", element: <RetailPage /> },
+      { path: "industries/manufacturing", element: <ManufacturingPage /> },
       { path: "contact", element: <ContactPage /> },
       { path: "login", element: <LoginPage /> },
       { path: "signup", element: <SignupPage /> },
       { path: "provider/signup", element: <SignupPage /> },
+      { path: "mover/application", element: <MoverApplicationPage /> },
 
       // User features
-      {
-        path: "booking",
-        element: (
-          <ProtectedRoute allowedRoles={["user"]}>
-            <BookingPage />
-          </ProtectedRoute>
-        ),
-      },
+      { path: "booking", element: <BookingPage /> },
       {
         path: "payment",
         element: (
@@ -73,7 +86,7 @@ export const router = createBrowserRouter([
       {
         path: "profile",
         element: (
-          <ProtectedRoute allowedRoles={["user", "provider", "admin"]}>
+          <ProtectedRoute allowedRoles={["user", "mover", "admin"]}>
             <ProfilePage />
           </ProtectedRoute>
         ),
@@ -99,18 +112,18 @@ export const router = createBrowserRouter([
       {
         path: "dashboard/provider",
         element: (
-          <ProtectedRoute allowedRoles={["provider"]}>
+          <ProtectedRoute allowedRoles={["mover"]} requireApprovedMover>
             <ProviderDashboard />
           </ProtectedRoute>
         ),
         children: [
           {
             path: "available-moves",
-            element: <div>Provider Available Moves (TODO)</div>,
+            element: <AvailableMoves />,
           },
           {
             path: "my-jobs",
-            element: <div>Provider My Jobs (TODO)</div>,
+            element: <ProviderJobs />,
           },
         ],
       },

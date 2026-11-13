@@ -10,6 +10,10 @@ const {
   getAdminDashboardStats,
   getAllProviders,
   getAllPayments,
+  getMoversByApprovalStatus,
+  getMoverApplication,
+  approveMover,
+  rejectMover,
 } = require("../controllers/admin.controller");
 
 // ADMIN: health check
@@ -28,6 +32,11 @@ router.get("/moves", protect, allowRoles("admin"), getAllMoves);
 
 // ADMIN: get all providers
 router.get("/providers", protect, allowRoles("admin"), getAllProviders);
+
+router.get("/movers", protect, allowRoles("admin"), getMoversByApprovalStatus);
+router.get("/movers/:id", protect, allowRoles("admin"), getMoverApplication);
+router.put("/movers/:id/approve", protect, allowRoles("admin"), approveMover);
+router.put("/movers/:id/reject", protect, allowRoles("admin"), rejectMover);
 
 // ADMIN: get all payments
 router.get("/payments", protect, allowRoles("admin"), getAllPayments);

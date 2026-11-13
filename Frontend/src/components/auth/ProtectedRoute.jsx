@@ -1,8 +1,8 @@
 import { Navigate } from "react-router-dom";
 import { getAuthFromStorage } from "../../utils/auth";
 
-export function ProtectedRoute({ children, allowedRoles }) {
-  const { token, role } = getAuthFromStorage();
+export function ProtectedRoute({ children, allowedRoles, requireApprovedMover = false }) {
+  const { token, role, user } = getAuthFromStorage();
 
   if (!token) {
     return <Navigate to="/login" replace />;
@@ -12,6 +12,10 @@ export function ProtectedRoute({ children, allowedRoles }) {
     if (!role || !allowedRoles.includes(role)) {
       return <Navigate to="/" replace />;
     }
+  }
+
+  if (requireApprovedMover && role === "mover" && user?.moverApprovalStatus !== "approved") {
+    return <Navigate to="/mover/application" replace />;
   }
 
   return children;

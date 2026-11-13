@@ -7,12 +7,22 @@ exports.getUserDashboard = async (req, res) => {
 
     const payments = await Payment.find({ user: req.user.id })
       .sort({ createdAt: -1 });
+    const spentByCurrency = payments
+      .filter((payment) => payment.paymentStatus === "paid")
+      .reduce((totals, payment) => {
+        const currency = payment.currency || "UNKNOWN";
+        totals.set(currency, (totals.get(currency) || 0) + payment.amount);
+        return totals;
+      }, new Map());
 
     res.json({
       stats: {
         totalMoves: moves.length,
-        paidMoves: moves.filter(m => m.isPaid).length,
-        totalSpent: payments.reduce((sum, p) => sum + p.amount, 0),
+        paidMoves: moves.filter((move) => move.paid).length,
+        totalSpentByCurrency: [...spentByCurrency.entries()].map(([currency, amount]) => ({
+          currency,
+          amount,
+        })),
       },
       orders: moves,  
       payments,

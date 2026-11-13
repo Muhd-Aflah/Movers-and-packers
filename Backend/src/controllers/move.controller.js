@@ -1,31 +1,54 @@
 const Move = require("../models/move.model");
+const {
+  getBookingPriceQuote,
+  normalizeBookingInput,
+} = require("../services/pricing.service");
 
 // POST /api/moves
 const createMove = async (req, res) => {
   try {
-    const { pickup, dropoff, moveDate, service, price } = req.body;
-
-    // Basic validation
-    if (!pickup || !dropoff || !moveDate || !service || price === undefined) {
-      return res
-        .status(400)
-        .json({ message: "Please enter all required fields" });
+    const { moveDate } = req.body;
+    const parsedMoveDate = new Date(moveDate);
+    if (!moveDate || !Number.isFinite(parsedMoveDate.getTime())) {
+      return res.status(400).json({ message: "Enter a valid move date" });
     }
+
+    const booking = normalizeBookingInput(req.body);
+    const quote = await getBookingPriceQuote(booking);
 
     const newMove = new Move({
       user: req.user.id,
-      pickup,
-      dropoff,
-      moveDate,
-      service,
-      price,
+      pickup: { address: quote.pickupResolved },
+      dropoff: { address: quote.dropoffResolved },
+      moveDate: parsedMoveDate,
+      service: booking.service,
+      weight: booking.weight,
+      loadingRequired: booking.loadingRequired,
+      unloadingRequired: booking.unloadingRequired,
+      price: quote.total,
+      pricingStatus: "priced",
+      pricing: {
+        currency: quote.currency,
+        distanceKm: quote.distanceKm,
+        routeProvider: "geoapify",
+        pickupResolved: quote.pickupResolved,
+        dropoffResolved: quote.dropoffResolved,
+        calculatedAt: new Date(),
+        breakdown: quote.breakdown,
+      },
     });
 
     const savedMove = await newMove.save();
-    res.status(201).json(savedMove);
+    return res.status(201).json(savedMove);
   } catch (error) {
-    console.error("Error creating move:", error);
-    res.status(500).json({ message: "Failed to create move" });
+    if (error.statusCode) {
+      return res.status(error.statusCode).json({
+        code: error.code,
+        message: error.message,
+        ...(error.details ? { details: error.details } : {}),
+      });
+    }
+    return res.status(500).json({ message: "Failed to create move" });
   }
 };
 
@@ -41,45 +64,19 @@ const getMyMoves = async (req, res) => {
   }
 };
 
-const getAvailableMoves = async (req, res) => {
+const getMyMove = async (req, res) => {
   try {
-    const moves = await Move.find({
-      status: "requested",
-      provider: null,
-    }).sort({ createdAt: -1 });
-
-    res.json(moves);
+    const move = await Move.findOne({ _id: req.params.id, user: req.user.id })
+      .populate("user", "name email phone");
+    if (!move) return res.status(404).json({ message: "Move not found" });
+    return res.json(move);
   } catch (error) {
-    res.status(500).json({ message: "Failed to fetch available moves" });
-  }
-};
-
-const acceptMove = async (req, res) => {
-  try {
-    const move = await Move.findById(req.params.id);
-
-    if (!move) {
-      return res.status(404).json({ message: "Move not found" });
-    }
-
-    if (move.status !== "requested" || move.provider) {
-      return res.status(400).json({ message: "This move cannot be accepted" });
-    }
-
-    move.status = "accepted";
-    move.provider = req.user.id;
-
-    await move.save();
-
-    res.json(move);
-  } catch (error) {
-    res.status(500).json({ message: "Failed to accept move" });
+    return res.status(400).json({ message: "Invalid move ID" });
   }
 };
 
 module.exports = {
   createMove,
   getMyMoves,
-  getAvailableMoves,
-  acceptMove,
+  getMyMove,
 };
