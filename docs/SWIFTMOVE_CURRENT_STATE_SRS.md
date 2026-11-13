@@ -98,7 +98,7 @@ Admin accounts cannot be created through the current signup controller; they nee
 
 ### 4.1 Customer module
 
-**Registration and login:** `SignupPage` submits name/email/password and a selected user or mover role. The backend normalizes signup email to lowercase, hashes the password through the model hook, and returns a one-day JWT and public user fields. Login finds email case-insensitively and compares the password hash.
+**Registration and login:** Customer signup sends name/email/password only to `/api/auth/signup`, which creates a `user`; attempts to select `mover` or `admin` are rejected. The `/provider/signup` screen submits a separate `/api/auth/mover-application` request; that operation creates a `mover` with pending approval. The backend normalizes email to lowercase, hashes passwords through the model hook, and returns a one-day JWT and public fields. Login finds email case-insensitively and compares the password hash.
 
 **Profile:** Customer, mover, and admin roles can open the frontend profile route. The API allows reading/updating a user only when the path ID equals the authenticated ID. Only name and phone are updateable through the controller. Email and role are not updated by this endpoint.
 

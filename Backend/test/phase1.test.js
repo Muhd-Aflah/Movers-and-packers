@@ -61,24 +61,19 @@ const makeMove = (id = new mongoose.Types.ObjectId().toString()) => ({
   pricing: { currency: "USD" },
 });
 
-test("signup rejects oversized bcrypt inputs and public admin role is never granted", async (t) => {
+test("signup rejects oversized bcrypt inputs and public admin role is rejected", async (t) => {
   process.env.JWT_SECRET = SECRET;
   const authController = require("../src/controllers/auth.controller");
   const oversized = makeResponse();
   await authController.signup({ body: { name: "Customer", email: "customer@example.com", password: "x".repeat(73), role: "user" } }, oversized);
   assert.equal(oversized.statusCode, 400);
 
-  t.mock.method(User, "findOne", async () => null);
-  t.mock.method(User, "create", async (input) => ({
-    _id: "user-1",
-    name: input.name,
-    email: input.email,
-    role: input.role,
-  }));
+  let createCalled = false;
+  t.mock.method(User, "create", async () => { createCalled = true; });
   const response = makeResponse();
   await authController.signup({ body: { name: "Customer", email: "customer@example.com", password: "ok", role: "admin" } }, response);
-  assert.equal(response.statusCode, 201);
-  assert.equal(response.body.user.role, "user");
+  assert.equal(response.statusCode, 400);
+  assert.equal(createCalled, false);
 });
 
 test("JWT middleware accepts valid HS256 and rejects expired or missing tokens", (t) => {

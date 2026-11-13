@@ -10,6 +10,7 @@ The inventory below is derived from `Backend/server.js`, route modules, and cont
 |---|---|---|---|
 | GET | `/` | Public | inline in `server.js` |
 | POST | `/api/auth/signup` | Public | `auth.controller.signup` |
+| POST | `/api/auth/mover-application` | Public, rate-limited; always creates `role: mover` with pending approval | `auth.controller.moverApplication` |
 | POST | `/api/auth/login` | Public | `auth.controller.login` |
 | GET | `/api/auth/profile` | Valid JWT | `auth.controller.profile` |
 | GET | `/api/users/:id` | Valid JWT; path ID must equal caller ID | `user.controller.getUserById` |
@@ -47,16 +48,20 @@ Unmatched paths return `404 { "message": "Route not found" }`.
 Request:
 
 ```json
-{ "name": "string", "email": "string", "password": "string", "role": "user | mover" }
+{ "name": "string", "email": "string", "password": "string" }
 ```
 
-`role` is optional; values other than `user` or `mover` are silently treated as `user`. `admin` cannot be self-created. New mover accounts start `moverApprovalStatus: "pending"`; customer/admin accounts do not require an approval state. The backend normalizes email to lowercase and hashes the password. The signed token is HS256 with a one-day expiry; startup requires a JWT secret of at least 32 bytes.
+Request `role` may be omitted or set to `user`. Any supplied role other than `user`, including `mover` or `admin`, is rejected with `400`. This public endpoint can only create customer accounts. The backend normalizes email to lowercase and hashes the password. The signed token is HS256 with a one-day expiry; startup requires a JWT secret of at least 32 bytes.
 
 Success `201`:
 
-For a customer: `{ "token": "JWT", "user": { "_id": "ObjectId", "name": "string", "email": "string", "role": "user" } }`. For a mover, the user object also contains `moverApprovalStatus` and (only after rejection) `moverReviewReason`.
+Success `201`: `{ "token": "JWT", "user": { "_id": "ObjectId", "name": "string", "email": "string", "role": "user" } }`.
 
-Invalid/oversized inputs return `400`; duplicate email returns `400`; the process-local per-IP limit returns `429`; other failures return `500 { "message": "Signup failed" }`.
+Invalid/oversized inputs and forbidden role selection return `400`; duplicate email returns `409`; the process-local per-IP limit returns `429`. Unexpected failures return generic `500 { "message": "Signup failed", "requestId": "..." }`; backend logs contain that ID, operation phase, error class and numeric code only.
+
+### `POST /api/auth/mover-application`
+
+Separate application flow. Request fields are `{ "name": "string", "email": "string", "password": "string" }`; no role field is required or trusted. The endpoint creates an account with `role: "mover"` and `moverApprovalStatus: "pending"`, then returns the same token/user shape plus mover status. It uses the same input validation, password hashing, JWT policy and shared signup rate-limit bucket. Duplicate email returns `409`; validation errors `400`; unexpected errors are generic `500` with a correlation ID.
 
 ### `POST /api/auth/login`
 

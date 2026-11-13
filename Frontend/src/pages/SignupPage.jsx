@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
-import { signup } from "../services/auth.service";
+import { signup, submitMoverApplication } from "../services/auth.service";
 import { setAuth } from "../utils/auth";
 
 export function SignupPage() {
@@ -26,7 +26,9 @@ export function SignupPage() {
     }
 
     try {
-      const data = await signup(name, email, password, role);
+      const data = role === "mover"
+        ? await submitMoverApplication(name, email, password)
+        : await signup(name, email, password);
 
       if (data?.token) {
         setAuth({

@@ -1,5 +1,6 @@
 const User = require("../models/User.model");
 const jwt = require("jsonwebtoken");
+const crypto = require("crypto");
 const escapeRegExp = (value) => value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 const MAX_NAME_LENGTH = 120;
 const MAX_EMAIL_LENGTH = 254;
@@ -31,47 +32,81 @@ const generateToken = (id, role) => {
   });
 };
 
-exports.signup = async (req, res) => {
-  try {
-    const { name, email, password, role } = req.body || {};
-    if (
-      typeof name !== "string" || !name.trim() ||
-      name.trim().length > MAX_NAME_LENGTH ||
-      typeof email !== "string" || !email.trim() || !validEmail(email.trim()) ||
-      typeof password !== "string" || !password ||
-      Buffer.byteLength(password, "utf8") > MAX_BCRYPT_PASSWORD_BYTES
-    ) {
-      return res.status(400).json({ message: "Enter a valid name, email, and password no longer than 72 UTF-8 bytes" });
-    }
+const validateRegistration = (body) => {
+  const { name, email, password } = body || {};
+  if (
+    typeof name !== "string" || !name.trim() ||
+    name.trim().length > MAX_NAME_LENGTH ||
+    typeof email !== "string" || !email.trim() || !validEmail(email.trim()) ||
+    typeof password !== "string" || !password ||
+    Buffer.byteLength(password, "utf8") > MAX_BCRYPT_PASSWORD_BYTES
+  ) {
+    return { error: "Enter a valid name, email, and password no longer than 72 UTF-8 bytes" };
+  }
+  return {
+    name: name.trim(),
+    email: email.trim().toLowerCase(),
+    password,
+  };
+};
 
-    const normalizedEmail = email.trim().toLowerCase();
+const createAccount = async (req, res, role) => {
+  const requestId = crypto.randomUUID();
+  let phase = "validate-input";
+  try {
+    const registration = validateRegistration(req.body);
+    if (registration.error) return res.status(400).json({ message: registration.error });
+
+    phase = "check-duplicate-email";
     const existingUser = await User.findOne({
-      email: { $regex: `^${escapeRegExp(normalizedEmail)}$`, $options: "i" },
+      email: { $regex: `^${escapeRegExp(registration.email)}$`, $options: "i" },
     });
     if (existingUser) {
-      return res.status(400).json({ message: "User already exists" });
+      return res.status(409).json({ message: "An account with this email already exists" });
     }
 
-    // "mover" is the persisted provider role used by the User schema.
-    // Admin accounts must be provisioned out of band, never through signup.
-    const allowedRoles = ["user", "mover"];
-    const safeRole = allowedRoles.includes(role) ? role : "user";
-
+    phase = "create-account";
     const user = await User.create({
-      name: name.trim(),
-      email: normalizedEmail,
-      password,
-      role: safeRole,
-      ...(safeRole === "mover" ? { moverApprovalStatus: "pending" } : {}),
+      ...registration,
+      role,
+      ...(role === "mover" ? { moverApprovalStatus: "pending" } : {}),
     });
 
-    res.status(201).json({
-      token: generateToken(user._id, user.role),
-      user: publicUser(user),
-    });
+    phase = "issue-token";
+    const token = generateToken(user._id, user.role);
+    return res.status(201).json({ token, user: publicUser(user) });
   } catch (error) {
-    res.status(500).json({ message: "Signup failed" });
+    if (error?.code === 11000) {
+      return res.status(409).json({ message: "An account with this email already exists" });
+    }
+    if (error?.name === "ValidationError") {
+      return res.status(400).json({ message: "Account details failed validation" });
+    }
+
+    // Log only a correlation ID, operation phase, error type and numeric code.
+    // Never log request bodies, email, password, token, URI, or raw error text.
+    console.error("Signup operation failed", {
+      requestId,
+      phase,
+      errorName: typeof error?.name === "string" ? error.name : "Error",
+      errorCode: Number.isInteger(error?.code) ? error.code : undefined,
+    });
+    return res.status(500).json({ message: "Signup failed", requestId });
   }
+};
+
+exports.signup = async (req, res) => {
+  const requestedRole = req.body?.role;
+  if (requestedRole !== undefined && requestedRole !== "user") {
+    return res.status(400).json({
+      message: "Public signup only creates customer accounts. Use the mover application form to apply as a mover.",
+    });
+  }
+  return createAccount(req, res, "user");
+};
+
+exports.moverApplication = async (req, res) => {
+  return createAccount(req, res, "mover");
 };
 
 exports.login = async (req, res) => {

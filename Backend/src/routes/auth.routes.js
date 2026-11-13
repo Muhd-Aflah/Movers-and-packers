@@ -18,6 +18,7 @@ const loginRateLimit = createRateLimiter({
 
 // Public routes
 router.post("/signup", signupRateLimit, authController.signup);
+router.post("/mover-application", signupRateLimit, authController.moverApplication);
 router.post("/login", loginRateLimit, authController.login);
 
 // Protected route

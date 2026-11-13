@@ -27,7 +27,7 @@ const query = (value) => {
   return result;
 };
 
-test("signup creates pending movers and leaves customer approval state unset", async (t) => {
+test("mover application creates pending movers; ordinary signup leaves customer approval unset", async (t) => {
   process.env.JWT_SECRET = SECRET;
   const created = [];
   t.mock.method(User, "findOne", async () => null);
@@ -37,17 +37,24 @@ test("signup creates pending movers and leaves customer approval state unset", a
   });
 
   const moverResponse = response();
-  await authController.signup({ body: { name: "Mover", email: "mover@example.com", password: "safe", role: "mover" } }, moverResponse);
+  await authController.moverApplication({ body: { name: "Mover", email: "mover@example.com", password: "safe", role: "admin" } }, moverResponse);
   assert.equal(moverResponse.statusCode, 201);
   assert.equal(moverResponse.body.user.role, "mover");
   assert.equal(moverResponse.body.user.moverApprovalStatus, "pending");
   assert.equal(created[0].moverApprovalStatus, "pending");
 
   const customerResponse = response();
-  await authController.signup({ body: { name: "Customer", email: "customer@example.com", password: "safe", role: "user" } }, customerResponse);
+  await authController.signup({ body: { name: "Customer", email: "customer@example.com", password: "safe" } }, customerResponse);
   assert.equal(customerResponse.statusCode, 201);
   assert.equal(customerResponse.body.user.role, "user");
   assert.equal(Object.hasOwn(created[1], "moverApprovalStatus"), false);
+
+  for (const role of ["mover", "admin"]) {
+    const rejected = response();
+    await authController.signup({ body: { name: "Escalation", email: `${role}@example.com`, password: "safe", role } }, rejected);
+    assert.equal(rejected.statusCode, 400);
+  }
+  assert.equal(created.length, 2);
 });
 
 test("approved mover middleware reads current database status and blocks stale JWTs", async (t) => {

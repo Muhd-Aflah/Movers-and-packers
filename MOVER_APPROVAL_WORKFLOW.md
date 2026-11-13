@@ -2,7 +2,7 @@
 
 ## Account lifecycle
 
-1. An applicant registers through the existing mover signup path. The account remains `role: "mover"` and receives `moverApprovalStatus: "pending"`.
+1. An applicant submits the separate `/provider/signup` form, which calls `POST /api/auth/mover-application`. The account is created as `role: "mover"` with `moverApprovalStatus: "pending"`. Generic `POST /api/auth/signup` creates customers only and rejects attempts to choose a mover/admin role.
 2. The applicant can log in, but is sent to the application status page. That page refreshes the user profile from the API and shows the current pending/rejected state and rejection reason when applicable.
 3. Admins open **Dashboard → Manage Providers** and review the pending list. The available profile data is the current User profile (name, email, phone, creation date); the existing product does not collect identity/license documents in this phase.
 4. An admin explicitly approves or rejects a pending mover. Rejection requires a reason. Backend records the admin User ID and decision time.

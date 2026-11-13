@@ -64,7 +64,8 @@ All protected endpoints require `Authorization: Bearer <token>`.
 
 | Method | Path | Access |
 | --- | --- | --- |
-| `POST` | `/api/auth/signup` | Public; creates user or mover account |
+| `POST` | `/api/auth/signup` | Public; creates a customer (`user`) account only |
+| `POST` | `/api/auth/mover-application` | Public; creates a pending mover account through the separate application flow |
 | `POST` | `/api/auth/login` | Public |
 | `GET` | `/api/auth/profile` | Authenticated |
 | `GET`, `PUT` | `/api/users/:id` | Authenticated; own profile only |

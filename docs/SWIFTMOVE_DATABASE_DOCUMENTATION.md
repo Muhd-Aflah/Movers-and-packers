@@ -11,7 +11,7 @@ MongoDB is accessed through Mongoose. Fields below reflect declared schemas, not
 | `name` | String | Required | |
 | `email` | String | Required, unique index | Signup lowercases; schema does not specify lowercase/trim |
 | `password` | String | Required | Hashed by pre-save hook using bcryptjs (10 salt rounds); excluded from admin/profile query responses |
-| `role` | String | Enum `user`, `admin`, `mover`; default `user` | Signup only permits `user` or `mover`; admin provisioning is outside signup |
+| `role` | String | Enum `user`, `admin`, `mover`; default `user` | Generic signup creates `user` only; the separate mover application endpoint creates `mover`; admin provisioning is outside public signup |
 | `moverApprovalStatus` | String | Optional enum `pending`, `approved`, `rejected`; no schema default | New mover signup explicitly writes `pending`; omitted for customers/admins. Missing legacy value is treated as pending by authorization and admin review. |
 | `moverReviewedBy` | ObjectId | Optional | Ref `User`; admin who made the decision |
 | `moverReviewedAt` | Date | Optional | Decision timestamp |
