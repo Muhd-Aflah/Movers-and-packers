@@ -14,10 +14,11 @@ const app = express();
 app.use(
   cors({
     origin: [
-      "https://swiftmove-movers-and-packers.vercel.app",
-      "http://localhost:5173",
-      "https://movers-and-packers-fppm.onrender.com",
-    ],
+  "https://swiftmove-movers-and-packers.vercel.app",
+  "https://swiftmove-staging.vercel.app",
+  "http://localhost:5173",
+  "https://movers-and-packers-fppm.onrender.com",
+],
     credentials: true,
     methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
     allowedHeaders: ["Content-Type", "Authorization"],
