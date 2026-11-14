@@ -1,4 +1,5 @@
 import { Link } from "react-router-dom";
+import { PublicContactDetails } from "../../components/PublicContactDetails";
 
 export function ManufacturingPage() {
   return (
@@ -83,21 +84,17 @@ export function ManufacturingPage() {
           <h2 className="text-2xl font-semibold text-gray-900 mb-6">Manufacturing Solutions</h2>
           <p className="text-gray-600 mb-6">Optimize your manufacturing supply chain with our industry-specific logistics expertise and technology.</p>
           <div className="flex flex-col sm:flex-row gap-4">
-            <button className="flex-1 bg-gray-600 text-white py-3 px-6 rounded-lg hover:bg-gray-700">
-              Get Manufacturing Solution
-            </button>
-            <button className="flex-1 bg-gray-100 text-gray-900 py-3 px-6 rounded-lg hover:bg-gray-200">
-              Request Assessment
-            </button>
+            <Link to="/booking" className="flex-1 rounded-lg bg-gray-600 px-6 py-3 text-center text-white hover:bg-gray-700">
+              Start a Move Quote
+            </Link>
+            <p className="flex-1 rounded-lg bg-gray-100 px-6 py-3 text-sm text-gray-700" role="note">
+              Manufacturing assessments are not available online yet.
+            </p>
           </div>
           
           <div className="mt-6 pt-6 border-t">
             <h3 className="font-semibold text-gray-900 mb-3">Manufacturing Experts</h3>
-            <div className="space-y-2 text-sm text-gray-600">
-              <p>📞 1-800-MANUFACTURE</p>
-              <p>✉️ swiftmove@online.com</p>
-              <p>🕐 24/7 Production Support</p>
-            </div>
+            <PublicContactDetails className="text-sm text-gray-600" />
           </div>
         </div>
       </div>

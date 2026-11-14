@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { QuoteModal } from "./QuoteModal";
 
@@ -6,6 +6,7 @@ export const HeroSection = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const [isQuoteOpen, setIsQuoteOpen] = useState(false);
+  const quoteTriggerRef = useRef(null);
 
   useEffect(() => {
     setIsQuoteOpen(false);
@@ -36,8 +37,13 @@ export const HeroSection = () => {
 
               <div className="flex gap-4">
                 <button
+                  ref={quoteTriggerRef}
+                  type="button"
                   onClick={() => setIsQuoteOpen(true)}
                   className="px-6 py-3 rounded-lg bg-blue-600 text-white font-semibold hover:bg-blue-700"
+                  aria-haspopup="dialog"
+                  aria-expanded={isQuoteOpen}
+                  aria-controls="public-quote-dialog"
                 >
                   Get a Free Quote
                 </button>
@@ -70,6 +76,7 @@ export const HeroSection = () => {
       <QuoteModal
         isOpen={isQuoteOpen}
         onClose={() => setIsQuoteOpen(false)}
+        returnFocusRef={quoteTriggerRef}
       />
     </>
   );

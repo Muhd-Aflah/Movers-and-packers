@@ -1,4 +1,5 @@
 import { Link } from "react-router-dom";
+import { PublicContactDetails } from "../../components/PublicContactDetails";
 
 export function EcommercePage() {
   return (
@@ -83,21 +84,17 @@ export function EcommercePage() {
           <h2 className="text-2xl font-semibold text-gray-900 mb-6">Start Selling</h2>
           <p className="text-gray-600 mb-6">Ready to scale your e-commerce operations? Let us handle the logistics while you focus on growth.</p>
           <div className="flex flex-col sm:flex-row gap-4">
-            <button className="flex-1 bg-blue-600 text-white py-3 px-6 rounded-lg hover:bg-blue-700">
-              Get Started
-            </button>
-            <button className="flex-1 bg-gray-100 text-gray-900 py-3 px-6 rounded-lg hover:bg-gray-200">
-              View Pricing
-            </button>
+            <Link to="/booking" className="flex-1 rounded-lg bg-blue-600 px-6 py-3 text-center text-white hover:bg-blue-700">
+              Start a Move Quote
+            </Link>
+            <Link to="/booking" className="flex-1 rounded-lg bg-gray-100 px-6 py-3 text-center text-gray-900 hover:bg-gray-200">
+              View Move Pricing
+            </Link>
           </div>
           
           <div className="mt-6 pt-6 border-t">
             <h3 className="font-semibold text-gray-900 mb-3">E-commerce Support</h3>
-            <div className="space-y-2 text-sm text-gray-600">
-              <p>📞 +91 9656225566</p>
-              <p>✉️ swiftmove@online.com</p>
-              <p>🕐 24/7 Support</p>
-            </div>
+            <PublicContactDetails className="text-sm text-gray-600" />
           </div>
         </div>
       </div>

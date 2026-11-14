@@ -6,11 +6,11 @@ const allowRoles = require("../middleware/role.middleware");
 const paymentController = require("../controllers/payment.controller");
 
 router.post("/webhook", paymentController.handleWebhook);
-router.post("/create-order", protect, paymentController.createOrder);
+router.post("/create-order", protect, allowRoles("user"), paymentController.createOrder);
 
-router.post("/verify", protect, paymentController.verifyPayment);
+router.post("/verify", protect, allowRoles("user"), paymentController.verifyPayment);
 
-router.get("/my", protect, paymentController.getMyPayments);
+router.get("/my", protect, allowRoles("user"), paymentController.getMyPayments);
 router.get("/:paymentId/receipt", protect, allowRoles("user"), paymentController.getPaymentReceipt);
 
 module.exports = router;

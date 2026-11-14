@@ -238,7 +238,7 @@ export function SolutionsPage() {
                 to="/contact"
                 className="inline-flex items-center justify-center bg-transparent border-2 border-white text-white font-semibold px-8 py-3 rounded-lg hover:bg-white/10 transition-colors"
               >
-                Request Demo
+                Contact us about a demo
               </Link>
             </div>
           </div>

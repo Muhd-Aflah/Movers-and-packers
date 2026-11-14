@@ -105,14 +105,9 @@ export function WarehousingPage() {
           </div>
 
           {/* Contact Info */}
-          <div className="mt-6 pt-6 border-t">
-            <h3 className="font-semibold text-gray-900 mb-3">
-              Contact Information
-            </h3>
-
-            <p className="text-sm text-gray-600">📞 1-800-WAREHOUSE</p>
-            <p className="text-sm text-gray-600">✉️  swiftmove@online.com</p>
-            <p className="text-sm text-gray-600">🕐 Mon–Fri, 9AM–6PM</p>
+          <div className="mt-6 border-t pt-6">
+            <h3 className="mb-3 font-semibold text-gray-900">Contact Information</h3>
+            <PublicContactDetails className="text-sm text-gray-600" />
           </div>
         </div>
 

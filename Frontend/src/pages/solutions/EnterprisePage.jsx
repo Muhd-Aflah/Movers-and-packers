@@ -1,4 +1,5 @@
 import { Link } from "react-router-dom";
+import { PublicContactDetails } from "../../components/PublicContactDetails";
 
 export function EnterprisePage() {
   return (
@@ -83,21 +84,17 @@ export function EnterprisePage() {
           <h2 className="text-2xl font-semibold text-gray-900 mb-6">Enterprise Sales</h2>
           <p className="text-gray-600 mb-6">Connect with our enterprise solutions team to discuss your large-scale logistics requirements.</p>
           <div className="flex flex-col sm:flex-row gap-4">
-            <button className="flex-1 bg-indigo-600 text-white py-3 px-6 rounded-lg hover:bg-indigo-700">
+            <Link to="/contact" className="flex-1 rounded-lg bg-indigo-600 px-6 py-3 text-center text-white hover:bg-indigo-700">
               Contact Sales
-            </button>
-            <button className="flex-1 bg-gray-100 text-gray-900 py-3 px-6 rounded-lg hover:bg-gray-200">
-              Schedule Demo
-            </button>
+            </Link>
+            <p className="flex-1 rounded-lg bg-gray-100 px-6 py-3 text-sm text-gray-700" role="note">
+              Demo scheduling is not available online. <Link to="/contact" className="font-semibold underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-600">Contact us to discuss a demo.</Link>
+            </p>
           </div>
           
           <div className="mt-6 pt-6 border-t">
             <h3 className="font-semibold text-gray-900 mb-3">Enterprise Team</h3>
-            <div className="space-y-2 text-sm text-gray-600">
-              <p>📞 9656225566</p>
-              <p>✉️ swiftmove@online.com</p>
-              <p>🕐 Dedicated Account Manager</p>
-            </div>
+            <PublicContactDetails className="text-sm text-gray-600" />
           </div>
         </div>
       </div>

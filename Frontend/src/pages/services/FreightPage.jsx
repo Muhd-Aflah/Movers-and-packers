@@ -1,4 +1,5 @@
 import { Link } from "react-router-dom";
+import { PublicContactDetails } from "../../components/PublicContactDetails";
 
 export function FreightPage() {
   return (
@@ -83,21 +84,17 @@ export function FreightPage() {
           <h2 className="text-2xl font-semibold text-gray-900 mb-6">Get a Quote</h2>
           <p className="text-gray-600 mb-6">Compare rates from multiple carriers and find best shipping solution for your needs.</p>
           <div className="flex flex-col sm:flex-row gap-4">
-            <button className="flex-1 bg-green-600 text-white py-3 px-6 rounded-lg hover:bg-green-700">
-              Get Freight Quote
-            </button>
-            <button className="flex-1 bg-gray-100 text-gray-900 py-3 px-6 rounded-lg hover:bg-gray-200">
-              Track Shipment
-            </button>
+            <Link to="/booking" className="flex-1 rounded-lg bg-green-600 px-6 py-3 text-center text-white hover:bg-green-700">
+              Start a Move Quote
+            </Link>
+            <p className="flex-1 rounded-lg bg-gray-100 px-6 py-3 text-sm text-gray-700" role="note">
+              <Link to="/dashboard/user" className="font-semibold underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600">Sign in to view your move tracking.</Link>
+            </p>
           </div>
           
           <div className="mt-6 pt-6 border-t">
             <h3 className="font-semibold text-gray-900 mb-3">Freight Hotline</h3>
-            <div className="space-y-2 text-sm text-gray-600">
-              <p>📞 1-800-FREIGHT</p>
-              <p>✉️ swiftmove@online.com</p>
-              <p>🕐 24/7 Support</p>
-            </div>
+            <PublicContactDetails className="text-sm text-gray-600" />
           </div>
         </div>
       </div>

@@ -1,4 +1,5 @@
 import { Link } from "react-router-dom";
+import { PublicContactDetails } from "../../components/PublicContactDetails";
 
 export function PackagingPage() {
   return (
@@ -83,21 +84,17 @@ export function PackagingPage() {
           <h2 className="text-2xl font-semibold text-gray-900 mb-6">Consultation</h2>
           <p className="text-gray-600 mb-6">Get expert advice on best packaging solutions for your specific products and requirements.</p>
           <div className="flex flex-col sm:flex-row gap-4">
-            <button className="flex-1 bg-purple-600 text-white py-3 px-6 rounded-lg hover:bg-purple-700">
-              Schedule Consultation
-            </button>
-            <button className="flex-1 bg-gray-100 text-gray-900 py-3 px-6 rounded-lg hover:bg-gray-200">
-              Request Samples
-            </button>
+            <Link to="/booking" className="flex-1 rounded-lg bg-purple-600 px-6 py-3 text-center text-white hover:bg-purple-700">
+              Start a Move Booking
+            </Link>
+            <p className="flex-1 rounded-lg bg-gray-100 px-6 py-3 text-sm text-gray-700" role="note">
+              Consultations and sample requests are not available online yet.
+            </p>
           </div>
           
           <div className="mt-6 pt-6 border-t">
             <h3 className="font-semibold text-gray-900 mb-3">Packaging Experts</h3>
-            <div className="space-y-2 text-sm text-gray-600">
-              <p>📞 1-800-PACKAGING</p>
-              <p>✉️ swiftmove@online.com</p>
-              <p>🕐 Mon-Fri: 8AM-7PM EST</p>
-            </div>
+            <PublicContactDetails className="text-sm text-gray-600" />
           </div>
         </div>
       </div>

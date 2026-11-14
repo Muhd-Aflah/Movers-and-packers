@@ -1,13 +1,11 @@
 import { useState, useEffect } from "react";
-import { Button } from "../components/ui/button";
+import { Link } from "react-router-dom";
 import { Card, CardContent } from "../components/ui/card";
+import { PublicContactDetails } from "../components/PublicContactDetails";
 import { LOCATION_DATA } from "../constants";
 import { 
   MapPin, 
-  Phone, 
-  Mail, 
   Clock, 
-  ChevronRight,
   Globe,
   Users,
   TrendingUp,
@@ -242,33 +240,21 @@ export function ContactPage() {
               </p>
               
               <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                <Button
-                  size="lg"
-                  variant="secondary"
-                  className="bg-white text-blue-600 hover:bg-blue-50 px-8 py-6 text-lg rounded-xl font-semibold group"
+                <Link
+                  to="/booking"
+                  className="inline-flex items-center justify-center rounded-xl bg-white px-8 py-6 text-lg font-semibold text-blue-600 hover:bg-blue-50 group"
                 >
                   <span className="flex items-center gap-2">
-                    Request Quote
+                    Start a Move Quote
                     <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
                   </span>
-                </Button>
-                <Button
-                  size="lg"
-                  className="bg-transparent border-2 border-white text-white hover:bg-white/10 px-8 py-6 text-lg rounded-xl font-semibold group"
-                >
-                  <span className="flex items-center gap-2">
-                    Join Now
-                    <ChevronRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
-                  </span>
-                </Button>
+                </Link>
+                <p className="flex items-center justify-center rounded-xl border-2 border-white/70 px-8 py-6 text-sm text-white" role="note">
+                  Online partner enrollment is not available yet.
+                </p>
               </div>
               
-              <p className="text-blue-200 text-sm mt-8">
-                <Phone className="inline w-4 h-4 mr-2" />
-                Call us: +91 9656225566 • 
-                <Mail className="inline w-4 h-4 mx-2" />
-                Email:  swiftmove@online.com
-              </p>
+              <PublicContactDetails className="mt-8 text-left text-sm text-blue-200" />
             </div>
           </div>
         </section>
