@@ -1,13 +1,28 @@
-import { createContext, useContext, useReducer } from "react";
+import { createContext, useContext, useEffect, useReducer } from "react";
 
-// Initial state
-const initialState = {
-  user: null,
-  isLoading: false,
-  error: null,
-  theme: "light",
-  language: "en",
-  notifications: [],
+const getInitialTheme = () => {
+  if (typeof window === "undefined") return "light";
+  try {
+    return window.localStorage.getItem("swiftmove-theme") === "dark" ? "dark" : "light";
+  } catch {
+    return "light";
+  }
+};
+
+const createInitialState = () => {
+  const theme = getInitialTheme();
+  if (typeof document !== "undefined") {
+    document.documentElement.classList.toggle("dark", theme === "dark");
+    document.documentElement.style.colorScheme = theme;
+  }
+  return {
+    user: null,
+    isLoading: false,
+    error: null,
+    theme,
+    language: "en",
+    notifications: [],
+  };
 };
 
 // Action types
@@ -94,7 +109,18 @@ const AppContext = createContext();
 
 // Provider component
 export function AppProvider({ children }) {
-  const [state, dispatch] = useReducer(appReducer, initialState);
+  const [state, dispatch] = useReducer(appReducer, undefined, createInitialState);
+
+  useEffect(() => {
+    const isDark = state.theme === "dark";
+    document.documentElement.classList.toggle("dark", isDark);
+    document.documentElement.style.colorScheme = isDark ? "dark" : "light";
+    try {
+      window.localStorage.setItem("swiftmove-theme", state.theme);
+    } catch {
+      // Keep the current session usable when browser storage is unavailable.
+    }
+  }, [state.theme]);
 
   // Action creators
   const actions = {
@@ -119,7 +145,7 @@ export function AppProvider({ children }) {
     },
 
     setTheme: (theme) => {
-      dispatch({ type: actionTypes.SET_THEME, payload: theme });
+      dispatch({ type: actionTypes.SET_THEME, payload: theme === "dark" ? "dark" : "light" });
     },
 
     setLanguage: (language) => {

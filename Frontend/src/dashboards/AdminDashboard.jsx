@@ -73,9 +73,19 @@ export function AdminDashboard() {
           to="/dashboard/admin/orders"
         />
         <ActionCard
+          title="Packing Estimates"
+          description="Review and price full-service moves"
+          to="/dashboard/admin/packing-estimates"
+        />
+        <ActionCard
           title="Payments"
           description="All payment transactions"
           to="/dashboard/admin/payments"
+        />
+        <ActionCard
+          title="Payment Reconciliation"
+          description="Review captured payments and unresolved order intents"
+          to="/dashboard/admin/payment-reconciliation"
         />
       </div>
 

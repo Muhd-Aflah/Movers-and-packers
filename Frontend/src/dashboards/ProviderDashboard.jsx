@@ -1,6 +1,7 @@
 import { Link, Outlet } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { providerService } from "../services/provider.service";
+import { formatMoveDate } from "../utils/moveDate";
 
 export function ProviderDashboard() {
   const [currentJob, setCurrentJob] = useState(null);
@@ -47,7 +48,7 @@ export function ProviderDashboard() {
             <p className="text-sm text-gray-700">Status: {currentJob.status}</p>
             <p className="text-sm text-gray-700">Pickup: {currentJob.pickup?.address || "—"}, {currentJob.pickup?.city || ""}</p>
             <p className="text-sm text-gray-700">Dropoff: {currentJob.dropoff?.address || "—"}, {currentJob.dropoff?.city || ""}</p>
-            <p className="text-sm text-gray-700">Move Date: {new Date(currentJob.moveDate).toLocaleDateString()}</p>
+            <p className="text-sm text-gray-700">Move Date: {formatMoveDate(currentJob.moveDate)}</p>
             {/* Add more job details as needed */}
           </div>
         ) : (

@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
-import { getMove } from "../services/booking.service";
+import { acceptMovePricing, getMove } from "../services/booking.service";
 import { createOrder, verifyPayment } from "../services/payment.service";
+import { formatMoveDate } from "../utils/moveDate";
 
 const currency = (amount, code) =>
   new Intl.NumberFormat(undefined, { style: "currency", currency: code }).format(amount);
@@ -12,6 +13,7 @@ export function PaymentPage() {
   const moveId = searchParams.get("moveId");
   const [move, setMove] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [accepting, setAccepting] = useState(false);
   const [razorpayReady, setRazorpayReady] = useState(Boolean(window.Razorpay));
   const [error, setError] = useState("");
 
@@ -26,7 +28,8 @@ export function PaymentPage() {
       .then((data) => {
         if (!active) return;
         setMove(data);
-        if (data.pricingStatus !== "priced" || !data.pricing?.currency) {
+        if (!["manual_review", "pending_acceptance"].includes(data.pricingStatus) &&
+          (data.pricingStatus !== "priced" || !data.pricing?.currency)) {
           setError("This move does not have a server-calculated price.");
         }
       })
@@ -101,17 +104,27 @@ export function PaymentPage() {
     }
   };
 
+  const handleAcceptEstimate = async () => {
+    if (!move || accepting || move.pricingStatus !== "pending_acceptance") return;
+    setAccepting(true);
+    setError("");
+    try {
+      const acceptedMove = await acceptMovePricing(move._id);
+      setMove(acceptedMove);
+    } catch (requestError) {
+      setError(requestError.message || "Could not accept this estimate");
+    } finally {
+      setAccepting(false);
+    }
+  };
+
   if (!move && !error) return <div className="p-8">Loading move...</div>;
 
   const breakdown = move?.pricing?.breakdown;
-  const breakdownLabels = {
-    baseBookingCharge: "Base booking charge",
-    distanceCharge: "Road distance charge",
-    serviceCharge: "Service charge",
-    loadingCharge: "Loading",
-    unloadingCharge: "Unloading",
-    minimumAdjustment: "Minimum charge adjustment",
-  };
+  const breakdownLabels = [
+    ["transport", "Transport"], ["packingMaterials", "Packing materials"], ["packingLabour", "Packing labour"],
+    ["loading", "Loading"], ["unloading", "Unloading"], ["additionalCharges", "Additional approved charges"], ["tolls", "Tolls (excluded; actual tolls may be added)"], ["tax", "Tax"],
+  ];
 
   return (
     <div className="min-h-screen bg-gray-50 py-12">
@@ -120,21 +133,25 @@ export function PaymentPage() {
         <h1 className="mb-4 mt-4 text-2xl font-bold">Payment</h1>
         {move && (
           <>
+            {move.pricingStatus === "manual_review" && <p className="mb-4 rounded bg-amber-50 p-3 text-sm text-amber-900">Your full-service move is awaiting an administrator packing estimate. Payment is unavailable until an estimate is prepared and accepted.</p>}
             <div className="space-y-2 text-sm">
               <p><b>From:</b> {move.pickup?.address}</p>
               <p><b>To:</b> {move.dropoff?.address}</p>
-              <p><b>Service:</b> {move.service}</p>
+              <p><b>Move date:</b> {formatMoveDate(move.moveDate)}</p>
+              <p><b>Service:</b> {move.serviceMode === "full_service" ? "Full-Service" : "Transport-Only"}</p>
+              <p><b>Vehicle:</b> {move.vehicleType?.replaceAll("_", " ")}</p>
               <p><b>Road distance:</b> {move.pricing?.distanceKm?.toLocaleString()} km</p>
             </div>
+            {move.pricingStatus === "pending_acceptance" && <p className="mb-4 mt-4 rounded bg-blue-50 p-3 text-sm text-blue-900">Review the administrator’s itemized estimate below. Accept this estimate before payment.</p>}
             {breakdown && (
               <dl className="mt-5 space-y-2 border-t pt-4">
                 <div className="mb-3 text-xs text-gray-600">
-                  Rate: {currency(breakdown.pricePerKilometre, move.pricing.currency)} per km ·
-                  Minimum booking charge: {currency(breakdown.minimumBookingCharge, move.pricing.currency)}
+                  Rate: {currency(move.pricing.vehicle?.perKmRate, move.pricing.currency)} per km ·
+                  Minimum transport fare: {currency(move.pricing.vehicle?.minimumFare, move.pricing.currency)}
                 </div>
-                {Object.entries(breakdownLabels).map(([field, label]) => (
+                {breakdownLabels.map(([field, label]) => (
                   <div key={field} className="flex justify-between gap-4 text-sm">
-                    <dt>{label}</dt>
+                    <dt>{label}{field === "tax" ? ` (${breakdown.taxStatus})` : ""}</dt>
                     <dd>{currency(breakdown[field] || 0, move.pricing.currency)}</dd>
                   </div>
                 ))}
@@ -144,11 +161,24 @@ export function PaymentPage() {
                 </div>
               </dl>
             )}
+            {breakdown && <p className="mt-3 text-xs text-gray-600">Tax is {breakdown.taxIncluded ? "included" : "excluded"}. Tolls are excluded; actual tolls may be added when known.</p>}
+            {move.pricing?.estimateType === "admin_manual" && (
+              <div className="mt-4 space-y-3 border-t pt-4 text-sm">
+                <section><h2 className="font-semibold">Packing material estimate</h2><dl className="mt-2 space-y-1">{move.pricing.materials.map((line, index) => <div key={`${line.description}-${index}`} className="flex justify-between gap-3"><dt>{line.description} ({line.quantity} {line.unit} × {currency(line.unitRate, move.pricing.currency)})</dt><dd>{currency(line.amount, move.pricing.currency)}</dd></div>)}</dl></section>
+                <section><h2 className="font-semibold">Labour estimate</h2><dl className="mt-2 space-y-1">{["packing", "loading", "unloading"].map((key) => <div key={key} className="flex justify-between gap-3"><dt className="capitalize">{key}: {move.pricing.labor[key].workers} worker(s) × {currency(move.pricing.labor[key].ratePerWorker, move.pricing.currency)}</dt><dd>{currency(move.pricing.labor[key].amount, move.pricing.currency)}</dd></div>)}</dl></section>
+                {move.pricing.additionalCharges.length > 0 && <section><h2 className="font-semibold">Additional approved charges</h2><dl className="mt-2 space-y-1">{move.pricing.additionalCharges.map((line, index) => <div key={`${line.description}-${index}`} className="flex justify-between gap-3"><dt>{line.description}</dt><dd>{currency(line.amount, move.pricing.currency)}</dd></div>)}</dl></section>}
+              </div>
+            )}
             {move.paid && <p className="mt-4 text-green-700">This move is already paid.</p>}
           </>
         )}
 
         {error && <p role="alert" className="mt-4 text-red-600">{error}</p>}
+        {move?.pricingStatus === "pending_acceptance" && (
+          <button onClick={handleAcceptEstimate} disabled={accepting} className="mt-6 w-full rounded-lg bg-blue-600 py-3 text-white disabled:opacity-50">
+            {accepting ? "Saving acceptance..." : `Accept estimate ${currency(move.price, move.pricing.currency)}`}
+          </button>
+        )}
         <button
           onClick={handlePayment}
           disabled={loading || !razorpayReady || !move || move.paid || move.pricingStatus !== "priced"}

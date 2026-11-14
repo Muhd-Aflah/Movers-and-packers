@@ -9,6 +9,18 @@
 }
 
 :root {
+  /* SwiftMove UI v2 semantic palette; legacy public-site brand tokens remain below. */
+  --sm-primary: #2563eb;
+  --sm-primary-text: #1d4ed8;
+  --sm-navy: #0f172a;
+  --sm-muted: #475569;
+  --sm-background: #f1f5f9;
+  --sm-surface: #ffffff;
+  --sm-success: #166534;
+  --sm-warning: #92400e;
+  --sm-error: #991b1b;
+  --sm-focus: #1d4ed8;
+
   --black: rgba(20, 20, 20, 1);
   --body: rgba(36, 36, 36, 1);
   --button-font-family: "Lato", Helvetica;
@@ -138,67 +150,78 @@
 
 @layer base {
   :root {
-    --background: 0 0% 100%;
-    --foreground: 222.2 47.4% 11.2%;
+    --background: 210 40% 98%;
+    --foreground: 222 47% 11%;
 
-    --muted: 210 40% 96.1%;
-    --muted-foreground: 215.4 16.3% 46.9%;
+    --muted: 210 40% 96%;
+    --muted-foreground: 215 16% 47%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 222.2 47.4% 11.2%;
+    --popover-foreground: 222 47% 11%;
 
-    --border: 214.3 31.8% 91.4%;
-    --input: 214.3 31.8% 91.4%;
+    --border: 214 32% 91%;
+    --input: 214 32% 91%;
 
-    --card: transparent;
-    --card-foreground: 222.2 47.4% 11.2%;
+    --card: 0 0% 100%;
+    --card-foreground: 222 47% 11%;
 
-    --primary: 222.2 47.4% 11.2%;
-    --primary-foreground: 210 40% 98%;
+    --primary: 221 83% 53%;
+    --primary-foreground: 0 0% 100%;
 
-    --secondary: 210 40% 96.1%;
-    --secondary-foreground: 222.2 47.4% 11.2%;
+    --secondary: 210 40% 96%;
+    --secondary-foreground: 222 47% 11%;
 
-    --accent: 210 40% 96.1%;
-    --accent-foreground: 222.2 47.4% 11.2%;
+    --accent: 210 40% 96%;
+    --accent-foreground: 222 47% 11%;
 
     --destructive: 0 100% 50%;
     --destructive-foreground: 210 40% 98%;
 
-    --ring: 215 20.2% 65.1%;
+    --ring: 221 83% 53%;
 
     --radius: 0.5rem;
   }
 
   .dark {
-    --background: 224 71% 4%;
-    --foreground: 213 31% 91%;
+    --sm-primary: #60a5fa;
+    --sm-primary-text: #93c5fd;
+    --sm-navy: #0f172a;
+    --sm-muted: #cbd5e1;
+    --sm-background: #020617;
+    --sm-surface: #0f172a;
+    --sm-success: #86efac;
+    --sm-warning: #fcd34d;
+    --sm-error: #fca5a5;
+    --sm-focus: #93c5fd;
 
-    --muted: 223 47% 11%;
-    --muted-foreground: 215.4 16.3% 56.9%;
+    --background: 222 84% 4%;
+    --foreground: 210 40% 98%;
 
-    --accent: 216 34% 17%;
+    --muted: 217 33% 17%;
+    --muted-foreground: 215 20% 65%;
+
+    --accent: 217 33% 17%;
     --accent-foreground: 210 40% 98%;
 
-    --popover: 224 71% 4%;
-    --popover-foreground: 215 20.2% 65.1%;
+    --popover: 222 84% 4%;
+    --popover-foreground: 210 40% 98%;
 
-    --border: 216 34% 17%;
-    --input: 216 34% 17%;
+    --border: 215 25% 27%;
+    --input: 215 25% 27%;
 
-    --card: transparent;
-    --card-foreground: 213 31% 91%;
+    --card: 222 47% 11%;
+    --card-foreground: 210 40% 98%;
 
-    --primary: 210 40% 98%;
-    --primary-foreground: 222.2 47.4% 1.2%;
+    --primary: 217 91% 60%;
+    --primary-foreground: 0 0% 100%;
 
-    --secondary: 222.2 47.4% 11.2%;
+    --secondary: 217 33% 17%;
     --secondary-foreground: 210 40% 98%;
 
-    --destructive: 0 63% 31%;
+    --destructive: 0 72% 51%;
     --destructive-foreground: 210 40% 98%;
 
-    --ring: 216 34% 17%;
+    --ring: 217 91% 60%;
 
     --radius: 0.5rem;
   }
@@ -212,5 +235,157 @@
   body {
     @apply bg-background text-foreground;
     font-feature-settings: "rlig" 1, "calt" 1;
+    font-family: "Inter", ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  }
+}
+
+html {
+  background: #f8fafc;
+}
+
+html.dark {
+  background: #020617;
+}
+
+body {
+  min-width: 320px;
+  min-height: 100vh;
+  transition: background-color 200ms ease, color 200ms ease;
+}
+
+.portal-shell h1,
+.portal-shell h2,
+.portal-shell h3,
+.portal-shell h4 {
+  font-family: "Manrope", ui-sans-serif, system-ui, sans-serif;
+}
+
+button,
+a,
+input,
+select,
+textarea {
+  -webkit-tap-highlight-color: transparent;
+}
+
+:focus-visible {
+  outline: 3px solid var(--sm-focus);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* Existing pages use Tailwind's neutral utility colors directly. Keep those
+   pages readable when the shared application theme switches to dark mode. */
+.dark .bg-white,
+.dark .bg-gray-50,
+.dark .bg-slate-50 {
+  background-color: #0f172a;
+}
+
+.dark .bg-gray-100,
+.dark .bg-gray-200,
+.dark .bg-gray-300,
+.dark .bg-slate-100,
+.dark .bg-blue-100,
+.dark .bg-blue-200,
+.dark .bg-green-100,
+.dark .bg-indigo-50,
+.dark .bg-indigo-100,
+.dark .bg-orange-50,
+.dark .bg-orange-100,
+.dark .bg-purple-50,
+.dark .bg-yellow-100,
+.dark [class~="hover:bg-gray-100"]:hover {
+  background-color: #1e293b;
+}
+
+.dark .text-gray-900,
+.dark .text-gray-800,
+.dark .text-gray-700,
+.dark .text-slate-900,
+.dark .text-slate-800,
+.dark .text-slate-700 {
+  color: #f8fafc;
+}
+
+.dark .text-gray-600,
+.dark .text-gray-500,
+.dark .text-gray-400,
+.dark .text-slate-600,
+.dark .text-slate-500,
+.dark .text-slate-400 {
+  color: #94a3b8;
+}
+
+.dark .text-amber-700 { color: #fcd34d; }
+.dark .text-indigo-600,
+.dark .text-indigo-700,
+.dark .text-indigo-800,
+.dark .text-indigo-950 { color: #c7d2fe; }
+.dark .text-orange-600,
+.dark .text-orange-700 { color: #fdba74; }
+.dark .text-purple-600,
+.dark .text-purple-700 { color: #e9d5ff; }
+.dark .text-red-800 { color: #fca5a5; }
+.dark .text-yellow-700 { color: #fde047; }
+
+.dark .border-gray-100,
+.dark .border-gray-200,
+.dark .border-gray-300,
+.dark .border-slate-100,
+.dark .border-slate-200,
+.dark .border-slate-300 {
+  border-color: #334155;
+}
+
+.dark input,
+.dark select,
+.dark textarea {
+  color: #f8fafc;
+  background-color: #0f172a;
+  border-color: #334155;
+}
+
+.dark input::placeholder,
+.dark textarea::placeholder {
+  color: #94a3b8;
+}
+
+.dark .bg-blue-50 { background-color: #172554; }
+.dark .bg-blue-100 { background-color: #1e3a8a; }
+.dark .bg-blue-200 { background-color: #1e40af; }
+.dark .text-blue-900 { color: #dbeafe; }
+.dark .text-blue-700 { color: #93c5fd; }
+.dark .bg-green-50 { background-color: #052e16; }
+.dark .bg-green-100 { background-color: #14532d; }
+.dark .text-green-700 { color: #86efac; }
+.dark .bg-amber-50 { background-color: #451a03; }
+.dark .text-amber-900 { color: #fde68a; }
+.dark .bg-red-50 { background-color: #450a0a; }
+.dark .text-red-700 { color: #fca5a5; }
+.dark .bg-indigo-50 { background-color: #1e1b4b; }
+.dark .bg-indigo-100 { background-color: #312e81; }
+.dark .bg-orange-50 { background-color: #431407; }
+.dark .bg-orange-100 { background-color: #7c2d12; }
+.dark .bg-purple-50 { background-color: #3b0764; }
+.dark .bg-yellow-100 { background-color: #422006; }
+
+@media (hover: hover) {
+  .card-hover {
+    transition: transform 180ms ease, box-shadow 180ms ease;
+  }
+
+  .card-hover:hover {
+    transform: translateY(-2px);
   }
 }

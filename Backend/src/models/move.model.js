@@ -1,4 +1,29 @@
 const mongoose = require("mongoose");
+const { PROPERTY_TYPES_BY_MOVE } = require("../services/bookingMetadata.service");
+
+const approximateSizeSchema = new mongoose.Schema({
+  value: { type: Number, min: 0 },
+  unit: { type: String, enum: ["bhk", "sq_ft"] },
+}, { _id: false });
+
+const trackingEventSchema = new mongoose.Schema({
+  event: {
+    type: String,
+    enum: [
+      "booking_requested",
+      "payment_confirmed",
+      "booking_confirmed",
+      "mover_assigned",
+      "pickup_started",
+      "in_transit",
+      "delivery_completed",
+    ],
+    required: true,
+  },
+  at: { type: Date, required: true },
+  actor: { type: mongoose.Schema.Types.ObjectId, ref: "User", default: null },
+  actorRole: { type: String, enum: ["user", "mover", "admin", "system"], required: true },
+});
 
 const moveSchema = new mongoose.Schema(
   {
@@ -20,6 +45,11 @@ const moveSchema = new mongoose.Schema(
       address: String,
       city: String,
     },
+    // Optional for legacy moves; the booking creation contract validates and
+    // persists all three fields together for new wizard requests.
+    moveType: { type: String, enum: ["home_move", "office_move"] },
+    propertyType: { type: String, enum: ["house", "apartment_flat", "office", "shop_commercial"] },
+    approximateSize: { type: approximateSizeSchema, default: undefined },
     service: {
       type: String,
       enum: ["warehousing", "freight", "packaging", "delivery", "custom"],
@@ -59,6 +89,9 @@ const moveSchema = new mongoose.Schema(
       enum: ["requested", "accepted", "in_progress", "completed", "cancelled"],
       default: "requested",
     },
+    // Legacy moves keep an empty history. Events are appended only by the
+    // server handlers that perform the corresponding authorized action.
+    trackingEvents: { type: [trackingEventSchema], default: [] },
     price: {
       type: Number,
       min: 0,
@@ -107,6 +140,33 @@ const moveSchema = new mongoose.Schema(
   },
   { timestamps: true }
 );
+
+moveSchema.pre("validate", function validateBookingMetadata(next) {
+  const hasMoveType = this.moveType !== undefined && this.moveType !== null;
+  const hasPropertyType = this.propertyType !== undefined && this.propertyType !== null;
+  const hasSize = this.approximateSize !== undefined && this.approximateSize !== null;
+  const hasMetadata = hasMoveType || hasPropertyType || hasSize;
+  if (!hasMetadata) return next();
+
+  if (!hasMoveType || !hasPropertyType || !hasSize ||
+    this.approximateSize.value === undefined || this.approximateSize.unit === undefined) {
+    this.invalidate("moveType", "Move metadata fields must be provided together");
+    return next();
+  }
+  if (!PROPERTY_TYPES_BY_MOVE[this.moveType]?.includes(this.propertyType)) {
+    this.invalidate("propertyType", "Property type does not match the selected move type");
+  }
+  const { value, unit } = this.approximateSize;
+  const expectedUnit = this.moveType === "home_move" ? "bhk" : "sq_ft";
+  if (!Number.isFinite(value) || value <= 0) {
+    this.invalidate("approximateSize.value", "Approximate size must be a positive finite number");
+  } else if (unit !== expectedUnit) {
+    this.invalidate("approximateSize.unit", `Approximate size unit must be ${expectedUnit}`);
+  } else if (unit === "bhk" && !Number.isSafeInteger(value)) {
+    this.invalidate("approximateSize.value", "BHK size must be a positive whole number");
+  }
+  return next();
+});
 
 // Supports customer move history and the customer dashboard's stable sort.
 moveSchema.index({ user: 1, createdAt: -1, _id: -1 });

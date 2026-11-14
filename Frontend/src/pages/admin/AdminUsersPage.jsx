@@ -1,34 +1,21 @@
-import { useEffect, useState } from "react";
+import { useCallback } from "react";
 import { adminService } from "../../services/admin.service";
+import { PaginationControls } from "../../components/ui/PaginationControls";
+import { usePaginatedData } from "../../hooks/usePaginatedData";
 
 export function AdminUsersPage() {
-  const [users, setUsers] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+  const fetchPage = useCallback((page) => adminService.getAllUsersPage(page), []);
+  const { items: users, loading, error, page, pagination, setPage } = usePaginatedData(fetchPage);
 
-  useEffect(() => {
-    const fetchUsers = async () => {
-      try {
-        const data = await adminService.getAllUsers();
-        setUsers(data);
-      } catch (err) {
-        setError(err);
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchUsers();
-  }, []);
-
-  if (loading) return <div>Loading users...</div>;
-  if (error) return <div>Error: {error.message}</div>;
+  if (loading && !pagination) return <div>Loading users...</div>;
 
   return (
     <div className="p-6">
       <h1 className="text-xl font-bold mb-4">All Users</h1>
+      {error && <p role="alert" className="mb-4 text-red-700">{error}</p>}
 
-      {users.length === 0 ? (
-        <p>No users found.</p>
+      {users.length === 0 && error ? null : users.length === 0 ? (
+        <p>{loading ? "Loading users..." : "No users found."}</p>
       ) : (
         <div className="space-y-4">
           {users.map((user) => (
@@ -41,6 +28,7 @@ export function AdminUsersPage() {
           ))}
         </div>
       )}
+      {pagination && <PaginationControls pagination={pagination} page={page} onPageChange={setPage} disabled={loading} label="Users pagination" />}
     </div>
   );
 }

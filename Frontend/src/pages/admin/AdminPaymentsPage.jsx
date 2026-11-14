@@ -1,29 +1,24 @@
-import { useEffect, useState } from "react";
+import { useCallback } from "react";
 import { adminService } from "../../services/admin.service";
 import { formatCurrency } from "../../utils/currency";
+import { PaginationControls } from "../../components/ui/PaginationControls";
+import { usePaginatedData } from "../../hooks/usePaginatedData";
 
 export function AdminPaymentsPage() {
-  const [payments, setPayments] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
+  const fetchPage = useCallback((page) => adminService.getAllPaymentsPage(page), []);
+  const { items: payments, loading, error, page, pagination, setPage } = usePaginatedData(fetchPage);
 
-  useEffect(() => {
-    let active = true;
-    adminService.getAllPayments()
-      .then((data) => active && setPayments(Array.isArray(data) ? data : []))
-      .catch((err) => active && setError(err.message || "Could not load payments"))
-      .finally(() => active && setLoading(false));
-    return () => { active = false; };
-  }, []);
-
-  if (loading) return <div>Loading payments...</div>;
-  if (error) return <div role="alert">Error: {error}</div>;
+  if (loading && !pagination) return <div>Loading payments...</div>;
 
   return (
     <div className="p-6">
       <h1 className="mb-4 text-xl font-bold">All Payments</h1>
-      {payments.length === 0 ? (
-        <p>No payments found.</p>
+      {error && <p role="alert" className="mb-4 text-red-700">Error: {error}</p>}
+      <p className="mb-4 rounded border border-amber-300 bg-amber-50 p-3 text-sm text-amber-950 dark:bg-amber-950 dark:text-amber-100">
+        The status below is SwiftMove’s payment record. Refunds made in Razorpay are not synchronized automatically; verify refund status in Razorpay before treating a payment as settled.
+      </p>
+      {payments.length === 0 && error ? null : payments.length === 0 ? (
+        <p>{loading ? "Loading payments..." : "No payments found."}</p>
       ) : (
         <div className="space-y-4">
           {payments.map((payment) => (
@@ -36,7 +31,8 @@ export function AdminPaymentsPage() {
                 Move: {payment.move?._id || payment.move || "Unavailable"}
               </p>
               <p className="text-sm text-gray-700">Amount: {formatCurrency(payment.amount, payment.currency)}</p>
-              <p className="text-sm text-gray-700">Status: {payment.paymentStatus}</p>
+              <p className="text-sm text-gray-700">SwiftMove payment record: {payment.paymentStatus}</p>
+              <p className="text-sm text-amber-800 dark:text-amber-200">Razorpay refund state: not synchronized; verify in Razorpay.</p>
               <p className="text-xs text-gray-500">
                 Date: {payment.createdAt ? new Date(payment.createdAt).toLocaleDateString() : "Unknown"}
               </p>
@@ -44,6 +40,7 @@ export function AdminPaymentsPage() {
           ))}
         </div>
       )}
+      {pagination && <PaginationControls pagination={pagination} page={page} onPageChange={setPage} disabled={loading} label="Payments pagination" />}
     </div>
   );
 }

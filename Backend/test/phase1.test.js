@@ -201,26 +201,30 @@ test("unresolved Geoapify results return no quote and never call routing", async
 
 test("customer move retrieval scopes the database query to the authenticated owner", async (t) => {
   const { getMyMove } = require("../src/controllers/move.controller");
+  const moveId = new mongoose.Types.ObjectId();
+  const ownerId = new mongoose.Types.ObjectId();
   let filter;
   t.mock.method(Move, "findOne", (query) => {
     filter = query;
-    return { populate: async () => null };
+    const result = { populate() { return result; }, then(resolve, reject) { return Promise.resolve(null).then(resolve, reject); } };
+    return result;
   });
   const response = makeResponse();
-  await getMyMove({ params: { id: "move-1" }, user: { id: "user-1" } }, response);
-  assert.equal(filter._id, "move-1");
-  assert.equal(filter.user, "user-1");
+  await getMyMove({ params: { id: moveId.toString() }, user: { id: ownerId.toString() } }, response);
+  assert.equal(filter._id, moveId.toString());
+  assert.equal(filter.user, ownerId.toString());
   assert.equal(response.statusCode, 404);
 });
 
 test("mover status updates reject transitions outside accepted -> in_progress -> completed", async (t) => {
   const providerController = require("../src/controllers/provider.controller");
+  const moveId = new mongoose.Types.ObjectId();
   let updateCalled = false;
-  t.mock.method(Move, "findById", async () => ({ _id: "move-1", provider: "mover-1", status: "requested", paid: true }));
+  t.mock.method(Move, "findById", async () => ({ _id: moveId, provider: "mover-1", status: "requested", paid: true }));
   t.mock.method(Move, "findOneAndUpdate", () => { updateCalled = true; });
   const response = makeResponse();
   await providerController.updateMoveStatus({
-    params: { id: "move-1" },
+    params: { id: moveId.toString() },
     body: { status: "completed" },
     user: { id: "mover-1" },
   }, response);
@@ -230,17 +234,18 @@ test("mover status updates reject transitions outside accepted -> in_progress ->
 
 test("assigned mover can advance an accepted move to in_progress", async (t) => {
   const providerController = require("../src/controllers/provider.controller");
-  const original = { _id: "move-2", provider: "mover-2", status: "accepted", paid: true };
+  const original = { _id: new mongoose.Types.ObjectId(), provider: "mover-2", status: "accepted", paid: true, trackingEvents: [] };
   const updated = { ...original, status: "in_progress" };
   let filter;
   t.mock.method(Move, "findById", async () => original);
   t.mock.method(Move, "findOneAndUpdate", (query) => {
     filter = query;
-    return { populate: async () => updated };
+    const result = { populate() { return result; }, then(resolve, reject) { return Promise.resolve(updated).then(resolve, reject); } };
+    return result;
   });
   const response = makeResponse();
   await providerController.updateMoveStatus({
-    params: { id: original._id },
+    params: { id: original._id.toString() },
     body: { status: "in_progress" },
     user: { id: "mover-2" },
   }, response);

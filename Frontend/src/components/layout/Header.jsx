@@ -1,16 +1,19 @@
 import { useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { MenuIcon, XIcon, ChevronDownIcon } from "lucide-react";
+import { MenuIcon, XIcon, ChevronDownIcon, Moon, Sun } from "lucide-react";
 import { Button } from "../ui/button";
 import { getAuthFromStorage, clearAuthStorage } from "../../utils/auth";
+import { useApp } from "../../store/appContext";
 
-export function Header({ dark, setDark }) {
+export function Header() {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [dropdown, setDropdown] = useState(null);
 
   const location = useLocation();
   const navigate = useNavigate();
-  const { token, role } = getAuthFromStorage();
+  const { theme, setTheme } = useApp();
+  const dark = theme === "dark";
+  const { token } = getAuthFromStorage();
 
   const logout = () => {
     clearAuthStorage();
@@ -63,11 +66,23 @@ export function Header({ dark, setDark }) {
                 }`}
               >
                 {item.label}
-                {item.children && <ChevronDownIcon className="w-4 h-4" />}
               </Link>
 
+              {item.children && (
+                <button
+                  type="button"
+                  onClick={() => setDropdown(dropdown === item.label ? null : item.label)}
+                  aria-label={`${dropdown === item.label ? "Close" : "Open"} ${item.label} menu`}
+                  aria-expanded={dropdown === item.label}
+                  aria-controls={`nav-${item.label.toLowerCase()}`}
+                  className="ml-1 inline-flex rounded p-1 text-slate-600 hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600 dark:text-slate-300 dark:hover:bg-slate-800"
+                >
+                  <ChevronDownIcon className="h-4 w-4" aria-hidden="true" />
+                </button>
+              )}
+
               {item.children && dropdown === item.label && (
-                <div className="absolute top-full left-0 mt-2 w-48 bg-white border rounded-lg shadow-lg">
+                <div id={`nav-${item.label.toLowerCase()}`} className="absolute top-full left-0 mt-2 w-48 bg-white border rounded-xl shadow-lg p-1">
                   {item.children.map((child) => (
                     <Link
                       key={child.href}
@@ -86,10 +101,13 @@ export function Header({ dark, setDark }) {
         {/* DESKTOP ACTIONS */}
         <div className="hidden lg:flex items-center gap-3">
           <button
-            onClick={() => setDark?.(!dark)}
-            className="w-9 h-9 rounded-md bg-gray-100 hover:bg-gray-200"
+            type="button"
+            onClick={() => setTheme(dark ? "light" : "dark")}
+            aria-label={`Switch to ${dark ? "light" : "dark"} theme`}
+            title={`Switch to ${dark ? "light" : "dark"} theme`}
+            className="inline-flex h-10 w-10 items-center justify-center rounded-lg border border-slate-200 bg-slate-50 text-slate-700 transition-colors hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 dark:hover:bg-slate-700"
           >
-            {dark ? "☀️" : "🌙"}
+            {dark ? <Sun className="h-4 w-4" aria-hidden="true" /> : <Moon className="h-4 w-4" aria-hidden="true" />}
           </button>
 
           {token ? (
@@ -117,17 +135,32 @@ export function Header({ dark, setDark }) {
         </div>
 
         {/* MOBILE TOGGLE */}
-        <button
-          className="lg:hidden"
-          onClick={() => setMobileOpen(!mobileOpen)}
-        >
-          {mobileOpen ? <XIcon /> : <MenuIcon />}
-        </button>
+        <div className="flex items-center gap-2 lg:hidden">
+          <button
+            type="button"
+            onClick={() => setTheme(dark ? "light" : "dark")}
+            aria-label={`Switch to ${dark ? "light" : "dark"} theme`}
+            title={`Switch to ${dark ? "light" : "dark"} theme`}
+            className="inline-flex h-10 w-10 items-center justify-center rounded-lg border border-slate-200 bg-slate-50 text-slate-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
+          >
+            {dark ? <Sun className="h-4 w-4" aria-hidden="true" /> : <Moon className="h-4 w-4" aria-hidden="true" />}
+          </button>
+          <button
+            type="button"
+            aria-label={mobileOpen ? "Close navigation menu" : "Open navigation menu"}
+            aria-expanded={mobileOpen}
+            aria-controls="mobile-navigation"
+            onClick={() => setMobileOpen(!mobileOpen)}
+            className="inline-flex h-10 w-10 items-center justify-center rounded-lg text-slate-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600 dark:text-slate-100"
+          >
+            {mobileOpen ? <XIcon /> : <MenuIcon />}
+          </button>
+        </div>
       </div>
 
       {/* MOBILE MENU */}
       {mobileOpen && (
-        <div className="lg:hidden bg-white border-t shadow-lg">
+        <div id="mobile-navigation" className="lg:hidden bg-white border-t shadow-lg">
           <nav className="flex flex-col p-6 gap-4">
             {NAV_ITEMS.map((item) => (
               <div key={item.href}>

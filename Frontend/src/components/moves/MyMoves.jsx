@@ -1,42 +1,27 @@
-import { useEffect, useState } from "react";
+import { useCallback } from "react";
 import { MyMoveCard } from "./MyMoveCard";
-import { apiRequest } from "../../services/api";
+import { getMyMovesPage } from "../../services/booking.service";
+import { PaginationControls } from "../ui/PaginationControls";
+import { usePaginatedData } from "../../hooks/usePaginatedData";
 
 export function MyMoves() {
-  const [moves, setMoves] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
+  const fetchPage = useCallback((page) => getMyMovesPage(page), []);
+  const { items: moves, pagination, page, setPage, loading, error } = usePaginatedData(fetchPage);
 
-  useEffect(() => {
-    const fetchMoves = async () => {
-      try {
-        const data = await apiRequest("/api/moves/my");
-        setMoves(Array.isArray(data) ? data : []);
-      } catch (err) {
-        setError(err.message || "Failed to load moves");
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchMoves();
-  }, []);
-
-  if (loading) {
+  if (loading && !pagination) {
     return <p className="text-gray-500">Loading moves...</p>;
   }
 
   if (error) return <p role="alert" className="text-red-600">{error}</p>;
 
-  if (!moves.length) {
+  if (!moves.length && !pagination?.total) {
     return <p className="text-gray-500">No moves yet.</p>;
   }
 
   return (
     <div className="space-y-4">
-      {moves.map((move) => (
-        <MyMoveCard key={move._id} move={move} />
-      ))}
+      {moves.map((move) => <MyMoveCard key={move._id} move={move} />)}
+      {pagination && <PaginationControls pagination={pagination} page={page} onPageChange={setPage} disabled={loading} label="Move history pagination" />}
     </div>
   );
 }

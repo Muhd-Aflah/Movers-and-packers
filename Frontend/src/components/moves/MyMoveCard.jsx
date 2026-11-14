@@ -1,6 +1,7 @@
-import { MoveStatusTimeline } from "./MoveStatusTimeline";
+import { MoveTrackingTimeline } from "./MoveTrackingTimeline";
 import { MOVE_STATUS } from "../../constants/moveStatus";
 import { Link } from "react-router-dom";
+import { formatMoveDate } from "../../utils/moveDate";
 
 export function MyMoveCard({ move }) {
   const { _id, pickup, dropoff, moveDate, status } = move;
@@ -13,7 +14,7 @@ export function MyMoveCard({ move }) {
             {pickup?.city || pickup?.address || "Pickup"} → {dropoff?.city || dropoff?.address || "Dropoff"}
           </h3>
           <p className="text-sm text-gray-500">
-            {moveDate ? new Date(moveDate).toLocaleDateString() : "Date not set"}
+            {formatMoveDate(moveDate)}
           </p>
         </div>
 
@@ -22,7 +23,7 @@ export function MyMoveCard({ move }) {
         </span>
       </div>
 
-      <MoveStatusTimeline status={status} />
+      <MoveTrackingTimeline events={move.trackingEvents || []} />
 
       <div className="flex gap-3">
         {status === MOVE_STATUS.REQUESTED && (

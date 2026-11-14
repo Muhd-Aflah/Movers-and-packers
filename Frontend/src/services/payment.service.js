@@ -1,4 +1,4 @@
-import { apiRequest } from "./api";
+import { apiRequest, apiRequestWithMeta } from "./api";
 
 export const createOrder = (moveId) =>
   apiRequest("/api/payments/create-order", {
@@ -11,3 +11,9 @@ export const verifyPayment = (paymentData) =>
     method: "POST",
     body: JSON.stringify(paymentData),
   });
+
+export const getMyPaymentsPage = (page, limit = 10) =>
+  apiRequestWithMeta(`/api/payments/my?page=${page}&limit=${limit}`);
+
+export const getPaymentReceipt = (paymentId) =>
+  apiRequest(`/api/payments/${encodeURIComponent(paymentId)}/receipt`);

@@ -1,5 +1,7 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useState } from "react";
 import { adminService } from "../../services/admin.service";
+import { PaginationControls } from "../../components/ui/PaginationControls";
+import { usePaginatedData } from "../../hooks/usePaginatedData";
 
 const tabs = [
   { id: "pending", label: "Pending applications" },
@@ -9,29 +11,14 @@ const tabs = [
 
 export function AdminProvidersPage() {
   const [status, setStatus] = useState("pending");
-  const [movers, setMovers] = useState([]);
   const [reasons, setReasons] = useState({});
-  const [loading, setLoading] = useState(true);
   const [busyId, setBusyId] = useState(null);
-  const [error, setError] = useState("");
   const [message, setMessage] = useState("");
   const [selectedMover, setSelectedMover] = useState(null);
   const [detailsLoading, setDetailsLoading] = useState(false);
 
-  const loadMovers = useCallback(async () => {
-    setLoading(true);
-    setError("");
-    try {
-      const data = await adminService.getMovers(status);
-      setMovers(Array.isArray(data) ? data : []);
-    } catch (requestError) {
-      setError(requestError.message || "Could not load mover applications");
-    } finally {
-      setLoading(false);
-    }
-  }, [status]);
-
-  useEffect(() => { loadMovers(); }, [loadMovers]);
+  const fetchPage = useCallback((page) => adminService.getMoversPage(status, page), [status]);
+  const { items: movers, loading, error, setError, page, pagination, setPage, reload: loadMovers } = usePaginatedData(fetchPage);
 
   const approve = async (mover) => {
     if (!window.confirm(`Approve ${mover.name} as a SwiftMove mover?`)) return;
@@ -96,7 +83,7 @@ export function AdminProvidersPage() {
             type="button"
             role="tab"
             aria-selected={status === tab.id}
-            onClick={() => { setStatus(tab.id); setMessage(""); setError(""); }}
+            onClick={() => { setStatus(tab.id); setPage(1); setMessage(""); setError(""); }}
             className={`rounded px-3 py-2 text-sm font-medium ${status === tab.id ? "bg-indigo-700 text-white" : "bg-gray-100 text-gray-700 hover:bg-gray-200"}`}
           >
             {tab.label}
@@ -108,7 +95,7 @@ export function AdminProvidersPage() {
       {message && <p role="status" className="mb-4 rounded bg-green-50 p-3 text-sm text-green-700">{message}</p>}
       {loading ? (
         <p className="py-6 text-sm text-gray-500">Loading mover accounts…</p>
-      ) : movers.length === 0 ? (
+      ) : movers.length === 0 && !error ? (
         <p className="py-6 text-sm text-gray-500">No {status} mover accounts.</p>
       ) : (
         <div className="space-y-4">
@@ -171,6 +158,8 @@ export function AdminProvidersPage() {
       )}
 
       {detailsLoading && <p className="mt-4 text-sm text-gray-500">Loading mover profile…</p>}
+      {pagination && <PaginationControls pagination={pagination} page={page} onPageChange={setPage} disabled={loading} label="Mover applications pagination" />}
+
       {selectedMover && (
         <aside className="mt-5 rounded-lg border border-indigo-200 bg-indigo-50 p-4" aria-live="polite">
           <div className="flex items-start justify-between gap-3">

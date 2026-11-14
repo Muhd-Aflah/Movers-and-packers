@@ -1,21 +1,13 @@
-import { useEffect, useState } from "react";
+import { useCallback, useState } from "react";
 import { providerService } from "../../services/provider.service";
+import { formatMoveDate } from "../../utils/moveDate";
+import { PaginationControls } from "../ui/PaginationControls";
+import { usePaginatedData } from "../../hooks/usePaginatedData";
 
 export function AvailableMoves() {
-  const [moves, setMoves] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
   const [acceptingId, setAcceptingId] = useState(null);
-
-  useEffect(() => {
-    let active = true;
-    providerService
-      .getAvailableMoves()
-      .then((data) => active && setMoves(Array.isArray(data) ? data : []))
-      .catch((err) => active && setError(err.message || "Could not load available moves"))
-      .finally(() => active && setLoading(false));
-    return () => { active = false; };
-  }, []);
+  const fetchPage = useCallback((page) => providerService.getAvailableMovesPage(page), []);
+  const { items: moves, setItems: setMoves, loading, error, setError, page, pagination, setPage, reload } = usePaginatedData(fetchPage);
 
   async function acceptMove(id) {
     setAcceptingId(id);
@@ -23,6 +15,7 @@ export function AvailableMoves() {
     try {
       await providerService.acceptJob(id);
       setMoves((current) => current.filter((move) => move._id !== id));
+      await reload();
     } catch (err) {
       setError(err.message || "Could not accept this move");
     } finally {
@@ -30,12 +23,12 @@ export function AvailableMoves() {
     }
   }
 
-  if (loading) return <p>Loading available jobs...</p>;
+  if (loading && !pagination) return <p>Loading available jobs...</p>;
   return (
     <section className="space-y-4">
       <h2 className="text-lg font-semibold">Available Moves</h2>
       {error && <p role="alert" className="text-sm text-red-600">{error}</p>}
-      {!moves.length && <p className="text-gray-500">No available jobs right now.</p>}
+      {!error && !moves.length && <p className="text-gray-500">{loading ? "Loading available jobs..." : "No available jobs right now."}</p>}
       {moves.map((move) => (
         <article key={move._id} className="flex items-center justify-between gap-4 rounded-lg border bg-white p-4">
           <div>
@@ -43,7 +36,7 @@ export function AvailableMoves() {
               {move.pickup?.city || move.pickup?.address || "Pickup"} → {move.dropoff?.city || move.dropoff?.address || "Dropoff"}
             </p>
             <p className="text-sm text-gray-500">
-              {move.moveDate ? new Date(move.moveDate).toLocaleDateString() : "Date not set"}
+              {formatMoveDate(move.moveDate)}
             </p>
           </div>
           <button
@@ -55,6 +48,7 @@ export function AvailableMoves() {
           </button>
         </article>
       ))}
+      {pagination && <PaginationControls pagination={pagination} page={page} onPageChange={setPage} disabled={loading || acceptingId !== null} label="Available moves pagination" />}
     </section>
   );
 }

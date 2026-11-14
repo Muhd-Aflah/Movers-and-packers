@@ -7,6 +7,7 @@ const {
   requiresManualEstimate,
   normalizeBookingInput,
 } = require("../services/pricing.service");
+const { normalizeBookingMetadata, normalizeMoveDate } = require("../services/bookingMetadata.service");
 
 const customerMove = (move) => {
   const result = move.toObject ? move.toObject() : { ...move };
@@ -17,11 +18,8 @@ const customerMove = (move) => {
 // POST /api/moves
 const createMove = async (req, res) => {
   try {
-    const { moveDate } = req.body;
-    const parsedMoveDate = new Date(moveDate);
-    if (!moveDate || !Number.isFinite(parsedMoveDate.getTime())) {
-      return res.status(400).json({ message: "Enter a valid move date" });
-    }
+    const parsedMoveDate = normalizeMoveDate(req.body?.moveDate);
+    const metadata = normalizeBookingMetadata(req.body);
 
     const booking = normalizeBookingInput(req.body);
     let quote;
@@ -39,6 +37,13 @@ const createMove = async (req, res) => {
       pickup: { address: quote.pickupResolved },
       dropoff: { address: quote.dropoffResolved },
       moveDate: parsedMoveDate,
+      ...(metadata || {}),
+      trackingEvents: [{
+        event: "booking_requested",
+        at: new Date(),
+        actor: req.user.id,
+        actorRole: "user",
+      }],
       service: "delivery",
       serviceMode: booking.serviceMode,
       vehicleType: booking.vehicleType,
@@ -92,6 +97,7 @@ const getMyMoves = async (req, res) => {
       Model: Move,
       filter: { user: req.user.id },
       ...pagination,
+      populate: [["trackingEvents.actor", "name role"]],
       sort: { createdAt: -1, _id: -1 },
     });
     return sendPaginated(res, { ...result, data: result.data.map(customerMove) });
@@ -103,11 +109,27 @@ const getMyMoves = async (req, res) => {
 const getMyMove = async (req, res) => {
   try {
     const move = await Move.findOne({ _id: req.params.id, user: req.user.id })
-      .populate("user", "name email phone");
+      .populate("user", "name email phone")
+      .populate("trackingEvents.actor", "name role");
     if (!move) return res.status(404).json({ message: "Move not found" });
     return res.json(customerMove(move));
   } catch (error) {
     return res.status(400).json({ message: "Invalid move ID" });
+  }
+};
+
+const getMyMoveTracking = async (req, res) => {
+  if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
+    return res.status(400).json({ message: "Invalid move ID" });
+  }
+  try {
+    const move = await Move.findOne({ _id: req.params.id, user: req.user.id })
+      .select("status trackingEvents")
+      .populate("trackingEvents.actor", "name role");
+    if (!move) return res.status(404).json({ message: "Move not found" });
+    return res.json({ moveId: move._id, status: move.status, trackingEvents: move.trackingEvents || [] });
+  } catch {
+    return res.status(500).json({ message: "Could not fetch move tracking" });
   }
 };
 
@@ -161,5 +183,6 @@ module.exports = {
   createMove,
   getMyMoves,
   getMyMove,
+  getMyMoveTracking,
   acceptMovePricing,
 };

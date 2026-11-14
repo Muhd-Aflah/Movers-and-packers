@@ -30,6 +30,7 @@ app.use("/api/pricing", require("./src/routes/pricing.routes"));
 app.use("/api/dashboard", require("./src/routes/dashboard.routes"));
 app.use("/api/admin", require("./src/routes/admin.routes"));
 app.use("/api/provider", require("./src/routes/provider.routes"));
+app.use("/api/notifications", require("./src/routes/notification.routes"));
 
 // Staging health check
 app.get("/api/health", (req, res) => {

@@ -26,7 +26,9 @@ import { SignupPage } from "../pages/SignupPage";
 import { AdminUsersPage } from "../pages/admin/AdminUsersPage";
 import { AdminOrdersPage } from "../pages/admin/AdminOrdersPage";
 import { AdminPaymentsPage } from "../pages/admin/AdminPaymentsPage";
+import { AdminPaymentReconciliationPage } from "../pages/admin/AdminPaymentReconciliationPage";
 import { AdminProvidersPage } from "../pages/admin/AdminProvidersPage";
+import { AdminPackingEstimatesPage } from "../pages/admin/AdminPackingEstimatesPage";
 
 // Dashboards
 import { DashboardRedirect } from "./DashboardRedirect";
@@ -140,7 +142,9 @@ export const router = createBrowserRouter([
           { path: "users", element: <AdminUsersPage /> },
           { path: "providers", element: <AdminProvidersPage /> },
           { path: "orders", element: <AdminOrdersPage /> },
+          { path: "packing-estimates", element: <AdminPackingEstimatesPage /> },
           { path: "payments", element: <AdminPaymentsPage /> },
+          { path: "payment-reconciliation", element: <AdminPaymentReconciliationPage /> },
         ],
       },
 

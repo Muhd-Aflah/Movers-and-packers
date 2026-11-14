@@ -1,6 +1,7 @@
 const Razorpay = require("razorpay");
 const crypto = require("crypto");
 const mongoose = require("mongoose");
+const User = require("../models/User.model");
 const Move = require("../models/move.model");
 const Payment = require("../models/payment.model");
 const PaymentOrder = require("../models/paymentOrder.model");
@@ -621,9 +622,145 @@ exports.getMyPayments = async (req, res) => {
       populate: [["move"]],
       sort: { createdAt: -1, _id: -1 },
     });
-    return sendPaginated(res, result);
+    const receiptEligibleIds = new Set();
+    const candidates = result.data.filter((payment) =>
+      payment.paymentStatus === "paid" && payment.gateway === "razorpay" &&
+      payment.order && payment.razorpayPaymentId,
+    );
+    if (candidates.length) {
+      try {
+        const [processingRecords, orders] = await Promise.all([
+          PaymentProcessing.find({
+            user: req.user.id,
+            status: "credited",
+            razorpayPaymentId: { $in: candidates.map((payment) => payment.razorpayPaymentId) },
+          }).select("user move paymentOrder razorpayPaymentId amountMinorUnits currency status completedAt").lean(),
+          PaymentOrder.find({
+            user: req.user.id,
+            status: "paid",
+            _id: { $in: candidates.map((payment) => payment.order) },
+          }).select("_id user move amount currency razorpayPaymentId status").lean(),
+        ]);
+        const processingByPaymentId = new Map(processingRecords.map((record) => [record.razorpayPaymentId, record]));
+        const orderById = new Map(orders.map((order) => [String(order._id), order]));
+        for (const payment of candidates) {
+          const move = payment.move?.toObject ? payment.move.toObject() : payment.move;
+          const processing = processingByPaymentId.get(payment.razorpayPaymentId);
+          const order = orderById.get(String(payment.order));
+          if (receiptStateIsEligible({ payment, processing, order, move, userId: req.user.id })) {
+            receiptEligibleIds.add(String(payment._id));
+          }
+        }
+      } catch {
+        // Receipt actions stay hidden if the optional eligibility lookup fails;
+        // the payment history itself remains available.
+      }
+    }
+    return sendPaginated(res, {
+      ...result,
+      data: result.data.map((payment) => {
+        const record = payment.toObject ? payment.toObject() : { ...payment };
+        return { ...record, receiptEligible: receiptEligibleIds.has(String(record._id)) };
+      }),
+    });
   } catch (error) {
     return res.status(500).json({ message: "Failed to fetch payment history" });
+  }
+};
+
+const sameId = (left, right) => left != null && right != null && String(left) === String(right);
+const referenceId = (value) => value && typeof value === "object" && value._id ? value._id : value;
+
+const receiptStateIsEligible = ({ payment, processing, order, move, userId }) => {
+  if (!payment || !processing || !order || !move || !userId ||
+    payment.paymentStatus !== "paid" || payment.gateway !== "razorpay" ||
+    !payment.razorpayPaymentId || !payment.order || !Number.isFinite(payment.amount) ||
+    typeof payment.currency !== "string" || !/^[A-Z]{3}$/.test(payment.currency) ||
+    processing.status !== "credited" || !processing.completedAt ||
+    order.status !== "paid" || move.paid !== true) return false;
+
+  let expectedMinorUnits;
+  try { expectedMinorUnits = toMinorUnits(payment.amount, payment.currency); }
+  catch { return false; }
+  return sameId(payment.user, userId) && sameId(referenceId(payment.move), move._id) &&
+    sameId(payment.order, processing.paymentOrder) && sameId(payment.order, order._id) &&
+    sameId(payment.razorpayPaymentId, processing.razorpayPaymentId) &&
+    sameId(payment.razorpayPaymentId, order.razorpayPaymentId) &&
+    sameId(processing.user, userId) && sameId(processing.move, move._id) &&
+    sameId(order.user, userId) && sameId(order.move, move._id) &&
+    sameId(move.payment, payment._id) &&
+    order.amount === payment.amount && order.currency === payment.currency &&
+    processing.amountMinorUnits === expectedMinorUnits && processing.currency === payment.currency;
+};
+
+exports.getPaymentReceipt = async (req, res) => {
+  if (!mongoose.Types.ObjectId.isValid(req.params.paymentId)) {
+    return res.status(404).json({ message: "Receipt unavailable" });
+  }
+  try {
+    const payment = await Payment.findOne({ _id: req.params.paymentId, user: req.user.id })
+      .select("user move order amount currency gateway razorpayPaymentId paymentStatus createdAt");
+    if (!payment || payment.paymentStatus !== "paid" || payment.gateway !== "razorpay" ||
+      !payment.razorpayPaymentId || !payment.order || !Number.isFinite(payment.amount) ||
+      typeof payment.currency !== "string" || !/^[A-Z]{3}$/.test(payment.currency)) {
+      return res.status(404).json({ message: "Receipt unavailable" });
+    }
+
+    const [processing, order, move, customer] = await Promise.all([
+      PaymentProcessing.findOne({
+        razorpayPaymentId: payment.razorpayPaymentId,
+        user: req.user.id,
+        move: payment.move,
+        paymentOrder: payment.order,
+        status: "credited",
+      }).select("user move paymentOrder amountMinorUnits currency status completedAt"),
+      PaymentOrder.findOne({
+        _id: payment.order,
+        user: req.user.id,
+        move: payment.move,
+        razorpayPaymentId: payment.razorpayPaymentId,
+        status: "paid",
+      }).select("user move amount currency razorpayPaymentId status"),
+      Move.findOne({ _id: payment.move, user: req.user.id, paid: true, payment: payment._id })
+        .select("pickup dropoff moveDate serviceMode vehicleType paid payment"),
+      User.findById(req.user.id).select("name email"),
+    ]);
+
+    if (!customer || !receiptStateIsEligible({ payment, processing, order, move, userId: req.user.id })) {
+      return res.status(404).json({ message: "Receipt unavailable" });
+    }
+
+    const receiptReference = `SM-RCP-${crypto.createHash("sha256")
+      .update(payment.razorpayPaymentId)
+      .digest("hex")
+      .slice(0, 24)
+      .toUpperCase()}`;
+    return res.json({
+      receiptId: receiptReference,
+      company: { name: "SwiftMove" },
+      customer: {
+        ...(customer.name ? { name: customer.name } : {}),
+        ...(customer.email ? { email: customer.email } : {}),
+      },
+      move: {
+        id: String(move._id),
+        ...(move.pickup?.address ? { pickup: move.pickup.address } : {}),
+        ...(move.dropoff?.address ? { destination: move.dropoff.address } : {}),
+        ...(move.moveDate ? { moveDate: move.moveDate } : {}),
+        ...(move.serviceMode ? { serviceMode: move.serviceMode } : {}),
+        ...(move.vehicleType ? { vehicleType: move.vehicleType } : {}),
+      },
+      payment: {
+        id: String(payment._id),
+        gatewayPaymentId: payment.razorpayPaymentId,
+        ...(payment.createdAt ? { paidAt: payment.createdAt } : {}),
+        amount: payment.amount,
+        currency: payment.currency,
+        status: payment.paymentStatus,
+      },
+    });
+  } catch {
+    return res.status(500).json({ message: "Could not retrieve receipt" });
   }
 };
 

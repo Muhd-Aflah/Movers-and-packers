@@ -290,6 +290,7 @@ test("delayed captured webhook pays the matching accepted quote and duplicate ev
   remotePayments = new Map([[fixture.paymentId, fixture.gatewayPayment]]);
   let eventRecord = null;
   let paymentCount = 0;
+  let moveCreditUpdate;
   eventRecord = null;
   t.mock.method(PaymentOrder, "findOne", async () => fixture.paymentOrder);
   t.mock.method(PaymentOrder, "findOneAndUpdate", async (_filter, update) => {
@@ -299,6 +300,7 @@ test("delayed captured webhook pays the matching accepted quote and duplicate ev
   t.mock.method(PaymentOrder, "findById", async () => fixture.paymentOrder);
   t.mock.method(Move, "findOne", async () => fixture.move);
   t.mock.method(Move, "findOneAndUpdate", async (_filter, update) => {
+    moveCreditUpdate = update;
     if (update.$set?.paid) {
       fixture.move.paid = true;
       fixture.move.payment = "payment-record-1";
@@ -321,6 +323,10 @@ test("delayed captured webhook pays the matching accepted quote and duplicate ev
   assert.equal(duplicate.body.duplicate, true);
   assert.equal(paymentCount, 1);
   assert.equal(fixture.move.paid, true);
+  assert.equal(moveCreditUpdate.$push.trackingEvents.event, "payment_confirmed");
+  assert.ok(moveCreditUpdate.$push.trackingEvents.at instanceof Date);
+  assert.equal(moveCreditUpdate.$push.trackingEvents.actor, null);
+  assert.equal(moveCreditUpdate.$push.trackingEvents.actorRole, "system");
 });
 
 test("concurrent duplicate webhook delivery is atomically claimed once", async (t) => {

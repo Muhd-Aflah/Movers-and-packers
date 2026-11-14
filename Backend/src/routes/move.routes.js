@@ -3,6 +3,7 @@ const {
   createMove,
   getMyMoves,
   getMyMove,
+  getMyMoveTracking,
   acceptMovePricing,
 } = require("../controllers/move.controller");
 
@@ -15,6 +16,7 @@ const router = express.Router();
 router.post("/", protect, allowRoles("user"), createMove); 
 router.get("/my", protect, allowRoles("user"), getMyMoves);
 router.post("/:id/accept-pricing", protect, allowRoles("user"), acceptMovePricing);
+router.get("/:id/tracking", protect, allowRoles("user"), getMyMoveTracking);
 router.get("/:id", protect, allowRoles("user"), getMyMove);
 
 module.exports = router;

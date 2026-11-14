@@ -204,7 +204,15 @@ const markMovePaid = async ({ move, payment, paymentOrder, lockToken }) => Move.
       { pricingAcceptedAt: { $ne: null }, acceptedPricingVersion: paymentOrder.pricingVersion },
     ],
   },
-  { $set: { paid: true, payment: payment._id } },
+  {
+    $set: { paid: true, payment: payment._id },
+    $push: { trackingEvents: {
+      event: "payment_confirmed",
+      at: new Date(),
+      actor: null,
+      actorRole: "system",
+    } },
+  },
   { new: true, runValidators: true },
 );
 

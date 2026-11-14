@@ -1,8 +1,9 @@
 import { APP_CONFIG } from "../constants/config";
+import { parsePaginationHeader } from "../utils/pagination";
 
 export const API_BASE_URL = APP_CONFIG.api.baseUrl;
 
-export const apiRequest = async (endpoint, options = {}) => {
+const request = async (endpoint, options = {}) => {
   if (!API_BASE_URL) {
     throw new Error("VITE_API_URL is not configured");
   }
@@ -42,5 +43,12 @@ export const apiRequest = async (endpoint, options = {}) => {
     throw new Error(data?.message || data || "API error");
   }
 
-  return data;
+  const pagination = parsePaginationHeader(response.headers.get("X-Pagination"));
+  return { data, pagination };
 };
+
+// Keep the established response shape for existing consumers. List pages that
+// need pagination metadata can opt into this companion method.
+export const apiRequest = async (endpoint, options = {}) => (await request(endpoint, options)).data;
+
+export const apiRequestWithMeta = request;

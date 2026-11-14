@@ -52,6 +52,7 @@ exports.acceptMove = async (req, res) => {
     return res.status(400).json({ message: "Invalid move ID" });
   }
   try {
+    const eventAt = new Date();
     const move = await Move.findOneAndUpdate(
       {
         _id: req.params.id,
@@ -61,7 +62,13 @@ exports.acceptMove = async (req, res) => {
         pricingStatus: "priced",
         price: { $type: "number", $gt: 0 },
       },
-      { $set: { provider: req.user.id, status: "accepted" } },
+      {
+        $set: { provider: req.user.id, status: "accepted" },
+        $push: { trackingEvents: { $each: [
+          { event: "booking_confirmed", at: eventAt, actor: req.user.id, actorRole: "mover" },
+          { event: "mover_assigned", at: eventAt, actor: req.user.id, actorRole: "mover" },
+        ] } },
+      },
       { new: true, runValidators: true },
     );
     if (!move) {
@@ -98,15 +105,26 @@ exports.getMyJobs = async (req, res) => {
 
 // PUT /api/provider/moves/:id/status
 exports.updateMoveStatus = async (req, res) => {
+  if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
+    return res.status(400).json({ message: "Invalid move ID" });
+  }
   try {
-    const { status } = req.body;
-    const transitions = {
-      accepted: ["in_progress"],
-      in_progress: ["completed"],
-    };
-    if (!["in_progress", "completed"].includes(status)) {
+    const body = req.body && typeof req.body === "object" && !Array.isArray(req.body) ? req.body : {};
+    if (Object.keys(body).some((key) => !["status", "milestone"].includes(key))) {
+      return res.status(400).json({ message: "Only a status or tracking milestone may be submitted" });
+    }
+    if (body.status !== undefined && body.milestone !== undefined) {
       return res.status(400).json({ message: "Invalid move status" });
     }
+    const event = body.milestone === "pickup_started" || body.status === "in_progress"
+      ? "pickup_started"
+      : body.milestone === "in_transit"
+        ? "in_transit"
+        : body.status === "completed"
+          ? "delivery_completed"
+          : null;
+    if (!event) return res.status(400).json({ message: "Invalid move status or tracking milestone" });
+
     const move = await Move.findById(req.params.id);
 
     if (!move) {
@@ -121,15 +139,54 @@ exports.updateMoveStatus = async (req, res) => {
       return res.status(409).json({ message: "The move must be paid before service can begin" });
     }
 
-    if (!transitions[move.status]?.includes(status)) {
-      return res.status(400).json({ message: "Move status transition is not allowed" });
+    const trackingEvents = Array.isArray(move.trackingEvents) ? move.trackingEvents : [];
+    const hasEvent = (name) => trackingEvents.some((entry) => entry.event === name);
+    if (hasEvent(event)) {
+      return res.status(409).json({ message: "This tracking milestone has already been recorded" });
     }
 
+    let nextStatus = move.status;
+    let requiredPreviousEvent = null;
+    if (event === "pickup_started") {
+      if (move.status !== "accepted") {
+        return res.status(400).json({ message: "Pickup can only be recorded for an accepted move" });
+      }
+      nextStatus = "in_progress";
+    } else if (event === "in_transit") {
+      if (move.status !== "in_progress") {
+        return res.status(400).json({ message: "The move must be in progress before transit can be recorded" });
+      }
+      // Older in_progress moves predate event history. Their pickup time is
+      // unknowable, so allow a real transit action without fabricating pickup.
+    } else {
+      if (move.status !== "in_progress") {
+        return res.status(400).json({ message: "Only an in-progress move can be completed" });
+      }
+      requiredPreviousEvent = "in_transit";
+      if (!hasEvent(requiredPreviousEvent)) {
+        return res.status(409).json({ message: "Record the move in transit before completing delivery" });
+      }
+      nextStatus = "completed";
+    }
+
+    const eventAt = new Date();
     const updatedMove = await Move.findOneAndUpdate(
-      { _id: move._id, provider: req.user.id, status: move.status },
-      { $set: { status } },
+      {
+        _id: move._id,
+        provider: req.user.id,
+        paid: true,
+        status: move.status,
+        $and: [
+          { "trackingEvents.event": { $ne: event } },
+          ...(requiredPreviousEvent ? [{ trackingEvents: { $elemMatch: { event: requiredPreviousEvent } } }] : []),
+        ],
+      },
+      {
+        $set: { status: nextStatus },
+        $push: { trackingEvents: { event, at: eventAt, actor: req.user.id, actorRole: "mover" } },
+      },
       { new: true, runValidators: true },
-    ).populate("user", "name email phone");
+    ).populate("user", "name email phone").populate("trackingEvents.actor", "name role");
     if (!updatedMove) {
       return res.status(409).json({ message: "Move status changed; refresh and try again" });
     }

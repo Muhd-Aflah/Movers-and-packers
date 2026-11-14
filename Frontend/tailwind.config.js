@@ -16,6 +16,15 @@ module.exports = {
     },
     extend: {
       colors: {
+        "sm-primary": "var(--sm-primary)",
+        "sm-primary-text": "var(--sm-primary-text)",
+        "sm-navy": "var(--sm-navy)",
+        "sm-muted": "var(--sm-muted)",
+        "sm-background": "var(--sm-background)",
+        "sm-surface": "var(--sm-surface)",
+        "sm-success": "var(--sm-success)",
+        "sm-warning": "var(--sm-warning)",
+        "sm-error": "var(--sm-error)",
         black: "var(--black)",
         body: "var(--body)",
         colorsmint: "var(--colorsmint)",
@@ -61,6 +70,8 @@ module.exports = {
         },
       },
       fontFamily: {
+        display: ["Manrope", "ui-sans-serif", "system-ui", "sans-serif"],
+        body: ["Inter", "ui-sans-serif", "system-ui", "sans-serif"],
         button: "var(--button-font-family)",
         sans: [
           "ui-sans-serif",
@@ -73,6 +84,9 @@ module.exports = {
         ],
       },
       borderRadius: {
+        control: "12px",
+        card: "16px",
+        pill: "9999px",
         lg: "var(--radius)",
         md: "calc(var(--radius) - 2px)",
         sm: "calc(var(--radius) - 4px)",
