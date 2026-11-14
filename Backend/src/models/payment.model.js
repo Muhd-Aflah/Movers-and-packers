@@ -6,7 +6,6 @@ const paymentSchema = new mongoose.Schema(
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
       required: true,
-      index: true,
     },
     move: {
       type: mongoose.Schema.Types.ObjectId,
@@ -48,7 +47,6 @@ const paymentSchema = new mongoose.Schema(
     },
     razorpaySignature: {
       type: String,
-      required: true,
       select: false,
     },
     paymentStatus: {
@@ -66,5 +64,13 @@ const paymentSchema = new mongoose.Schema(
   },
   { timestamps: true },
 );
+
+// Supports customer payment history and dashboard reads without a blocking sort.
+paymentSchema.index({ user: 1, createdAt: -1, _id: -1 });
+// Supports the admin payment list's stable newest-first ordering.
+paymentSchema.index({ createdAt: -1, _id: -1 });
+// Supports paid-revenue aggregation by currency for admin and customer dashboards.
+paymentSchema.index({ paymentStatus: 1, currency: 1 });
+paymentSchema.index({ user: 1, paymentStatus: 1, currency: 1 });
 
 module.exports = mongoose.model("Payment", paymentSchema);

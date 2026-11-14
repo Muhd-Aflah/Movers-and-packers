@@ -2,6 +2,7 @@ const User = require("../models/User.model");
 const Move = require("../models/move.model");
 const Payment = require("../models/payment.model");
 const mongoose = require("mongoose");
+const { parsePagination, findPage, sendPaginated } = require("../utils/pagination");
 
 const MOVER_APPROVAL_STATUSES = ["pending", "approved", "rejected"];
 const MOVER_REVIEW_SELECT =
@@ -15,29 +16,22 @@ const formatMover = (mover) => {
 // GET /api/admin/dashboard/stats
 const getAdminDashboardStats = async (req, res) => {
   try {
-    const totalUsers = await User.countDocuments();
-    const totalProviders = await User.countDocuments({ role: "mover" });
-    const totalMoves = await Move.countDocuments();
-    const activeMoves = await Move.countDocuments({
-      status: { $in: ["accepted", "in_progress"] },
-    });
-
     const today = new Date();
     today.setHours(0, 0, 0, 0);
     const tomorrow = new Date(today);
     tomorrow.setDate(tomorrow.getDate() + 1);
 
-    const todaysBookings = await Move.countDocuments({
-      moveDate: {
-        $gte: today,
-        $lt: tomorrow,
-      },
-    });
-
-    const revenueByCurrency = await Payment.aggregate([
-      { $match: { paymentStatus: "paid" } },
-      { $group: { _id: { $ifNull: ["$currency", "UNKNOWN"] }, amount: { $sum: "$amount" } } },
-      { $sort: { _id: 1 } },
+    const [totalUsers, totalProviders, totalMoves, activeMoves, todaysBookings, revenueByCurrency] = await Promise.all([
+      User.countDocuments(),
+      User.countDocuments({ role: "mover" }),
+      Move.countDocuments(),
+      Move.countDocuments({ status: { $in: ["accepted", "in_progress"] } }),
+      Move.countDocuments({ moveDate: { $gte: today, $lt: tomorrow } }),
+      Payment.aggregate([
+        { $match: { paymentStatus: "paid" } },
+        { $group: { _id: { $ifNull: ["$currency", "UNKNOWN"] }, amount: { $sum: "$amount" } } },
+        { $sort: { _id: 1 } },
+      ]),
     ]);
 
     // For support tickets, assuming no dedicated model yet. Setting to 0.
@@ -63,35 +57,56 @@ const getAdminDashboardStats = async (req, res) => {
 
 // GET /api/admin/users
 const getAllUsers = async (req, res) => {
+  let pagination;
+  try { pagination = parsePagination(req.query); }
+  catch (error) { return res.status(400).json({ message: error.message, code: error.code }); }
   try {
-    const users = await User.find().select("-password");
-    res.json(users);
+    const result = await findPage({
+      Model: User,
+      ...pagination,
+      sort: { createdAt: -1, _id: -1 },
+      select: "-password",
+    });
+    return sendPaginated(res, result);
   } catch (error) {
-    res.status(500).json({ message: "Failed to fetch users" });
+    return res.status(500).json({ message: "Failed to fetch users" });
   }
 };
 
 // GET /api/admin/moves
 const getAllMoves = async (req, res) => {
+  let pagination;
+  try { pagination = parsePagination(req.query); }
+  catch (error) { return res.status(400).json({ message: error.message, code: error.code }); }
   try {
-    const moves = await Move.find()
-      .populate("user", "name email role")
-      .populate("provider", "name email")
-      .sort({ createdAt: -1 });
-
-    res.json(moves);
+    const result = await findPage({
+      Model: Move,
+      ...pagination,
+      sort: { createdAt: -1, _id: -1 },
+      populate: [["user", "name email role"], ["provider", "name email"]],
+    });
+    return sendPaginated(res, result);
   } catch (error) {
-    res.status(500).json({ message: "Failed to fetch moves" });
+    return res.status(500).json({ message: "Failed to fetch moves" });
   }
 };
 
 // GET /api/admin/providers
 const getAllProviders = async (req, res) => {
+  let pagination;
+  try { pagination = parsePagination(req.query); }
+  catch (error) { return res.status(400).json({ message: error.message, code: error.code }); }
   try {
-    const providers = await User.find({ role: "mover" }).select("-password");
-    res.json(providers);
+    const result = await findPage({
+      Model: User,
+      filter: { role: "mover" },
+      ...pagination,
+      sort: { createdAt: -1, _id: -1 },
+      select: "-password",
+    });
+    return sendPaginated(res, result);
   } catch (error) {
-    res.status(500).json({ message: "Failed to fetch providers" });
+    return res.status(500).json({ message: "Failed to fetch providers" });
   }
 };
 
@@ -101,6 +116,9 @@ const getMoversByApprovalStatus = async (req, res) => {
   if (!MOVER_APPROVAL_STATUSES.includes(status)) {
     return res.status(400).json({ message: "Status must be pending, approved, or rejected" });
   }
+  let pagination;
+  try { pagination = parsePagination(req.query); }
+  catch (error) { return res.status(400).json({ message: error.message, code: error.code }); }
 
   try {
     const filter = { role: "mover" };
@@ -114,11 +132,15 @@ const getMoversByApprovalStatus = async (req, res) => {
     } else {
       filter.moverApprovalStatus = status;
     }
-    const movers = await User.find(filter)
-      .select(MOVER_REVIEW_SELECT)
-      .populate("moverReviewedBy", "name email")
-      .sort({ createdAt: -1 });
-    return res.json(movers.map(formatMover));
+    const result = await findPage({
+      Model: User,
+      filter,
+      ...pagination,
+      select: MOVER_REVIEW_SELECT,
+      populate: [["moverReviewedBy", "name email"]],
+      sort: { createdAt: -1, _id: -1 },
+    });
+    return sendPaginated(res, { ...result, data: result.data.map(formatMover) });
   } catch {
     return res.status(500).json({ message: "Failed to fetch mover applications" });
   }
@@ -212,12 +234,17 @@ const rejectMover = decideMoverApplication("rejected");
 
 // GET /api/admin/payments
 const getAllPayments = async (req, res) => {
+  let pagination;
+  try { pagination = parsePagination(req.query); }
+  catch (error) { return res.status(400).json({ message: error.message, code: error.code }); }
   try {
-    const payments = await Payment.find()
-      .populate("user", "name email")
-      .populate("move", "pickup dropoff moveDate service price status")
-      .sort({ createdAt: -1 });
-    res.json(payments);
+    const result = await findPage({
+      Model: Payment,
+      ...pagination,
+      populate: [["user", "name email"], ["move", "pickup dropoff moveDate service price status"]],
+      sort: { createdAt: -1, _id: -1 },
+    });
+    return sendPaginated(res, result);
   } catch (error) {
     res.status(500).json({ message: "Failed to fetch payments" });
   }

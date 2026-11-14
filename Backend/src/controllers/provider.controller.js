@@ -1,4 +1,6 @@
 const Move = require("../models/move.model");
+const mongoose = require("mongoose");
+const { parsePagination, findPage, sendPaginated } = require("../utils/pagination");
 
 // GET /api/provider/current-job
 exports.getCurrentJob = async (req, res) => {
@@ -19,19 +21,25 @@ exports.getCurrentJob = async (req, res) => {
 
 // GET /api/provider/available-moves
 exports.getAvailableMoves = async (req, res) => {
+  let pagination;
+  try { pagination = parsePagination(req.query); }
+  catch (error) { return res.status(400).json({ message: error.message, code: error.code }); }
   try {
-    const availableMoves = await Move.find({
-      status: "requested",
-      provider: null, // Not yet assigned
-      paid: true,
-      price: { $type: "number", $gt: 0 },
-      pricingStatus: "priced",
-    })
-      .populate("user", "name email phone")
-      .sort({ createdAt: -1 })
-      .select("-__v");
-
-    res.json(availableMoves);
+    const result = await findPage({
+      Model: Move,
+      filter: {
+        status: "requested",
+        provider: null,
+        paid: true,
+        price: { $type: "number", $gt: 0 },
+        pricingStatus: "priced",
+      },
+      ...pagination,
+      populate: [["user", "name email phone"]],
+      sort: { createdAt: -1, _id: -1 },
+      select: "-__v",
+    });
+    return sendPaginated(res, result);
   } catch (error) {
     console.error("Error fetching available moves for provider:", error);
     res.status(500).json({ message: "Failed to fetch available moves" });
@@ -40,9 +48,19 @@ exports.getAvailableMoves = async (req, res) => {
 
 // PUT /api/provider/moves/:id/accept
 exports.acceptMove = async (req, res) => {
+  if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
+    return res.status(400).json({ message: "Invalid move ID" });
+  }
   try {
     const move = await Move.findOneAndUpdate(
-      { _id: req.params.id, status: "requested", provider: null, paid: true },
+      {
+        _id: req.params.id,
+        status: "requested",
+        provider: null,
+        paid: true,
+        pricingStatus: "priced",
+        price: { $type: "number", $gt: 0 },
+      },
       { $set: { provider: req.user.id, status: "accepted" } },
       { new: true, runValidators: true },
     );
@@ -59,13 +77,19 @@ exports.acceptMove = async (req, res) => {
 
 // GET /api/provider/my-jobs
 exports.getMyJobs = async (req, res) => {
+  let pagination;
+  try { pagination = parsePagination(req.query); }
+  catch (error) { return res.status(400).json({ message: error.message, code: error.code }); }
   try {
-    const myJobs = await Move.find({ provider: req.user.id })
-      .populate("user", "name email phone")
-      .sort({ createdAt: -1 })
-      .select("-__v");
-
-    res.json(myJobs);
+    const result = await findPage({
+      Model: Move,
+      filter: { provider: req.user.id },
+      ...pagination,
+      populate: [["user", "name email phone"]],
+      sort: { createdAt: -1, _id: -1 },
+      select: "-__v",
+    });
+    return sendPaginated(res, result);
   } catch (error) {
     console.error("Error fetching assigned jobs for provider:", error);
     res.status(500).json({ message: "Failed to fetch assigned jobs" });

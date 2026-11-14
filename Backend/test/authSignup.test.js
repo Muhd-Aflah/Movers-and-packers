@@ -2,6 +2,7 @@ const test = require("node:test");
 const assert = require("node:assert/strict");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
+const mongoose = require("mongoose");
 const User = require("../src/models/User.model");
 const authController = require("../src/controllers/auth.controller");
 
@@ -77,10 +78,10 @@ test("missing fields, invalid email, and invalid password return 400 without dat
   assert.equal(calls, 0);
 });
 
-test("database failure returns generic 500 and logs only safe correlation metadata", async (t) => {
+test("database failure returns generic 500 and logs a safe diagnostic message", async (t) => {
   const logged = [];
   t.mock.method(User, "findOne", async () => null);
-  t.mock.method(User, "create", async () => { throw new Error("secret-bearing database detail"); });
+  t.mock.method(User, "create", async () => { throw new Error("database operation failed"); });
   t.mock.method(console, "error", (...args) => logged.push(args));
 
   const res = response();
@@ -94,18 +95,58 @@ test("database failure returns generic 500 and logs only safe correlation metada
   const logText = JSON.stringify(logged);
   assert.match(logText, /requestId/);
   assert.match(logText, /create-account/);
-  assert.doesNotMatch(logText, /private@example\.com|private-password|secret-bearing database detail/);
+  assert.match(logText, /database operation failed/);
+  assert.doesNotMatch(logText, /private@example\.com|private-password/);
 });
 
-test("duplicate lookup failure is logged and does not reveal database error text", async (t) => {
+test("duplicate lookup failure logs sanitized MongoDB diagnostics and keeps the response generic", async (t) => {
   const logged = [];
-  t.mock.method(User, "findOne", async () => { throw new Error("private connection detail"); });
+  const previousMongoUri = process.env.MONGO_URI;
+  const previousJwtSecret = process.env.JWT_SECRET;
+  const testMongoUri = "mongodb+srv://staging-user:staging-password@cluster.example/swiftmove_staging";
+  const testJwtSecret = "diagnostic-test-secret-material-at-least-32-bytes";
+  process.env.MONGO_URI = testMongoUri;
+  process.env.JWT_SECRET = testJwtSecret;
+  t.after(() => {
+    if (previousMongoUri === undefined) delete process.env.MONGO_URI;
+    else process.env.MONGO_URI = previousMongoUri;
+    if (previousJwtSecret === undefined) delete process.env.JWT_SECRET;
+    else process.env.JWT_SECRET = previousJwtSecret;
+  });
+
+  t.mock.method(User, "findOne", async () => {
+    const error = new Error(
+      `not authorized on swiftmove_staging to find users for private@example.com; password: private-password; uri=${testMongoUri}; auth user staging-user; auth password staging-password; secret=${testJwtSecret}`,
+    );
+    error.name = "MongoServerError";
+    error.code = 8000;
+    error.codeName = "AtlasError";
+    error.errorLabels = ["RetryableWriteError", "TransientTransactionError"];
+    throw error;
+  });
   t.mock.method(console, "error", (...args) => logged.push(args));
   const res = response();
   await authController.signup({
-    body: { name: "Customer", email: "lookup@example.com", password: "password" },
+    body: { name: "Customer", email: "private@example.com", password: "private-password" },
   }, res);
+
   assert.equal(res.statusCode, 500);
   assert.ok(res.body.requestId);
-  assert.doesNotMatch(JSON.stringify(logged), /lookup@example\.com|password|private connection detail/);
+  assert.deepEqual(Object.keys(res.body).sort(), ["message", "requestId"]);
+  assert.equal(res.body.message, "Signup failed");
+
+  const fields = logged[0][1];
+  assert.equal(fields.requestId, res.body.requestId);
+  assert.equal(fields.phase, "check-duplicate-email");
+  assert.equal(fields.errorName, "MongoServerError");
+  assert.equal(fields.errorCode, 8000);
+  assert.equal(fields.codeName, "AtlasError");
+  assert.deepEqual(fields.errorLabels, ["RetryableWriteError", "TransientTransactionError"]);
+  assert.equal(fields.databaseName, mongoose.connection.name || null);
+  assert.equal(fields.collectionName, "users");
+  assert.equal(fields.usesDefaultConnection, User.db === mongoose.connection);
+  assert.match(fields.errorMessage, /not authorized on swiftmove_staging to find users/);
+
+  const logText = JSON.stringify(logged);
+  assert.doesNotMatch(logText, /private@example\.com|private-password|staging-user|staging-password|cluster\.example|diagnostic-test-secret-material/);
 });

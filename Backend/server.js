@@ -5,27 +5,21 @@ const cors = require("cors");
 const mongoose = require("mongoose");
 
 const connectDB = require("./src/config/db");
+const { createCorsOptions, resolveCorsConfig } = require("./src/config/cors");
+const { startPaymentRecoveryWorker } = require("./src/controllers/payment.controller");
 
 dotenv.config();
 
 const app = express();
 
-// CORS configuration
-app.use(
-  cors({
-    origin: [
-  "https://swiftmove-movers-and-packers.vercel.app",
-  "https://swiftmove-staging.vercel.app",
-  "http://localhost:5173",
-  "https://movers-and-packers-fppm.onrender.com",
-],
-    credentials: true,
-    methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
-    allowedHeaders: ["Content-Type", "Authorization"],
-  }),
-);
+const corsEnvironment = resolveCorsConfig(process.env);
+app.use(cors(createCorsOptions(corsEnvironment)));
 
-app.use(express.json());
+app.use(express.json({
+  verify(req, res, buffer) {
+    if (req.path === "/api/payments/webhook") req.rawBody = Buffer.from(buffer);
+  },
+}));
 
 // API routes
 app.use("/api/payments", require("./src/routes/payment.routes"));
@@ -77,6 +71,10 @@ const validateStartupConfig = () => {
     );
   }
 
+  if (!process.env.RAZORPAY_WEBHOOK_SECRET) {
+    throw new Error("RAZORPAY_WEBHOOK_SECRET is required");
+  }
+
   const trustProxyHops = Number(process.env.TRUST_PROXY_HOPS || 0);
 
   if (!Number.isSafeInteger(trustProxyHops) || trustProxyHops < 0) {
@@ -84,12 +82,15 @@ const validateStartupConfig = () => {
   }
 
   app.set("trust proxy", trustProxyHops);
+
+  resolveCorsConfig(process.env);
 };
 
 const startServer = async () => {
   validateStartupConfig();
 
   await connectDB();
+  startPaymentRecoveryWorker();
 
   app.listen(PORT, () => {
     console.log(`Server running on port ${PORT}`);

@@ -19,6 +19,7 @@ const paymentOrderSchema = new mongoose.Schema(
       required: true,
       min: 0.01,
     },
+    pricingVersion: { type: Number, default: 0, min: 0 },
     currency: {
       type: String,
       required: true,
@@ -44,9 +45,10 @@ const paymentOrderSchema = new mongoose.Schema(
       type: String,
       select: false,
     },
+    reconciliationReason: { type: String, maxlength: 240 },
     status: {
       type: String,
-      enum: ["created", "paid", "failed"],
+      enum: ["created", "paid", "failed", "reconciliation_required"],
       default: "created",
       index: true,
     },

@@ -21,6 +21,11 @@ const userSchema = new mongoose.Schema(
       enum: ["user", "admin", "mover"],
       default: "user",
     },
+    isActive: {
+      type: Boolean,
+      default: true,
+      index: true,
+    },
     // Optional for customer/admin accounts. New mover signups explicitly start
     // pending; legacy movers stay fail-closed until the controlled migration.
     moverApprovalStatus: {
@@ -60,5 +65,10 @@ userSchema.pre("save", async function (next) {
 userSchema.methods.matchPassword = async function (enteredPassword) {
   return await bcrypt.compare(enteredPassword, this.password);
 };
+
+// Supports chronological admin user lists and role-scoped mover lists.
+userSchema.index({ createdAt: -1, _id: -1 });
+userSchema.index({ role: 1, createdAt: -1, _id: -1 });
+userSchema.index({ role: 1, moverApprovalStatus: 1, createdAt: -1, _id: -1 });
 
 module.exports = mongoose.model("User", userSchema);
