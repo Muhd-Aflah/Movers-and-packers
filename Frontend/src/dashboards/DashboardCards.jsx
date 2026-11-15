@@ -1,44 +1,49 @@
-import { CalendarDays, Truck, CreditCard } from "lucide-react";
-import { formatCurrency } from "../utils/currency";
+import { AlertTriangle, CalendarDays, CheckCircle2, RefreshCw, Truck } from "lucide-react";
 
-function Card({ title, value, subtitle, icon: Icon }) {
+const METRICS = [
+  { key: "totalMoves", title: "Total bookings", subtitle: "All your move requests", icon: CalendarDays, color: "blue" },
+  { key: "upcomingMoves", title: "Upcoming moves", subtitle: "Scheduled and in progress", icon: Truck, color: "sky" },
+  { key: "actionRequired", title: "Action required", subtitle: "Estimates waiting for you", icon: AlertTriangle, color: "amber" },
+  { key: "completedMoves", title: "Completed", subtitle: "Successfully delivered", icon: CheckCircle2, color: "green" },
+];
+
+const ICON_COLORS = {
+  blue: "bg-blue-100 text-blue-700 dark:bg-blue-950 dark:text-blue-300",
+  sky: "bg-sky-100 text-sky-700 dark:bg-sky-950 dark:text-sky-300",
+  amber: "bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300",
+  green: "bg-green-100 text-green-800 dark:bg-green-950 dark:text-green-300",
+};
+
+function MetricCard({ title, value, subtitle, icon: Icon, color, loading }) {
   return (
-    <div className="rounded-xl border bg-white p-4 shadow-sm">
-      <div className="flex items-center justify-between">
-        <div>
-          <p className="text-xs text-gray-500">{title}</p>
-          <p className="text-lg font-semibold text-gray-900">{value}</p>
-          <p className="text-xs text-gray-600">{subtitle}</p>
-        </div>
-        <Icon className="h-5 w-5 text-gray-700" />
+    <article className="flex min-w-0 items-center justify-between gap-3 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900 sm:p-5">
+      <div className="min-w-0">
+        <p className="text-xs font-medium text-slate-600 dark:text-slate-400 sm:text-sm">{title}</p>
+        {loading ? <div className="mt-2 h-7 w-14 animate-pulse rounded bg-slate-200 dark:bg-slate-700" aria-hidden="true" /> : <p className="mt-1 break-words text-xl font-bold tracking-tight text-slate-950 dark:text-white sm:text-2xl">{value ?? "—"}</p>}
+        <p className="mt-1 text-xs leading-5 text-slate-500 dark:text-slate-400">{subtitle}</p>
       </div>
-    </div>
+      <span className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl ${ICON_COLORS[color]}`}><Icon className="h-5 w-5" aria-hidden="true" /></span>
+    </article>
   );
 }
 
-export function DashboardCards({ stats = {} }) {
+export function DashboardCards({ stats = {}, summary = {}, statsLoading = false, summaryLoading = false }) {
+  const values = {
+    totalMoves: stats.totalMoves,
+    upcomingMoves: summary.upcomingCount,
+    actionRequired: summary.actionRequiredCount,
+    completedMoves: summary.completedCount,
+  };
   return (
-    <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-      <Card
-        title="Total Moves"
-        value={stats.totalMoves ?? 0}
-        subtitle="All your move requests"
-        icon={CalendarDays}
-      />
-      <Card
-        title="Paid Moves"
-        value={stats.paidMoves ?? 0}
-        subtitle="Moves with completed payment"
-        icon={Truck}
-      />
-      <Card
-        title="Total Spent"
-        value={Array.isArray(stats.totalSpentByCurrency) && stats.totalSpentByCurrency.length
-          ? stats.totalSpentByCurrency.map(({ currency, amount }) => formatCurrency(amount, currency)).join(" · ")
-          : "No paid transactions"}
-        subtitle="Completed payments by currency"
-        icon={CreditCard}
-      />
-    </div>
+    <section aria-label="Booking statistics" className="grid min-w-0 grid-cols-2 gap-3 xl:grid-cols-4 sm:gap-4">
+      {METRICS.map((metric) => (
+        <MetricCard
+          key={metric.key}
+          {...metric}
+          value={values[metric.key]}
+          loading={metric.key === "totalMoves" ? statsLoading : summaryLoading}
+        />
+      ))}
+    </section>
   );
 }
