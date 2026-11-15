@@ -8,6 +8,7 @@ const {
   normalizeBookingInput,
 } = require("../services/pricing.service");
 const { normalizeBookingMetadata, normalizeMoveDate } = require("../services/bookingMetadata.service");
+const { publishMoveEventSafely } = require("../services/notification.service");
 
 const customerMove = (move) => {
   const result = move.toObject ? move.toObject() : { ...move };
@@ -72,6 +73,22 @@ const createMove = async (req, res) => {
     });
 
     const savedMove = await newMove.save();
+    await publishMoveEventSafely({
+      move: savedMove,
+      eventKey: `booking:created:${savedMove._id}`,
+      events: ["booking:created"],
+      notification: {
+        type: "booking:created",
+        title: "Booking submitted",
+        message: "Your move request was submitted.",
+        sourceTrackingEvent: "booking_requested",
+      },
+      adminNotification: {
+        type: "booking:created",
+        title: "New booking",
+        message: "A customer submitted a new move request.",
+      },
+    });
     return res.status(201).json(savedMove);
   } catch (error) {
     if (error.statusCode) {
@@ -173,6 +190,21 @@ const acceptMovePricing = async (req, res) => {
       { new: true, runValidators: true },
     );
     if (!updated) return res.status(409).json({ message: "The estimate changed; refresh and review it again" });
+    await publishMoveEventSafely({
+      move: updated,
+      eventKey: `estimate:accepted:${updated._id}:${updated.pricingVersion}`,
+      events: ["estimate:accepted", "booking:updated"],
+      notification: {
+        type: "estimate:accepted",
+        title: "Estimate accepted",
+        message: "Your estimate was accepted.",
+      },
+      adminNotification: {
+        type: "estimate:accepted",
+        title: "Estimate accepted",
+        message: "A customer accepted a move estimate.",
+      },
+    });
     return res.json(customerMove(updated));
   } catch {
     return res.status(500).json({ message: "Could not accept this estimate" });

@@ -1,6 +1,7 @@
 const Move = require("../models/move.model");
 const mongoose = require("mongoose");
 const { parsePagination, findPage, sendPaginated } = require("../utils/pagination");
+const { publishMoveEventSafely } = require("../services/notification.service");
 
 // GET /api/provider/current-job
 exports.getCurrentJob = async (req, res) => {
@@ -74,6 +75,25 @@ exports.acceptMove = async (req, res) => {
     if (!move) {
       return res.status(409).json({ message: "Move is unavailable or already assigned" });
     }
+
+    await publishMoveEventSafely({
+      move,
+      eventKey: `booking:status_changed:${move._id}:accepted`,
+      events: ["booking:status_changed", "booking:updated"],
+      mover: true,
+      notification: {
+        type: "booking:status_changed",
+        title: "Booking confirmed",
+        message: "A mover accepted your move request.",
+        sourceTrackingEvent: "booking_confirmed",
+      },
+      adminNotification: {
+        type: "booking:status_changed",
+        title: "Mover assigned",
+        message: "A mover accepted a customer move request.",
+        sourceTrackingEvent: "booking_confirmed",
+      },
+    });
 
     res.json({ message: "Move accepted successfully", move });
   } catch (error) {
@@ -190,6 +210,30 @@ exports.updateMoveStatus = async (req, res) => {
     if (!updatedMove) {
       return res.status(409).json({ message: "Move status changed; refresh and try again" });
     }
+
+    const copy = {
+      pickup_started: ["Pickup started", "Pickup and packing have started."],
+      in_transit: ["Move in transit", "Your move is in transit."],
+      delivery_completed: ["Delivery completed", "Delivery has been completed."],
+    }[event];
+    await publishMoveEventSafely({
+      move: updatedMove,
+      eventKey: `booking:status_changed:${updatedMove._id}:${event}`,
+      events: ["booking:status_changed", "booking:updated"],
+      mover: true,
+      notification: {
+        type: "booking:status_changed",
+        title: copy[0],
+        message: copy[1],
+        sourceTrackingEvent: event,
+      },
+      adminNotification: {
+        type: "booking:status_changed",
+        title: copy[0],
+        message: "A mover updated a move milestone.",
+        sourceTrackingEvent: event,
+      },
+    });
 
     res.json({ message: "Move status updated successfully", move: updatedMove });
   } catch (error) {

@@ -3,10 +3,13 @@ const express = require("express");
 const dotenv = require("dotenv");
 const cors = require("cors");
 const mongoose = require("mongoose");
+const { createServer } = require("http");
 
 const connectDB = require("./src/config/db");
 const { createCorsOptions, resolveCorsConfig } = require("./src/config/cors");
 const { startPaymentRecoveryWorker } = require("./src/controllers/payment.controller");
+const { initializeSocketServer } = require("./src/realtime/socket");
+const Notification = require("./src/models/notification.model");
 
 dotenv.config();
 
@@ -14,6 +17,8 @@ const app = express();
 
 const corsEnvironment = resolveCorsConfig(process.env);
 app.use(cors(createCorsOptions(corsEnvironment)));
+const httpServer = createServer(app);
+initializeSocketServer(httpServer, corsEnvironment);
 
 app.use(express.json({
   verify(req, res, buffer) {
@@ -91,9 +96,10 @@ const startServer = async () => {
   validateStartupConfig();
 
   await connectDB();
+  await Notification.init();
   startPaymentRecoveryWorker();
 
-  app.listen(PORT, () => {
+  httpServer.listen(PORT, () => {
     console.log(`Server running on port ${PORT}`);
   });
 };

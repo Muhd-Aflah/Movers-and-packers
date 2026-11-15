@@ -6,6 +6,7 @@ const PaymentReconciliation = require("../models/paymentReconciliation.model");
 const PaymentProcessing = require("../models/paymentProcessing.model");
 const PaymentWebhookEvent = require("../models/paymentWebhookEvent.model");
 const PaymentOrderIntent = require("../models/paymentOrderIntent.model");
+const { publishPaymentSuccessSafely } = require("./notification.service");
 
 const RETRYABLE_CAPTURE_ERROR = "CAPTURE_PROCESSING_RETRY";
 const PAYMENT_LOCK_MS = 5 * 60 * 1000;
@@ -408,6 +409,7 @@ const processCapturedPayment = async ({ paymentOrder, gatewayOrder, gatewayPayme
       return { status: "reconciliation_required", reconciliation };
     }
     await finishProcessing({ paymentId, lockToken: processingToken, eventId, status: "credited" });
+    await publishPaymentSuccessSafely({ move: updatedMove, paymentId });
     return { status: "paid", payment: savedPayment };
   } catch (error) {
     try {

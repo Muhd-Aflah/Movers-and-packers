@@ -6,6 +6,7 @@ const PaymentOrderIntent = require("../models/paymentOrderIntent.model");
 const PaymentReconciliation = require("../models/paymentReconciliation.model");
 const { buildManualPricingSnapshot } = require("../services/manualPricing.service");
 const { parsePagination, findPage, sendPaginated } = require("../utils/pagination");
+const { publishMoveEventSafely } = require("../services/notification.service");
 
 const REVISION_LOCK_MS = 2 * 60 * 1000;
 
@@ -132,6 +133,19 @@ exports.submitPackingEstimate = async (req, res) => {
         { new: true, runValidators: true },
       );
       if (!updated) return res.status(409).json({ message: "The estimate changed concurrently; refresh and retry" });
+      const estimateCreated = previousVersion === 0;
+      await publishMoveEventSafely({
+        move: updated,
+        eventKey: `${estimateCreated ? "estimate:created" : "estimate:updated"}:${updated._id}:${updatedVersion}`,
+        events: [estimateCreated ? "estimate:created" : "estimate:updated", "booking:updated"],
+        notification: {
+          type: estimateCreated ? "estimate:created" : "estimate:updated",
+          title: estimateCreated ? "Estimate ready" : "Estimate updated",
+          message: estimateCreated
+            ? "An administrator prepared an estimate for your move. Review and accept it to continue."
+            : "An administrator updated your estimate. Review and accept the current version to continue.",
+        },
+      });
       return res.json(updated);
     } finally {
       await Move.updateOne(

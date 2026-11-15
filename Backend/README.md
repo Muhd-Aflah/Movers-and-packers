@@ -70,6 +70,35 @@ the staging backend even when `NODE_ENV=production`; set the matching exact
 cross-environment origins. Credentials are enabled for the exact allowlist and
 the CORS middleware handles OPTIONS preflight.
 
+Socket.IO shares the same HTTP server and `APP_ENV`/`CORS_ORIGINS` allowlist.
+Its handshake requires the existing HS256 JWT and reloads the current User
+role/active state from MongoDB; pending movers are refused. The server assigns
+a private `user:<id>` room and assigns the `role:admin` room only to current
+admins. Clients cannot request rooms. Event payloads contain move identifiers
+and status/version metadata only; clients refetch authoritative records through
+the protected REST API. The server disconnects sockets at token expiry. There
+is no socket secret or separate backend port.
+
+Configure frontend `VITE_SOCKET_URL` to the backend HTTPS URL, such as
+`https://movers-and-packers-1.onrender.com` for staging. When unset, the
+frontend uses `VITE_API_URL`. Socket.IO starts with HTTP long-polling and
+upgrades to WebSocket when available; HTTPS deployments use WSS for the
+upgraded connection. Staging CORS permits the staging Vercel origin and
+`https://localhost` for the Capacitor WebView. Production CORS remains
+restricted to its currently approved Vercel origin; production Android sockets
+require a separately approved origin change.
+
+Notifications are stored in the `Notification` collection with a unique
+`(recipient, eventKey)` index. The backend waits for `Notification.init()`
+before listening so this deduplication index is ready before event writes. Run
+the service database user with permission to create the new collection/index,
+or provision the schema and index through the team's database change process
+before deployment. Existing tracking-event notifications remain readable as
+read-only historical entries. Authenticated notification routes include
+customer, approved mover, and admin feeds plus
+`PATCH /api/notifications/:id/read`; each read update is constrained to the
+authenticated recipient.
+
 Login, signup, and public quote requests have process-local rate limits. When the
 backend is behind Render's proxy, configure `TRUST_PROXY_HOPS` correctly so
 requests are limited by the client address. These limits are per backend process;
@@ -166,6 +195,10 @@ All protected endpoints require `Authorization: Bearer <token>`.
 | `POST` | `/api/payments/create-order` | Authenticated; body contains owned `moveId` |
 | `POST` | `/api/payments/verify` | Authenticated |
 | `POST` | `/api/payments/webhook` | Public endpoint; requires a valid Razorpay signature and event ID |
+| `GET` | `/api/notifications/customer` | Customer; recent persisted and legacy move notifications |
+| `GET` | `/api/notifications/mover` | Approved mover; recent persisted and legacy move notifications |
+| `GET` | `/api/notifications/admin` | Admin; recent persisted notifications |
+| `PATCH` | `/api/notifications/:id/read` | Authenticated recipient; mark own notification read |
 | `GET` | `/api/payments/my` | Authenticated |
 | `GET` | `/api/provider/current-job` | Approved mover |
 | `GET` | `/api/provider/available-moves` | Approved mover; only paid, priced, unassigned moves |

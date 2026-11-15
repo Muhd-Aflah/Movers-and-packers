@@ -11,6 +11,7 @@ const PaymentWebhookEvent = require("../models/paymentWebhookEvent.model");
 const PaymentProcessing = require("../models/paymentProcessing.model");
 const { processCapturedPayment, recoverPendingCapturedPayments, RETRYABLE_CAPTURE_ERROR, toMinorUnits } = require("../services/capturedPayment.service");
 const { parsePagination, findPage, sendPaginated } = require("../utils/pagination");
+const { publishMoveEventSafely } = require("../services/notification.service");
 
 const PAYMENT_ORDER_LOCK_MS = 5 * 60 * 1000;
 const pricingWasAccepted = (move) => move.pricingAcceptanceRequired !== true ||
@@ -277,6 +278,22 @@ exports.createOrder = async (req, res) => {
       { _id: intent._id, status: "gateway_created", razorpayOrderId: order.id },
       { $set: { status: "completed", paymentOrder: localOrder._id } },
     );
+
+    await publishMoveEventSafely({
+      move: lockedMove,
+      eventKey: `payment:initiated:${intent._id}`,
+      events: ["payment:initiated"],
+      notification: {
+        type: "payment:initiated",
+        title: "Payment ready",
+        message: "A payment order is ready for your accepted estimate.",
+      },
+      adminNotification: {
+        type: "payment:initiated",
+        title: "Payment started",
+        message: "A customer started payment for a move.",
+      },
+    });
 
     return res.status(201).json(paymentOrderResponse(order));
   } catch (error) {

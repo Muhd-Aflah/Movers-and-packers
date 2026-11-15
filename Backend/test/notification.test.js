@@ -93,7 +93,7 @@ test("failed or unverified payment activity does not produce a payment notificat
   assert.deepEqual(await getRecentNotifications({ userId: customerId.toString(), role: "user" }), []);
 });
 
-test("notification API returns only authenticated customer or mover scoped data", async (t) => {
+test("notification API returns data scoped to the authenticated customer or admin", async (t) => {
   const customerId = new mongoose.Types.ObjectId();
   let queryFilter;
   t.mock.method(Move, "find", (filter) => { queryFilter = filter; return listQuery([]); });
@@ -104,14 +104,16 @@ test("notification API returns only authenticated customer or mover scoped data"
 
   const adminResponse = response();
   await getMyNotifications({ user: { id: customerId.toString(), role: "admin" } }, adminResponse);
-  assert.equal(adminResponse.statusCode, 403);
-  assert.equal(queryFilter.user, customerId.toString(), "admin requests never query customer notification data");
+  assert.equal(adminResponse.statusCode, 200);
+  assert.deepEqual(adminResponse.body, { notifications: [] });
+  assert.equal(queryFilter.user, customerId.toString(), "admin requests never query customer move data");
 });
 
 test("notification routes enforce customer and approved-mover roles", () => {
   const router = require("../src/routes/notification.routes");
   const customerRoute = router.stack.find((layer) => layer.route?.path === "/customer").route;
   const moverRoute = router.stack.find((layer) => layer.route?.path === "/mover").route;
+  const adminRoute = router.stack.find((layer) => layer.route?.path === "/admin").route;
   assert.equal(customerRoute.stack[0].name, "protect");
   assert.equal(customerRoute.stack.length, 3);
   assert.equal(customerRoute.stack.at(-1).handle, getMyNotifications);
@@ -119,6 +121,9 @@ test("notification routes enforce customer and approved-mover roles", () => {
   assert.equal(moverRoute.stack.length, 4);
   assert.equal(moverRoute.stack[2].handle, require("../src/middleware/role.middleware").requireApprovedMover);
   assert.equal(moverRoute.stack.at(-1).handle, getMyNotifications);
+  assert.equal(adminRoute.stack[0].name, "protect");
+  assert.equal(adminRoute.stack[1].name, "<anonymous>");
+  assert.equal(adminRoute.stack.at(-1).handle, getMyNotifications);
 
   const customerOnMoverRoute = response();
   moverRoute.stack[1].handle({ user: { role: "user" } }, customerOnMoverRoute, () => assert.fail("customer must not enter mover notifications"));
