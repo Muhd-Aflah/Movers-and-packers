@@ -166,6 +166,78 @@ test("admin approval cannot target a customer account", async (t) => {
   assert.equal(res.statusCode, 404);
 });
 
+test("admin mover profile endpoint returns the selected mover fields without changing approval", async (t) => {
+  const moverId = new mongoose.Types.ObjectId();
+  const reviewerId = new mongoose.Types.ObjectId();
+  const mover = {
+    _id: moverId,
+    name: "Mover Example",
+    email: "mover@example.com",
+    phone: "1234567890",
+    role: "mover",
+    moverApprovalStatus: "pending",
+    moverReviewedBy: reviewerId,
+    createdAt: new Date("2026-01-02T00:00:00.000Z"),
+    toObject() {
+      return {
+        _id: this._id,
+        name: this.name,
+        email: this.email,
+        phone: this.phone,
+        role: this.role,
+        moverApprovalStatus: this.moverApprovalStatus,
+        moverReviewedBy: this.moverReviewedBy,
+        createdAt: this.createdAt,
+      };
+    },
+  };
+  let selectedFields = "";
+  let populated;
+  t.mock.method(User, "findOne", (filter) => {
+    assert.deepEqual(filter, { _id: moverId.toString(), role: "mover" });
+    const result = query(mover);
+    result.select = (fields) => { selectedFields = fields; return result; };
+    result.populate = (...args) => { populated = args; return result; };
+    return result;
+  });
+
+  const res = response();
+  await adminController.getMoverApplication({ params: { id: moverId.toString() } }, res);
+  assert.equal(res.statusCode, 200);
+  assert.equal(res.body._id.toString(), moverId.toString());
+  assert.equal(res.body.name, "Mover Example");
+  assert.equal(res.body.moverApprovalStatus, "pending");
+  assert.equal(Object.hasOwn(res.body, "password"), false);
+  assert.match(selectedFields, /name email phone role moverApprovalStatus/);
+  assert.doesNotMatch(selectedFields, /password/);
+  assert.deepEqual(populated, ["moverReviewedBy", "name email"]);
+  assert.equal(mover.moverApprovalStatus, "pending");
+});
+
+test("admin mover profile endpoint rejects invalid IDs and reports missing movers", async (t) => {
+  let lookupCount = 0;
+  t.mock.method(User, "findOne", () => { lookupCount += 1; return query(null); });
+
+  const invalid = response();
+  await adminController.getMoverApplication({ params: { id: "bad-id" } }, invalid);
+  assert.equal(invalid.statusCode, 400);
+  assert.equal(lookupCount, 0);
+
+  const missing = response();
+  await adminController.getMoverApplication({ params: { id: new mongoose.Types.ObjectId().toString() } }, missing);
+  assert.equal(missing.statusCode, 404);
+  assert.deepEqual(missing.body, { message: "Mover application not found" });
+});
+
+test("admin mover profile endpoint returns a generic error when the lookup fails", async (t) => {
+  t.mock.method(User, "findOne", () => { throw new Error("private database detail"); });
+  const res = response();
+  await adminController.getMoverApplication({ params: { id: new mongoose.Types.ObjectId().toString() } }, res);
+  assert.equal(res.statusCode, 500);
+  assert.deepEqual(res.body, { message: "Failed to fetch mover application" });
+  assert.doesNotMatch(JSON.stringify(res.body), /private database detail/);
+});
+
 test("migration dry-run only reports movers and never writes; apply leaves jobs and reviewed accounts alone", async () => {
   const migration = require("../scripts/migrateMoversToPending");
   const legacyMover = { _id: new mongoose.Types.ObjectId() };
