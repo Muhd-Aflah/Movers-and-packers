@@ -15,6 +15,12 @@ const { parsePagination, findPage, sendPaginated } = require("../utils/paginatio
 const PAYMENT_ORDER_LOCK_MS = 5 * 60 * 1000;
 const pricingWasAccepted = (move) => move.pricingAcceptanceRequired !== true ||
   Boolean(move.pricingAcceptedAt && move.acceptedPricingVersion === move.pricingVersion);
+const paymentOrderResponse = (order) => ({
+  key_id: process.env.RAZORPAY_KEY_ID,
+  order_id: order.id,
+  amount: order.amount,
+  currency: order.currency,
+});
 
 let razorpayClient;
 const getRazorpay = () => {
@@ -143,7 +149,7 @@ exports.createOrder = async (req, res) => {
           (Number.isSafeInteger(priorOrder.pricingVersion) ? priorOrder.pricingVersion : 0) !== pricingVersion) {
           return res.status(409).json({ code: "OBSOLETE_PAYMENT_ORDER_EXISTS", message: "An existing Razorpay order may still be payable. Resolve it before creating an order for this quote." });
         }
-        return res.json({ order_id: existingOrder.id, amount: existingOrder.amount, currency: existingOrder.currency });
+        return res.json(paymentOrderResponse(existingOrder));
       }
       return res.status(409).json({ code: "PAYMENT_ORDER_STATE_UNKNOWN", message: "The existing Razorpay order must be reconciled before another order can be created." });
     }
@@ -175,7 +181,7 @@ exports.createOrder = async (req, res) => {
             { _id: unresolvedIntent._id, razorpayOrderId: existingOrder.id },
             { $set: { status: "completed", paymentOrder: paymentOrder._id } },
           );
-          return res.json({ order_id: existingOrder.id, amount: existingOrder.amount, currency: existingOrder.currency });
+          return res.json(paymentOrderResponse(existingOrder));
         }
       }
       return res.status(409).json({ code: "ORDER_INTENT_RECONCILIATION_REQUIRED", message: "A prior payment-order attempt is unresolved. Do not retry payment; contact support." });
@@ -272,7 +278,7 @@ exports.createOrder = async (req, res) => {
       { $set: { status: "completed", paymentOrder: localOrder._id } },
     );
 
-    return res.status(201).json({ order_id: order.id, amount: order.amount, currency: order.currency });
+    return res.status(201).json(paymentOrderResponse(order));
   } catch (error) {
     if (moveId && lockToken) {
       try {

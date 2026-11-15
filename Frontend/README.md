@@ -5,12 +5,15 @@ React and Vite frontend for SwiftMove.
 ## Development
 
 From this directory, install the dependencies and run `npm run dev`. Create a local
-`.env` file with the backend URL and Razorpay's public checkout key:
+`.env` file with the backend URL:
 
 ```text
 VITE_API_URL=http://localhost:5000
-VITE_RAZORPAY_KEY_ID=your_razorpay_key_id
 ```
+
+The payment-order endpoint returns Razorpay's public key ID alongside its
+server-created order details, so checkout configuration stays aligned with the
+backend gateway credentials.
 
 The Geoapify key and all pricing rates belong on the backend. The browser requests
 a quote from `/api/pricing/quote`; the backend resolves the addresses and calculates

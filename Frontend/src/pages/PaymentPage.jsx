@@ -1,8 +1,9 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { acceptMovePricing, getMove } from "../services/booking.service";
 import { createOrder, verifyPayment } from "../services/payment.service";
 import { formatMoveDate } from "../utils/moveDate";
+import { createPaymentOrderGuard, requestPaymentOrder } from "../utils/paymentCheckout";
 
 const currency = (amount, code) =>
   new Intl.NumberFormat(undefined, { style: "currency", currency: code }).format(amount);
@@ -16,6 +17,8 @@ export function PaymentPage() {
   const [accepting, setAccepting] = useState(false);
   const [razorpayReady, setRazorpayReady] = useState(Boolean(window.Razorpay));
   const [error, setError] = useState("");
+  const paymentOrderGuard = useRef(null);
+  if (!paymentOrderGuard.current) paymentOrderGuard.current = createPaymentOrderGuard();
 
   useEffect(() => {
     let active = true;
@@ -59,14 +62,15 @@ export function PaymentPage() {
     setError("");
 
     try {
-      const order = await createOrder(move._id);
-      const key = import.meta.env.VITE_RAZORPAY_KEY_ID;
-      if (!key || !order.order_id || !Number.isSafeInteger(order.amount) || !order.currency) {
-        throw new Error("Payment order details are incomplete");
-      }
+      const order = await requestPaymentOrder(
+        paymentOrderGuard.current,
+        () => createOrder(move._id),
+        move,
+      );
+      if (!order) return;
 
       const checkout = new window.Razorpay({
-        key,
+        key: order.key,
         order_id: order.order_id,
         amount: order.amount,
         currency: order.currency,
@@ -85,21 +89,27 @@ export function PaymentPage() {
           } catch (verificationError) {
             setError(verificationError.message || "Payment verification failed. Do not retry until payment status is checked.");
           } finally {
+            paymentOrderGuard.current.release();
             setLoading(false);
           }
         },
         modal: {
-          ondismiss: () => setLoading(false),
+          ondismiss: () => {
+            paymentOrderGuard.current.release();
+            setLoading(false);
+          },
         },
       });
 
       checkout.on("payment.failed", () => {
         setError("Payment failed or was not captured. You can try again.");
+        paymentOrderGuard.current.release();
         setLoading(false);
       });
       checkout.open();
     } catch (requestError) {
       setError(requestError.message || "Could not start payment");
+      paymentOrderGuard.current.release();
       setLoading(false);
     }
   };

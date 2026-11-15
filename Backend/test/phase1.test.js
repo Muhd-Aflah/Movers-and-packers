@@ -280,7 +280,14 @@ test("repeated payment-order requests reuse the saved Razorpay order and amount"
 
   assert.equal(first.statusCode, 201);
   assert.equal(second.statusCode, 200);
+  assert.deepEqual(first.body, {
+    key_id: "test-key-id",
+    order_id: second.body.order_id,
+    amount: 1234,
+    currency: "USD",
+  });
   assert.equal(first.body.order_id, second.body.order_id);
+  assert.equal(second.body.key_id, "test-key-id");
   assert.equal(first.body.amount, 1234);
   assert.equal(createOrderCalls, 1);
 });
