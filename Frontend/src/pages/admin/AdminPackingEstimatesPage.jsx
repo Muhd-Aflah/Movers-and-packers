@@ -3,6 +3,7 @@ import { adminService } from "../../services/admin.service";
 import { formatCurrency } from "../../utils/currency";
 import { PaginationControls } from "../../components/ui/PaginationControls";
 import { usePaginatedData } from "../../hooks/usePaginatedData";
+import { runEstimateSubmission } from "./packingEstimateWorkflow";
 
 const emptyEstimate = (move) => ({
   materials: [{ description: "", quantity: "1", unit: "", unitRate: "" }],
@@ -17,10 +18,11 @@ const emptyEstimate = (move) => ({
 export function AdminPackingEstimatesPage() {
   const [forms, setForms] = useState({});
   const [savingId, setSavingId] = useState("");
+  const [actionError, setActionError] = useState("");
   const [notice, setNotice] = useState("");
 
   const fetchPage = useCallback((page) => adminService.getPendingPackingEstimatesPage(page), []);
-  const { items: moves, setItems: setMoves, loading, error, setError, page, pagination, setPage, reload: loadMoves } = usePaginatedData(fetchPage);
+  const { items: moves, setItems: setMoves, loading, error, page, pagination, setPage, reload: loadMoves } = usePaginatedData(fetchPage);
 
   useEffect(() => {
     setForms((current) => {
@@ -38,37 +40,25 @@ export function AdminPackingEstimatesPage() {
     ...form, labor: { ...form.labor, [key]: { ...form.labor[key], [field]: value } },
   }));
 
-  const submitEstimate = async (move) => {
-    const form = forms[move._id];
-    if (!form?.materials?.length || form.materials.some((line) => !line.description.trim() || !line.unit.trim() || line.quantity === "" || line.unitRate === "")) {
-      setError("Enter each material description, quantity, unit, and unit rate."); return;
-    }
-    if (Object.values(form.labor).some((line) => line.workers === "" || line.ratePerWorker === "")) {
-      setError("Enter a worker count and rate for packing, loading, and unloading."); return;
-    }
-    if (form.additionalCharges.some((line) => !line.description.trim() || line.amount === "")) {
-      setError("Complete or remove each additional charge line."); return;
-    }
-    setSavingId(move._id); setError(""); setNotice("");
-    try {
-      const updated = await adminService.savePackingEstimate(move._id, {
-        materials: form.materials.map((line) => ({ ...line, quantity: Number(line.quantity), unitRate: Number(line.unitRate) })),
-        labor: Object.fromEntries(Object.entries(form.labor).map(([key, line]) => [key, { workers: Number(line.workers), ratePerWorker: Number(line.ratePerWorker) }])),
-        additionalCharges: form.additionalCharges.map((line) => ({ ...line, amount: Number(line.amount) })),
-      });
-      setMoves((current) => current.map((item) => item._id === updated._id ? { ...item, ...updated, user: item.user } : item));
-      setNotice("Estimate saved. The customer must accept this version before payment.");
-    } catch (requestError) { setError(requestError.message || "Could not save packing estimate"); }
-    finally { setSavingId(""); }
-  };
+  const submitEstimate = (move) => runEstimateSubmission({
+    moveId: move._id,
+    form: forms[move._id] || emptyEstimate(move),
+    setSavingId,
+    setError: setActionError,
+    setNotice,
+    saveEstimate: adminService.savePackingEstimate,
+    updateMove: (updated) => setMoves((current) => current.map((item) => item._id === updated._id ? { ...item, ...updated, user: item.user } : item)),
+  });
+
+  const visibleError = actionError || error;
 
   if (loading && !pagination) return <div className="p-6">Loading pending estimates...</div>;
   return (
     <div className="space-y-5 p-6">
       <div className="flex items-center justify-between gap-4"><div><h1 className="text-xl font-bold">Manual Packing Estimates</h1><p className="text-sm text-gray-600">Only admins can submit estimates. The backend calculates every line and total.</p></div><button onClick={loadMoves} className="rounded border px-3 py-2">Refresh</button></div>
-      {error && <p role="alert" className="rounded bg-red-50 p-3 text-red-700">{error}</p>}
+      {visibleError && <p role="alert" className="rounded bg-red-50 p-3 text-red-700">{visibleError}</p>}
       {notice && <p role="status" className="rounded bg-green-50 p-3 text-green-700">{notice}</p>}
-      {!error && !moves.length && <p>{loading ? "Loading estimates..." : "No moves are awaiting a packing estimate or customer acceptance."}</p>}
+      {!visibleError && !moves.length && <p>{loading ? "Loading estimates..." : "No moves are awaiting a packing estimate or customer acceptance."}</p>}
       {moves.map((move) => {
         const form = forms[move._id] || emptyEstimate(move);
         const draft = move.pricingDraft;
