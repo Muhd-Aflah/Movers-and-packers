@@ -72,5 +72,5 @@ export function usePaginatedData(fetchPage, pageSize = 10) {
     return () => { requestId.current += 1; };
   }, [reload]);
 
-  return { page, setPage, items, setItems, pagination, loading, error, reload };
+  return { page, setPage, items, setItems, pagination, loading, error, setError, reload };
 }

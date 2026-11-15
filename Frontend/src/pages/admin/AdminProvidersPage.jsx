@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { adminService } from "../../services/admin.service";
 import { PaginationControls } from "../../components/ui/PaginationControls";
 import { usePaginatedData } from "../../hooks/usePaginatedData";
+import { getMoverDecisionButtonState, runMoverDecision } from "./moverDecision";
 
 const tabs = [
   { id: "pending", label: "Pending applications" },
@@ -12,7 +13,9 @@ const tabs = [
 export function AdminProvidersPage() {
   const [status, setStatus] = useState("pending");
   const [reasons, setReasons] = useState({});
-  const [busyId, setBusyId] = useState(null);
+  const [approvingMoverId, setApprovingMoverId] = useState(null);
+  const [rejectingMoverId, setRejectingMoverId] = useState(null);
+  const [actionError, setActionError] = useState("");
   const [message, setMessage] = useState("");
   const [selectedMover, setSelectedMover] = useState(null);
   const [detailsOpen, setDetailsOpen] = useState(false);
@@ -25,7 +28,7 @@ export function AdminProvidersPage() {
   const detailsTriggerRef = useRef(null);
 
   const fetchPage = useCallback((page) => adminService.getMoversPage(status, page), [status]);
-  const { items: movers, loading, error, setError, page, pagination, setPage, reload: loadMovers } = usePaginatedData(fetchPage);
+  const { items: movers, loading, error, page, pagination, setPage, reload: loadMovers } = usePaginatedData(fetchPage);
 
   useEffect(() => {
     if (!detailsOpen) return undefined;
@@ -67,40 +70,39 @@ export function AdminProvidersPage() {
   };
 
   const approve = async (mover) => {
+    if (approvingMoverId === mover._id || rejectingMoverId === mover._id) return;
     if (!window.confirm(`Approve ${mover.name} as a SwiftMove mover?`)) return;
-    setBusyId(mover._id);
-    setError("");
-    setMessage("");
-    try {
-      const result = await adminService.approveMover(mover._id);
-      setMessage(result.message || "Mover approved");
-      await loadMovers();
-    } catch (requestError) {
-      setError(requestError.message || "Could not approve mover");
-    } finally {
-      setBusyId(null);
-    }
+    await runMoverDecision({
+      moverId: mover._id,
+      setLoadingId: setApprovingMoverId,
+      setError: setActionError,
+      setMessage,
+      request: () => adminService.approveMover(mover._id),
+      refresh: loadMovers,
+      successFallback: "Mover approved",
+      errorFallback: "Could not approve mover",
+    });
   };
 
   const reject = async (mover) => {
+    if (approvingMoverId === mover._id || rejectingMoverId === mover._id) return;
     const reason = (reasons[mover._id] || "").trim();
     if (!reason) {
-      setError(`Enter a rejection reason for ${mover.name}.`);
+      setActionError(`Enter a rejection reason for ${mover.name}.`);
+      setMessage("");
       return;
     }
     if (!window.confirm(`Reject ${mover.name}'s mover application?`)) return;
-    setBusyId(mover._id);
-    setError("");
-    setMessage("");
-    try {
-      const result = await adminService.rejectMover(mover._id, reason);
-      setMessage(result.message || "Mover application rejected");
-      await loadMovers();
-    } catch (requestError) {
-      setError(requestError.message || "Could not reject mover");
-    } finally {
-      setBusyId(null);
-    }
+    await runMoverDecision({
+      moverId: mover._id,
+      setLoadingId: setRejectingMoverId,
+      setError: setActionError,
+      setMessage,
+      request: () => adminService.rejectMover(mover._id, reason),
+      refresh: loadMovers,
+      successFallback: "Mover application rejected",
+      errorFallback: "Could not reject mover",
+    });
   };
 
   const viewDetails = async (mover) => {
@@ -144,7 +146,7 @@ export function AdminProvidersPage() {
             type="button"
             role="tab"
             aria-selected={status === tab.id}
-            onClick={() => { setStatus(tab.id); setPage(1); setMessage(""); setError(""); }}
+            onClick={() => { setStatus(tab.id); setPage(1); setMessage(""); setActionError(""); }}
             className={`rounded px-3 py-2 text-sm font-medium ${status === tab.id ? "bg-indigo-700 text-white" : "bg-gray-100 text-gray-700 hover:bg-gray-200"}`}
           >
             {tab.label}
@@ -152,7 +154,7 @@ export function AdminProvidersPage() {
         ))}
       </div>
 
-      {error && <p role="alert" className="mb-4 rounded bg-red-50 p-3 text-sm text-red-700">{error}</p>}
+      {(actionError || error) && <p role="alert" className="mb-4 rounded bg-red-50 p-3 text-sm text-red-700">{actionError || error}</p>}
       {message && <p role="status" className="mb-4 rounded bg-green-50 p-3 text-sm text-green-700">{message}</p>}
       {loading ? (
         <p className="py-6 text-sm text-gray-500">Loading mover accounts…</p>
@@ -160,7 +162,10 @@ export function AdminProvidersPage() {
         <p className="py-6 text-sm text-gray-500">No {status} mover accounts.</p>
       ) : (
         <div className="space-y-4">
-          {movers.map((mover) => (
+          {movers.map((mover) => {
+            const approveButton = getMoverDecisionButtonState("approve", mover._id, approvingMoverId, rejectingMoverId);
+            const rejectButton = getMoverDecisionButtonState("reject", mover._id, approvingMoverId, rejectingMoverId);
+            return (
             <article key={mover._id} className="rounded-lg border p-4">
               <div className="flex flex-wrap items-start justify-between gap-3">
                 <div>
@@ -204,17 +209,18 @@ export function AdminProvidersPage() {
                     placeholder="Explain why this application cannot be approved"
                   />
                   <div className="flex flex-wrap gap-2">
-                    <button type="button" disabled={busyId === mover._id} onClick={() => approve(mover)} className="rounded bg-green-700 px-4 py-2 text-sm font-medium text-white disabled:opacity-50">
-                      {busyId === mover._id ? "Saving…" : "Approve mover"}
+                    <button type="button" disabled={approveButton.disabled} onClick={() => approve(mover)} className="rounded bg-green-700 px-4 py-2 text-sm font-medium text-white disabled:opacity-50">
+                      {approveButton.label}
                     </button>
-                    <button type="button" disabled={busyId === mover._id} onClick={() => reject(mover)} className="rounded bg-red-700 px-4 py-2 text-sm font-medium text-white disabled:opacity-50">
-                      Reject application
+                    <button type="button" disabled={rejectButton.disabled} onClick={() => reject(mover)} className="rounded bg-red-700 px-4 py-2 text-sm font-medium text-white disabled:opacity-50">
+                      {rejectButton.label}
                     </button>
                   </div>
                 </div>
               )}
             </article>
-          ))}
+            );
+          })}
         </div>
       )}
 
