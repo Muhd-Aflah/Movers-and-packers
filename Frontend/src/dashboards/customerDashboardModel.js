@@ -3,6 +3,22 @@ const terminalStatuses = new Set(["completed", "cancelled"]);
 export const hasEstimateAction = (move) =>
   move?.pricingStatus === "pending_acceptance" && move?.pricingAcceptanceRequired === true;
 
+const payableBookingStatuses = new Set(["requested", "accepted"]);
+
+// These fields come from the saved backend move. The create-order endpoint
+// remains authoritative and revalidates ownership, price, acceptance, and paid state.
+export const canPayForMove = (move) => {
+  if (!move?._id || move.paid === true || !payableBookingStatuses.has(move.status)) return false;
+  if (move.pricingStatus !== "priced" || !Number.isFinite(move.price) || move.price <= 0) return false;
+  if (typeof move.pricing?.currency !== "string" || !move.pricing.currency.trim()) return false;
+  if (move.pricingAcceptanceRequired === true) {
+    return Boolean(move.pricingAcceptedAt) &&
+      Number.isSafeInteger(move.pricingVersion) &&
+      move.acceptedPricingVersion === move.pricingVersion;
+  }
+  return true;
+};
+
 const indiaDateKey = (value) => {
   if (!value) return "";
   const date = value instanceof Date ? value : new Date(value);

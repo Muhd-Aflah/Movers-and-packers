@@ -8,7 +8,7 @@ import { formatMoveDate } from "../utils/moveDate";
 import { getServiceModeLabel } from "../utils/serviceMode";
 import { PaginationControls } from "../components/ui/PaginationControls";
 import { MoveTrackingTimeline } from "../components/moves/MoveTrackingTimeline";
-import { hasEstimateAction } from "./customerDashboardModel";
+import { canPayForMove, hasEstimateAction } from "./customerDashboardModel";
 
 const EVENT_LABELS = {
   booking_requested: "Booking requested",
@@ -26,6 +26,7 @@ const moveReference = (move) => String(move?._id || "").slice(-8).toUpperCase() 
 function BookingCard({ move, onViewDetails }) {
   const route = `${stopLabel(move.pickup, "Pickup unavailable")} → ${stopLabel(move.dropoff, "Delivery unavailable")}`;
   const pendingEstimate = hasEstimateAction(move);
+  const paymentEligible = canPayForMove(move);
   const priceText = pendingEstimate
     ? Number.isFinite(move.price) ? formatCurrency(move.price, move.pricing?.currency) : "Estimate ready"
     : Number.isFinite(move.price) ? formatCurrency(move.price, move.pricing?.currency) : "No final estimate";
@@ -47,8 +48,8 @@ function BookingCard({ move, onViewDetails }) {
         <button type="button" onClick={() => onViewDetails(move)} className="inline-flex min-h-10 items-center gap-2 rounded-lg px-3 text-sm font-semibold text-slate-700 hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600 dark:text-slate-200 dark:hover:bg-slate-800">View Details <ArrowRight className="h-4 w-4" aria-hidden="true" /></button>
         {pendingEstimate
           ? <Link to={`/payment?moveId=${encodeURIComponent(move._id)}`} className="inline-flex min-h-10 items-center rounded-lg bg-blue-600 px-3 text-sm font-semibold text-white hover:bg-blue-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600 focus-visible:ring-offset-2">Review Estimate</Link>
-          : move.status === "accepted" && !move.paid
-            ? <Link to={`/payment?moveId=${encodeURIComponent(move._id)}`} className="inline-flex min-h-10 items-center rounded-lg bg-blue-600 px-3 text-sm font-semibold text-white hover:bg-blue-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600 focus-visible:ring-offset-2">Continue to Payment</Link>
+          : paymentEligible
+            ? <Link to={`/payment?moveId=${encodeURIComponent(move._id)}`} className="inline-flex min-h-10 items-center rounded-lg bg-blue-600 px-3 text-sm font-semibold text-white hover:bg-blue-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600 focus-visible:ring-offset-2">Pay Now</Link>
             : null}
       </div>
     </article>
@@ -65,6 +66,7 @@ function BookingDetailsDialog({ move, onClose }) {
 
   if (!move) return null;
   const pendingEstimate = hasEstimateAction(move);
+  const paymentEligible = canPayForMove(move);
   return (
     <div className="fixed inset-0 z-[80] flex items-center justify-center bg-slate-950/60 p-3 sm:p-5" onMouseDown={(event) => { if (event.target === event.currentTarget) onClose(); }}>
       <section role="dialog" aria-modal="true" aria-labelledby="booking-details-title" className="max-h-[min(88vh,50rem)] w-full max-w-2xl overflow-y-auto rounded-2xl border border-slate-200 bg-white p-5 text-slate-900 shadow-2xl dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 sm:p-7">
@@ -79,6 +81,7 @@ function BookingDetailsDialog({ move, onClose }) {
         </div>
         <div className="mt-6"><h3 className="mb-3 flex items-center gap-2 font-semibold"><Clock3 className="h-4 w-4 text-blue-600" aria-hidden="true" />Tracking</h3><MoveTrackingTimeline events={move.trackingEvents || []} /></div>
         {pendingEstimate && <Link to={`/payment?moveId=${encodeURIComponent(move._id)}`} onClick={onClose} className="mt-5 inline-flex min-h-11 items-center justify-center rounded-xl bg-blue-600 px-4 text-sm font-semibold text-white hover:bg-blue-700">Review Estimate</Link>}
+        {!pendingEstimate && paymentEligible && <Link to={`/payment?moveId=${encodeURIComponent(move._id)}`} onClick={onClose} className="mt-5 inline-flex min-h-11 items-center justify-center rounded-xl bg-blue-600 px-4 text-sm font-semibold text-white hover:bg-blue-700">Pay Now</Link>}
       </section>
     </div>
   );
