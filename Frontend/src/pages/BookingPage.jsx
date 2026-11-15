@@ -13,6 +13,7 @@ import { VehicleStep } from "../components/booking/steps/VehicleStep";
 import { createMove } from "../services/booking.service";
 import { getPriceQuote } from "../services/pricing.service";
 import { getAuthFromStorage } from "../utils/auth";
+import { classifyQuoteResponse } from "../components/booking/quoteFeedback";
 import {
   BOOKING_STEPS,
   clearBookingDraft,
@@ -41,13 +42,8 @@ export function BookingPage() {
   const pricingPayload = useMemo(() => getPricingPayload(draft), [draft]);
   const pricingFingerprint = JSON.stringify(pricingPayload);
   const authenticated = Boolean(getAuthFromStorage().token);
-  const quoteIsCurrent = quoteState.status === "success" && quoteState.fingerprint === pricingFingerprint && (
-    quoteState.data?.manualEstimateRequired === true || (
-      quoteState.data?.pricingAvailable === true &&
-      Boolean(quoteState.data?.breakdown) &&
-      Number.isFinite(quoteState.data?.total)
-    )
-  );
+  const quoteIsCurrent = quoteState.status === "success" && quoteState.fingerprint === pricingFingerprint &&
+    classifyQuoteResponse(quoteState.data) !== "invalid";
   const currentQuoteState = quoteState.fingerprint === pricingFingerprint
     ? quoteState
     : { status: "loading", fingerprint: pricingFingerprint, data: null, error: "" };
@@ -68,7 +64,17 @@ export function BookingPage() {
       })
       .catch((error) => {
         if (requestSequence.current !== sequence) return;
-        setQuoteState({ status: "error", fingerprint: pricingFingerprint, data: null, error: error.message || "Could not calculate a price." });
+        setQuoteState({
+          status: "error",
+          fingerprint: pricingFingerprint,
+          data: null,
+          error: {
+            message: error.message || "Could not calculate a price.",
+            code: error.code,
+            status: error.status,
+            details: error.details,
+          },
+        });
       });
     return () => {
       if (requestSequence.current === sequence) requestSequence.current += 1;
@@ -153,7 +159,12 @@ export function BookingPage() {
     <VehicleStep key="vehicle" draft={draft} update={updateDraft} errors={errors} />,
     <InventoryStep key="inventory" draft={draft} update={updateDraft} errors={errors} />,
     <LabourStep key="labour" draft={draft} update={updateDraft} errors={errors} />,
-    <ReviewStep key="review" quoteState={currentQuoteState} onRetry={() => setRetryQuote((value) => value + 1)} />,
+    <ReviewStep
+      key="review"
+      quoteState={currentQuoteState}
+      onRetry={() => setRetryQuote((value) => value + 1)}
+      onEditAddresses={() => { setApiError(""); setErrors({}); setStep(1); }}
+    />,
     <ConfirmStep key="confirm" draft={draft} quote={quote} quoteReady={quoteIsCurrent} authenticated={authenticated} />,
   ][step];
 

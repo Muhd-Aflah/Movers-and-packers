@@ -40,7 +40,13 @@ const request = async (endpoint, options = {}) => {
     : await response.text();
 
   if (!response.ok) {
-    throw new Error(data?.message || data || "API error");
+    const error = new Error(data?.message || data || "API error");
+    error.status = response.status;
+    if (data && typeof data === "object") {
+      error.code = data.code;
+      error.details = data.details;
+    }
+    throw error;
   }
 
   const pagination = parsePaginationHeader(response.headers.get("X-Pagination"));

@@ -1,5 +1,6 @@
 import { Info } from "lucide-react";
 import { ErrorState, LoadingState } from "../../ui/StatePanel";
+import { classifyQuoteResponse, getQuoteErrorFeedback } from "../quoteFeedback";
 
 const BREAKDOWN_ROWS = [
   ["transport", "Transport"],
@@ -16,16 +17,23 @@ const formatMoney = (amount, currency) => {
   catch { return `${currency} ${Number(amount).toLocaleString("en-IN")}`; }
 };
 
-export function ReviewStep({ quoteState, onRetry }) {
+export function ReviewStep({ quoteState, onRetry, onEditAddresses }) {
   if (quoteState.status === "loading" || quoteState.status === "idle") {
     return <LoadingState title="Preparing your estimate" description="Getting a fresh route and server-calculated quote. This may take a few seconds." />;
   }
   if (quoteState.status === "error") {
-    return <ErrorState title="We couldn’t prepare the estimate" description={quoteState.error || "Check the addresses and try again."} action={<button type="button" onClick={onRetry} className="min-h-11 rounded-control bg-blue-600 px-4 font-semibold text-white hover:bg-blue-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600">Try again</button>} />;
+    const feedback = getQuoteErrorFeedback(quoteState.error);
+    const action = feedback.editAddresses
+      ? <button type="button" onClick={onEditAddresses} className="min-h-11 rounded-control bg-blue-600 px-4 font-semibold text-white hover:bg-blue-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600">Review addresses</button>
+      : feedback.retryable
+        ? <button type="button" onClick={onRetry} className="min-h-11 rounded-control bg-blue-600 px-4 font-semibold text-white hover:bg-blue-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600">Try again</button>
+        : null;
+    return <ErrorState title="We couldn’t prepare the estimate" description={feedback.description} action={action} />;
   }
 
   const quote = quoteState.data;
-  if (quote?.manualEstimateRequired) {
+  const quoteKind = classifyQuoteResponse(quote);
+  if (quoteKind === "manual_review") {
     return (
       <div className="space-y-5">
         <div className="rounded-card border border-amber-300 bg-amber-50 p-5 text-amber-950 dark:border-amber-800 dark:bg-amber-950 dark:text-amber-100">
@@ -43,8 +51,8 @@ export function ReviewStep({ quoteState, onRetry }) {
   }
 
   const breakdown = quote?.breakdown;
-  if (!quote?.pricingAvailable || !breakdown || !Number.isFinite(quote.total)) {
-    return <ErrorState title="No final quote is available" description="You can’t continue to confirmation without a server-generated quote. Try again or review your move details." action={<button type="button" onClick={onRetry} className="min-h-11 rounded-control bg-blue-600 px-4 font-semibold text-white hover:bg-blue-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600">Request a new quote</button>} />;
+  if (quoteKind !== "priced" || !breakdown) {
+    return <ErrorState title="No final quote is available" description="The pricing service did not return a complete quote. Your move details are saved; go back and change a detail or contact SwiftMove support before continuing." />;
   }
 
   return (

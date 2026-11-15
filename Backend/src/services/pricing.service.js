@@ -26,7 +26,7 @@ const parseConfig = (envKey, missing) => {
     if (!config || typeof config !== "object" || Array.isArray(config)) throw new Error();
     return config;
   } catch {
-    throw new PricingError(503, "PRICING_NOT_CONFIGURED", `Pricing configuration ${envKey} is invalid`);
+    throw new PricingError(503, "PRICING_NOT_CONFIGURED", `Pricing configuration ${envKey} is invalid`, { invalid: [envKey] });
   }
 };
 
@@ -37,7 +37,7 @@ const readRate = (value, label, missing, { allowZero = true } = {}) => {
   }
   const rate = typeof value === "string" && value.trim() !== "" ? Number(value) : value;
   if (typeof rate !== "number" || !Number.isFinite(rate) || rate < 0 || (!allowZero && rate === 0)) {
-    throw new PricingError(503, "PRICING_NOT_CONFIGURED", "Pricing configuration contains an invalid rate");
+    throw new PricingError(503, "PRICING_NOT_CONFIGURED", `Pricing configuration ${label} is invalid`, { invalid: [label] });
   }
   return rate;
 };
@@ -225,14 +225,13 @@ const getBookingPriceQuote = async (input) => {
 const requiresManualEstimate = (error) =>
   error?.code === "MANUAL_ESTIMATE_REQUIRED" ||
   (error?.code === "PRICING_NOT_CONFIGURED" &&
-    Array.isArray(error.details?.missing) &&
-    error.details.missing.some((key) =>
+    [error.details?.missing, error.details?.invalid].some((entries) => Array.isArray(entries) && entries.some((key) =>
       key === "PRICING_PACKING_MATERIAL_RATES_JSON" ||
       key === "PRICING_PACKING_PER_WORKER" ||
       key === "PRICING_LOADING_PER_WORKER" ||
       key === "PRICING_UNLOADING_PER_WORKER" ||
       key.endsWith(" packing rate"),
-    ));
+    )));
 
 const getManualReviewQuote = async (input) => {
   const booking = normalizeBookingInput(input);

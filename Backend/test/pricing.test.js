@@ -71,6 +71,25 @@ test("transport-only quote applies vehicle fare and per-km formula without labou
   assert.equal(quote.total, 700);
 });
 
+test("transport-only quote needs no packing materials or labour rates", async (t) => {
+  const saved = Object.fromEntries(CONFIG_KEYS.map((key) => [key, process.env[key]]));
+  t.after(() => Object.entries(saved).forEach(([key, value]) => value === undefined ? delete process.env[key] : process.env[key] = value));
+  configure({
+    PRICING_PACKING_MATERIAL_RATES_JSON: "",
+    PRICING_PACKING_PER_WORKER: "",
+    PRICING_LOADING_PER_WORKER: "",
+    PRICING_UNLOADING_PER_WORKER: "",
+  });
+  installFetch(t, 10000);
+  const quote = await getBookingPriceQuote(transportInput());
+  assert.equal(quote.breakdown.transport, Math.max(700, 300 + 10 * 18));
+  assert.equal(quote.total, quote.breakdown.transport);
+  assert.equal(quote.breakdown.packingMaterials, 0);
+  assert.equal(quote.breakdown.packingLabour, 0);
+  assert.equal(quote.breakdown.loading, 0);
+  assert.equal(quote.breakdown.unloading, 0);
+});
+
 test("tax is applied only when explicitly enabled and configured", async (t) => {
   const saved = Object.fromEntries(CONFIG_KEYS.map((key) => [key, process.env[key]]));
   t.after(() => Object.entries(saved).forEach(([key, value]) => value === undefined ? delete process.env[key] : process.env[key] = value));
@@ -122,6 +141,38 @@ test("full-service quote requires separate configured material and labour rates"
   await assert.rejects(getBookingPriceQuote(fullServiceInput()), (error) => error.statusCode === 503 && error.details.missing.includes("PRICING_PACKING_MATERIAL_RATES_JSON"));
 });
 
+test("full-service quote becomes manual review when materials or labour rates are unavailable", async (t) => {
+  const saved = Object.fromEntries(CONFIG_KEYS.map((key) => [key, process.env[key]]));
+  t.after(() => Object.entries(saved).forEach(([key, value]) => value === undefined ? delete process.env[key] : process.env[key] = value));
+  configure({ PRICING_PACKING_MATERIAL_RATES_JSON: "", PRICING_PACKING_PER_WORKER: "" });
+  installFetch(t);
+  const { createQuote } = require("../src/controllers/pricing.controller");
+  const res = response();
+  await createQuote({ body: fullServiceInput() }, res);
+  assert.equal(res.statusCode, 200);
+  assert.equal(res.body.manualEstimateRequired, true);
+  assert.equal(res.body.pricingStatus, "manual_review");
+  assert.equal(res.body.serviceMode, "full_service");
+  assert.equal(res.body.pricingDraft.breakdown.transport, 700);
+  assert.equal(res.body.pricingDraft.breakdown.packingMaterials, null);
+});
+
+test("quote endpoint returns the missing vehicle configuration in its error details", async (t) => {
+  const saved = Object.fromEntries(CONFIG_KEYS.map((key) => [key, process.env[key]]));
+  t.after(() => Object.entries(saved).forEach(([key, value]) => value === undefined ? delete process.env[key] : process.env[key] = value));
+  configure({ PRICING_VEHICLES_JSON: "" });
+  const { createQuote } = require("../src/controllers/pricing.controller");
+  const res = response();
+  await createQuote({ body: transportInput() }, res);
+  assert.equal(res.statusCode, 503);
+  assert.deepEqual(res.body, {
+    pricingAvailable: false,
+    code: "PRICING_NOT_CONFIGURED",
+    message: "Pricing is incomplete. No final quote was generated.",
+    details: { missing: ["PRICING_VEHICLES_JSON"] },
+  });
+});
+
 test("full-service with inventory requires declared packing quantities", async (t) => {
   const saved = Object.fromEntries(CONFIG_KEYS.map((key) => [key, process.env[key]]));
   t.after(() => Object.entries(saved).forEach(([key, value]) => value === undefined ? delete process.env[key] : process.env[key] = value));
@@ -147,6 +198,19 @@ test("missing vehicle minimum blocks transport quote instead of treating base fa
   const missingMinimum = { ...vehicleRates, tata_ace: { ...vehicleRates.tata_ace, minimumFare: null } };
   configure({ PRICING_VEHICLES_JSON: JSON.stringify(missingMinimum) }); installFetch(t);
   await assert.rejects(getBookingPriceQuote(transportInput()), (error) => error.code === "PRICING_NOT_CONFIGURED" && error.details.missing.includes("tata_ace.minimumFare"));
+});
+
+test("transport-only requires each configured vehicle fare and identifies any missing rate", async (t) => {
+  const saved = Object.fromEntries(CONFIG_KEYS.map((key) => [key, process.env[key]]));
+  t.after(() => Object.entries(saved).forEach(([key, value]) => value === undefined ? delete process.env[key] : process.env[key] = value));
+  for (const field of ["baseFare", "perKmRate", "minimumFare"]) {
+    const vehicles = { ...vehicleRates, tata_ace: { ...vehicleRates.tata_ace, [field]: null } };
+    configure({ PRICING_VEHICLES_JSON: JSON.stringify(vehicles) });
+    await assert.rejects(
+      getBookingPriceQuote(transportInput()),
+      (error) => error.code === "PRICING_NOT_CONFIGURED" && error.details.missing.includes(`tata_ace.${field}`),
+    );
+  }
 });
 
 test("booking saves the server quote and service details as a move snapshot", async (t) => {
