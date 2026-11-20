@@ -1,9 +1,12 @@
 import { useRef, useState } from "react";
+import { Capacitor, registerPlugin } from "@capacitor/core";
 import { LoaderCircle, Printer, RotateCcw } from "lucide-react";
 import { Button } from "../ui/button";
 import { getPaymentReceipt } from "../../services/payment.service";
 import { formatCurrency } from "../../utils/currency";
 import { formatMoveDate } from "../../utils/moveDate";
+
+const ReceiptPrinter = registerPlugin("ReceiptPrinter");
 
 const PAYMENT_TIME = new Intl.DateTimeFormat("en-IN", {
   dateStyle: "long",
@@ -68,6 +71,17 @@ function preparingHtml() {
   return "<!doctype html><html lang=\"en\"><head><meta charset=\"utf-8\"><title>Preparing receipt</title></head><body style=\"font-family:Arial,sans-serif;padding:32px;color:#172033\"><p>Loading your verified payment receipt…</p></body></html>";
 }
 
+function receiptErrorMessage(error, useNativePrint) {
+  if (error?.status === 401) return "Your session expired. Sign in again to download this receipt.";
+  if (error?.status === 403) return "You are not authorized to access this receipt.";
+  if (error?.status === 404) return "This verified receipt is unavailable for your account.";
+  if (error?.status === 429) return "Too many receipt requests. Wait a moment and try again.";
+  if (error?.code === "REQUEST_TIMEOUT") return "The receipt request timed out. Check your connection and try again.";
+  return useNativePrint
+    ? "Could not open Android print options. Check your connection and try again."
+    : "Receipt is unavailable right now. Check your connection and try again.";
+}
+
 export function PaymentReceiptButton({ paymentId }) {
   const inFlight = useRef(false);
   const [loading, setLoading] = useState(false);
@@ -76,8 +90,9 @@ export function PaymentReceiptButton({ paymentId }) {
 
   async function openReceipt() {
     if (inFlight.current) return;
-    const receiptWindow = window.open("about:blank", "_blank", "width=900,height=1100");
-    if (!receiptWindow) {
+    const useNativePrint = Capacitor.isNativePlatform() && Capacitor.isPluginAvailable("ReceiptPrinter");
+    const receiptWindow = useNativePrint ? null : window.open("about:blank", "_blank", "width=900,height=1100");
+    if (!useNativePrint && !receiptWindow) {
       setError("Allow a new window to open the receipt, then try again.");
       setNotice("");
       return;
@@ -87,29 +102,38 @@ export function PaymentReceiptButton({ paymentId }) {
     setLoading(true);
     setError("");
     setNotice("");
-    receiptWindow.opener = null;
-    receiptWindow.document.open();
-    receiptWindow.document.write(preparingHtml());
-    receiptWindow.document.close();
+    if (receiptWindow) {
+      receiptWindow.opener = null;
+      receiptWindow.document.open();
+      receiptWindow.document.write(preparingHtml());
+      receiptWindow.document.close();
+    }
 
     try {
       const receipt = await getPaymentReceipt(paymentId);
       if (!receipt?.receiptId || receipt.payment?.status !== "paid" || !receipt.payment?.currency) {
         throw new Error("Receipt data is unavailable");
       }
-      if (receiptWindow.closed) throw new Error("Receipt window was closed");
-      receiptWindow.document.open();
-      receiptWindow.document.write(receiptHtml(receipt));
-      receiptWindow.document.close();
-      receiptWindow.document.querySelector("[data-print]")?.addEventListener("click", () => receiptWindow.print());
-      receiptWindow.focus();
-      window.setTimeout(() => {
-        if (!receiptWindow.closed) receiptWindow.print();
-      }, 350);
-      setNotice("Receipt opened. Choose Save as PDF in the print dialog to download a PDF copy.");
-    } catch {
-      if (!receiptWindow.closed) receiptWindow.close();
-      setError("Receipt is unavailable right now. Check your connection and try again.");
+      const html = receiptHtml(receipt);
+      if (useNativePrint) {
+        const printName = `SwiftMove Receipt ${receipt.receiptId}`.slice(0, 50);
+        await ReceiptPrinter.printHtml({ name: printName, html });
+        setNotice("Android print options opened. Choose Save as PDF to download your receipt.");
+      } else {
+        if (receiptWindow.closed) throw new Error("Receipt window was closed");
+        receiptWindow.document.open();
+        receiptWindow.document.write(html);
+        receiptWindow.document.close();
+        receiptWindow.document.querySelector("[data-print]")?.addEventListener("click", () => receiptWindow.print());
+        receiptWindow.focus();
+        window.setTimeout(() => {
+          if (!receiptWindow.closed) receiptWindow.print();
+        }, 350);
+        setNotice("Receipt opened. Choose Save as PDF in the print dialog to download a PDF copy.");
+      }
+    } catch (requestError) {
+      if (receiptWindow && !receiptWindow.closed) receiptWindow.close();
+      setError(receiptErrorMessage(requestError, useNativePrint));
     } finally {
       inFlight.current = false;
       setLoading(false);

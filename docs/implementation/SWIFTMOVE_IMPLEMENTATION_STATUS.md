@@ -1,6 +1,8 @@
+﻿> **Documentation status:** Point-in-time source snapshot. Later implementation details may differ; use [Backend/README.md](../../Backend/README.md) for current backend configuration and workflow notes, and verify source before relying on this document.
+
 # SwiftMove Implementation Status (As Built)
 
-This matrix reflects source evidence only. “Complete” means the repository contains a connected implementation for the described scope; it does not imply production deployment or end-to-end verification. File paths are relative to the repository root.
+This matrix reflects source evidence only. â€œCompleteâ€ means the repository contains a connected implementation for the described scope; it does not imply production deployment or end-to-end verification. File paths are relative to the repository root.
 
 ## Feature matrix
 

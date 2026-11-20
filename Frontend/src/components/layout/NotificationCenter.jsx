@@ -10,6 +10,45 @@ const DATE_FORMAT = new Intl.DateTimeFormat("en-IN", {
   timeZone: "Asia/Kolkata",
 });
 
+const notificationTime = (value) => {
+  const time = Date.parse(value || "");
+  return Number.isFinite(time) ? time : null;
+};
+
+function mergeNotification(serverItem, localItem) {
+  const merged = { ...localItem, ...serverItem };
+  const serverReadAt = serverItem.readAt ?? null;
+  const localReadAt = localItem.readAt ?? null;
+  const serverIsRead = serverItem.isRead ?? Boolean(serverReadAt);
+  const localIsRead = localItem.isRead ?? Boolean(localReadAt);
+  const serverReadTime = notificationTime(serverReadAt);
+  const localReadTime = notificationTime(localReadAt);
+  const localReadIsNewer = localIsRead && (!serverIsRead || (
+    localReadTime !== null && (serverReadTime === null || localReadTime > serverReadTime)
+  ));
+  const readState = localReadIsNewer
+    ? { readAt: localReadAt, isRead: localIsRead }
+    : { readAt: serverReadAt, isRead: serverIsRead };
+
+  return { ...merged, ...readState };
+}
+
+export function mergeNotifications(serverItems = [], localItems = []) {
+  const byId = new Map();
+  for (const item of localItems) {
+    if (item?.id != null) byId.set(String(item.id), item);
+  }
+  for (const item of serverItems) {
+    if (item?.id == null) continue;
+    const id = String(item.id);
+    const localItem = byId.get(id);
+    byId.set(id, localItem ? mergeNotification(item, localItem) : item);
+  }
+  return [...byId.values()]
+    .sort((left, right) => String(right.at || "").localeCompare(String(left.at || "")))
+    .slice(0, 50);
+}
+
 export function NotificationCenter({ role }) {
   const [open, setOpen] = useState(false);
   const [notifications, setNotifications] = useState([]);
@@ -21,13 +60,12 @@ export function NotificationCenter({ role }) {
 
   const onSocketEvent = useCallback((event, payload) => {
     if (event === "notification:new" && payload?.id) {
-      setNotifications((current) => [payload, ...current.filter((item) => item.id !== payload.id)]
-        .sort((left, right) => right.at.localeCompare(left.at)).slice(0, 50));
+      setNotifications((current) => mergeNotifications([payload], current));
       setStatus("success");
     } else if (event === "notification:read" && payload?.notificationId) {
-      setNotifications((current) => current.map((item) => item.id === payload.notificationId
+      setNotifications((current) => mergeNotifications([], current.map((item) => item.id === payload.notificationId
         ? { ...item, readAt: payload.readAt, isRead: true }
-        : item));
+        : item)));
     }
   }, []);
   useSocketEvents(["notification:new", "notification:read"], onSocketEvent);
@@ -41,9 +79,7 @@ export function NotificationCenter({ role }) {
       .then((result) => {
         if (!active) return;
         setNotifications((current) => {
-          const byId = new Map();
-          for (const item of [...(result?.notifications || []), ...current]) byId.set(item.id, item);
-          return [...byId.values()].sort((left, right) => right.at.localeCompare(left.at)).slice(0, 50);
+          return mergeNotifications(Array.isArray(result?.notifications) ? result.notifications : [], current);
         });
         setStatus("success");
       })

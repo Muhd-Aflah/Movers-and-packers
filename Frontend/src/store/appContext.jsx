@@ -1,16 +1,24 @@
 import { createContext, useContext, useEffect, useReducer } from "react";
 
-const getInitialTheme = () => {
-  if (typeof window === "undefined") return "light";
+const getInitialThemePreference = () => {
+  if (typeof window === "undefined") return "system";
   try {
-    return window.localStorage.getItem("swiftmove-theme") === "dark" ? "dark" : "light";
+    const savedTheme = window.localStorage.getItem("swiftmove-theme");
+    if (savedTheme === "dark" || savedTheme === "light") return savedTheme;
   } catch {
-    return "light";
+    // Fall back to the system setting when browser storage is unavailable.
   }
+  return "system";
+};
+
+const resolveTheme = (preference) => {
+  if (preference === "dark" || preference === "light") return preference;
+  return window.matchMedia?.("(prefers-color-scheme: dark)")?.matches ? "dark" : "light";
 };
 
 const createInitialState = () => {
-  const theme = getInitialTheme();
+  const themePreference = getInitialThemePreference();
+  const theme = typeof window === "undefined" ? "light" : resolveTheme(themePreference);
   if (typeof document !== "undefined") {
     document.documentElement.classList.toggle("dark", theme === "dark");
     document.documentElement.style.colorScheme = theme;
@@ -20,6 +28,7 @@ const createInitialState = () => {
     isLoading: false,
     error: null,
     theme,
+    themePreference,
     language: "en",
     notifications: [],
   };
@@ -77,7 +86,11 @@ function appReducer(state, action) {
       return {
         ...state,
         theme: action.payload,
+        themePreference: action.payload,
       };
+
+    case "SYSTEM_THEME_CHANGED":
+      return { ...state, theme: action.payload };
 
     case actionTypes.SET_LANGUAGE:
       return {
@@ -116,11 +129,23 @@ export function AppProvider({ children }) {
     document.documentElement.classList.toggle("dark", isDark);
     document.documentElement.style.colorScheme = isDark ? "dark" : "light";
     try {
-      window.localStorage.setItem("swiftmove-theme", state.theme);
+      if (state.themePreference === "system") window.localStorage.removeItem("swiftmove-theme");
+      else window.localStorage.setItem("swiftmove-theme", state.themePreference);
     } catch {
       // Keep the current session usable when browser storage is unavailable.
     }
-  }, [state.theme]);
+    if (state.themePreference !== "system" || !window.matchMedia) return undefined;
+    const media = window.matchMedia("(prefers-color-scheme: dark)");
+    const handleSystemThemeChange = (event) => {
+      dispatch({ type: "SYSTEM_THEME_CHANGED", payload: event.matches ? "dark" : "light" });
+    };
+    if (media.addEventListener) media.addEventListener("change", handleSystemThemeChange);
+    else media.addListener?.(handleSystemThemeChange);
+    return () => {
+      if (media.removeEventListener) media.removeEventListener("change", handleSystemThemeChange);
+      else media.removeListener?.(handleSystemThemeChange);
+    };
+  }, [state.theme, state.themePreference]);
 
   // Action creators
   const actions = {

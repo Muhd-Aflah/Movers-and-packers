@@ -6,6 +6,7 @@ import { AppProvider } from "./store/appContext";
 import { SocketProvider } from "./context/SocketContext";
 import { SpeedInsights } from "@vercel/speed-insights/react";
 import "./tailwind.css";
+import "./legacyDarkMode.css";
 
 createRoot(document.getElementById("root")).render(
   <StrictMode>

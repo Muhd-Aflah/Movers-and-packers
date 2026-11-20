@@ -17,27 +17,44 @@ const request = async (endpoint, options = {}) => {
   };
 
   const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), APP_CONFIG.api.timeout);
+  const timeoutMs = Number.isFinite(options.timeoutMs) && options.timeoutMs > 0
+    ? Math.min(options.timeoutMs, 30_000)
+    : APP_CONFIG.api.timeout;
+  const externalSignal = options.signal;
+  const { timeoutMs: _timeoutMs, signal: _signal, ...fetchOptions } = options;
+  let timedOut = false;
+  const abortFromExternalSignal = () => controller.abort(externalSignal.reason);
+  if (externalSignal?.aborted) abortFromExternalSignal();
+  else externalSignal?.addEventListener("abort", abortFromExternalSignal, { once: true });
+  const timeoutId = setTimeout(() => {
+    timedOut = true;
+    controller.abort();
+  }, timeoutMs);
   let response;
+  let data;
   try {
     response = await fetch(`${API_BASE_URL.replace(/\/$/, "")}${endpoint}`, {
-      ...options,
+      ...fetchOptions,
       headers,
-      signal: options.signal || controller.signal,
+      signal: controller.signal,
     });
+    const contentType = response.headers.get("content-type") || "";
+    data = response.status === 204
+      ? null
+      : contentType.includes("application/json")
+        ? await response.json()
+        : await response.text();
   } catch (error) {
-    if (error.name === "AbortError") throw new Error("API request timed out");
+    if (timedOut) {
+      const timeoutError = new Error("The request took too long. Check your connection and try again.");
+      timeoutError.code = "REQUEST_TIMEOUT";
+      throw timeoutError;
+    }
     throw error;
   } finally {
     clearTimeout(timeoutId);
+    externalSignal?.removeEventListener("abort", abortFromExternalSignal);
   }
-
-  const contentType = response.headers.get("content-type") || "";
-  const data = response.status === 204
-    ? null
-    : contentType.includes("application/json")
-    ? await response.json()
-    : await response.text();
 
   if (!response.ok) {
     const error = new Error(data?.message || data || "API error");

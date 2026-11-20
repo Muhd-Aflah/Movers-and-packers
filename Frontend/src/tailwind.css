@@ -32,8 +32,8 @@
   --colorsmint: rgba(0, 200, 179, 1);
   --simblue: rgba(44, 45, 91, 1);
   --simorange: rgba(246, 115, 102, 1);
-  --text-1: rgba(79, 79, 79, 1);
-  --text-2: rgba(149, 147, 160, 1);
+  --text-1: rgba(71, 85, 105, 1);
+  --text-2: rgba(100, 116, 139, 1);
   --white: rgba(255, 255, 255, 1);
 }
 
@@ -144,10 +144,6 @@
   }
 }
 
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
-
 @layer base {
   :root {
     --background: 210 40% 98%;
@@ -159,8 +155,8 @@
     --popover: 0 0% 100%;
     --popover-foreground: 222 47% 11%;
 
-    --border: 214 32% 91%;
-    --input: 214 32% 91%;
+    --border: 215 20% 78%;
+    --input: 215 20% 78%;
 
     --card: 0 0% 100%;
     --card-foreground: 222 47% 11%;
@@ -174,8 +170,8 @@
     --accent: 210 40% 96%;
     --accent-foreground: 222 47% 11%;
 
-    --destructive: 0 100% 50%;
-    --destructive-foreground: 210 40% 98%;
+    --destructive: 0 72% 40%;
+    --destructive-foreground: 0 0% 100%;
 
     --ring: 221 83% 53%;
 
@@ -213,7 +209,7 @@
     --card-foreground: 210 40% 98%;
 
     --primary: 217 91% 60%;
-    --primary-foreground: 0 0% 100%;
+    --primary-foreground: 222 47% 11%;
 
     --secondary: 217 33% 17%;
     --secondary-foreground: 210 40% 98%;
@@ -240,11 +236,11 @@
 }
 
 html {
-  background: #f8fafc;
+  background: hsl(var(--background));
 }
 
 html.dark {
-  background: #020617;
+  background: hsl(var(--background));
 }
 
 body {
@@ -283,102 +279,6 @@ textarea {
     transition-duration: 0.01ms !important;
   }
 }
-
-/* Existing pages use Tailwind's neutral utility colors directly. Keep those
-   pages readable when the shared application theme switches to dark mode. */
-.dark .bg-white,
-.dark .bg-gray-50,
-.dark .bg-slate-50 {
-  background-color: #0f172a;
-}
-
-.dark .bg-gray-100,
-.dark .bg-gray-200,
-.dark .bg-gray-300,
-.dark .bg-slate-100,
-.dark .bg-blue-100,
-.dark .bg-blue-200,
-.dark .bg-green-100,
-.dark .bg-indigo-50,
-.dark .bg-indigo-100,
-.dark .bg-orange-50,
-.dark .bg-orange-100,
-.dark .bg-purple-50,
-.dark .bg-yellow-100,
-.dark [class~="hover:bg-gray-100"]:hover {
-  background-color: #1e293b;
-}
-
-.dark .text-gray-900,
-.dark .text-gray-800,
-.dark .text-gray-700,
-.dark .text-slate-900,
-.dark .text-slate-800,
-.dark .text-slate-700 {
-  color: #f8fafc;
-}
-
-.dark .text-gray-600,
-.dark .text-gray-500,
-.dark .text-gray-400,
-.dark .text-slate-600,
-.dark .text-slate-500,
-.dark .text-slate-400 {
-  color: #94a3b8;
-}
-
-.dark .text-amber-700 { color: #fcd34d; }
-.dark .text-indigo-600,
-.dark .text-indigo-700,
-.dark .text-indigo-800,
-.dark .text-indigo-950 { color: #c7d2fe; }
-.dark .text-orange-600,
-.dark .text-orange-700 { color: #fdba74; }
-.dark .text-purple-600,
-.dark .text-purple-700 { color: #e9d5ff; }
-.dark .text-red-800 { color: #fca5a5; }
-.dark .text-yellow-700 { color: #fde047; }
-
-.dark .border-gray-100,
-.dark .border-gray-200,
-.dark .border-gray-300,
-.dark .border-slate-100,
-.dark .border-slate-200,
-.dark .border-slate-300 {
-  border-color: #334155;
-}
-
-.dark input,
-.dark select,
-.dark textarea {
-  color: #f8fafc;
-  background-color: #0f172a;
-  border-color: #334155;
-}
-
-.dark input::placeholder,
-.dark textarea::placeholder {
-  color: #94a3b8;
-}
-
-.dark .bg-blue-50 { background-color: #172554; }
-.dark .bg-blue-100 { background-color: #1e3a8a; }
-.dark .bg-blue-200 { background-color: #1e40af; }
-.dark .text-blue-900 { color: #dbeafe; }
-.dark .text-blue-700 { color: #93c5fd; }
-.dark .bg-green-50 { background-color: #052e16; }
-.dark .bg-green-100 { background-color: #14532d; }
-.dark .text-green-700 { color: #86efac; }
-.dark .bg-amber-50 { background-color: #451a03; }
-.dark .text-amber-900 { color: #fde68a; }
-.dark .bg-red-50 { background-color: #450a0a; }
-.dark .text-red-700 { color: #fca5a5; }
-.dark .bg-indigo-50 { background-color: #1e1b4b; }
-.dark .bg-indigo-100 { background-color: #312e81; }
-.dark .bg-orange-50 { background-color: #431407; }
-.dark .bg-orange-100 { background-color: #7c2d12; }
-.dark .bg-purple-50 { background-color: #3b0764; }
-.dark .bg-yellow-100 { background-color: #422006; }
 
 @media (hover: hover) {
   .card-hover {

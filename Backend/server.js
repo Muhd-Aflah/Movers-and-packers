@@ -10,6 +10,7 @@ const { createCorsOptions, resolveCorsConfig } = require("./src/config/cors");
 const { startPaymentRecoveryWorker } = require("./src/controllers/payment.controller");
 const { initializeSocketServer } = require("./src/realtime/socket");
 const Notification = require("./src/models/notification.model");
+const requestTiming = require("./src/middleware/requestTiming.middleware");
 
 dotenv.config();
 
@@ -17,6 +18,7 @@ const app = express();
 
 const corsEnvironment = resolveCorsConfig(process.env);
 app.use(cors(createCorsOptions(corsEnvironment)));
+app.use(requestTiming);
 const httpServer = createServer(app);
 initializeSocketServer(httpServer, corsEnvironment);
 

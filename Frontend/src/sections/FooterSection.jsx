@@ -28,11 +28,11 @@ const locationData = [
 
 export const FooterSection = () => {
   return (
-    <section className="flex flex-col items-center justify-center gap-12 sm:gap-16 lg:gap-[100px] px-4 sm:px-6 lg:px-0 py-12 sm:py-16 lg:py-[100px] w-full bg-[#eef1fa]">
+    <section className="flex w-full flex-col items-center justify-center gap-12 bg-slate-100 px-4 py-12 text-foreground sm:gap-16 sm:px-6 sm:py-16 lg:gap-[100px] lg:px-0 lg:py-[100px] dark:bg-slate-900">
       <header className="flex flex-col items-center sm:items-start gap-2.5">
-        <h2 className="flex items-center justify-center w-fit [font-family:'Lato',Helvetica] font-normal text-black text-2xl sm:text-3xl lg:text-4xl tracking-[0] leading-[normal] whitespace-nowrap">
+        <h2 className="flex w-fit items-center justify-center whitespace-nowrap text-2xl font-normal leading-normal text-foreground sm:text-3xl lg:text-4xl">
           <span className="font-bold">Warehouse </span>
-          <span className="[font-family:'Lato',Helvetica] font-normal text-[#141414] text-2xl sm:text-3xl lg:text-4xl tracking-[0]">
+          <span className="text-foreground text-2xl font-normal sm:text-3xl lg:text-4xl">
             Onsite
           </span>
         </h2>
@@ -59,10 +59,10 @@ export const FooterSection = () => {
                   src={location.flag}
                 />
                 <div className="flex flex-col items-start gap-0.5">
-                  <div className="[font-family:'Graphik-Medium',Helvetica] font-medium text-[#979797] text-[8px] sm:text-[9px] lg:text-[10px] tracking-[0] leading-[normal] whitespace-nowrap">
+                  <div className="whitespace-nowrap text-[8px] font-medium leading-normal text-muted-foreground sm:text-[9px] lg:text-[10px]">
                     {location.country}
                   </div>
-                  <div className="[font-family:'Graphik-Medium',Helvetica] font-medium text-body text-xs sm:text-sm lg:text-sm tracking-[0] leading-[normal] whitespace-nowrap">
+                  <div className="whitespace-nowrap text-xs font-medium leading-normal text-foreground sm:text-sm">
                     {location.count}
                   </div>
                 </div>
@@ -82,9 +82,9 @@ export const FooterSection = () => {
         <Link to="/booking" className="w-full sm:w-auto">
           <Button
             variant="outline"
-            className="px-6 sm:px-8 lg:px-[50px] py-3 sm:py-4 lg:py-[25px] h-auto rounded-xl border-[#2c2d5b] hover:bg-transparent w-full"
+            className="h-auto w-full rounded-xl border-primary px-6 py-3 hover:bg-accent sm:px-8 sm:py-4 lg:px-[50px] lg:py-[25px]"
           >
-            <span className="[font-family:'Lato',Helvetica] font-extrabold text-simblue text-base sm:text-lg text-center">
+            <span className="text-center text-base font-extrabold text-primary sm:text-lg">
               Request Quote
             </span>
           </Button>
@@ -92,8 +92,8 @@ export const FooterSection = () => {
 
         {/* JOIN NOW */}
         <Link to="/signup" className="w-full sm:w-auto">
-          <Button className="px-6 sm:px-8 lg:px-[50px] py-3 sm:py-4 lg:py-[25px] h-auto bg-simblue hover:bg-simblue/90 rounded-xl w-full">
-            <span className="[font-family:'Lato',Helvetica] font-extrabold text-white text-base sm:text-lg text-center">
+          <Button className="h-auto w-full rounded-xl bg-primary px-6 py-3 text-primary-foreground hover:bg-primary/90 sm:px-8 sm:py-4 lg:px-[50px] lg:py-[25px]">
+            <span className="text-center text-base font-extrabold text-primary-foreground sm:text-lg">
               Join Now
             </span>
           </Button>

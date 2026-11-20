@@ -23,12 +23,12 @@ const services = [
 
 export const WarehouseMapSection = () => {
   return (
-    <section className="flex flex-col items-center justify-center gap-12 sm:gap-16 lg:gap-[100px] px-4 sm:px-6 lg:px-[150px] py-12 sm:py-16 lg:py-[100px] bg-[#f4f6f9] w-full">
+    <section className="flex w-full flex-col items-center justify-center gap-12 bg-slate-100 px-4 py-12 text-foreground sm:gap-16 sm:px-6 sm:py-16 lg:gap-[100px] lg:px-[150px] lg:py-[100px] dark:bg-slate-900">
       <div className="flex flex-col lg:flex-row items-center justify-between w-full max-w-7xl gap-8">
         <div className="flex flex-col items-start lg:items-start justify-center gap-2.5">
-          <h2 className="flex items-center justify-center lg:justify-start w-fit [font-family:'Lato',Helvetica] font-normal text-black text-2xl sm:text-3xl lg:text-4xl tracking-[0] leading-[normal] whitespace-nowrap">
+          <h2 className="flex w-fit items-center justify-center whitespace-nowrap text-2xl font-normal leading-normal text-foreground sm:text-3xl lg:justify-start lg:text-4xl">
             <span className="font-bold">Services </span>
-            <span className="[font-family:'Lato',Helvetica] font-normal text-[#141414] text-2xl sm:text-3xl lg:text-4xl tracking-[0]">
+            <span className="text-foreground text-2xl font-normal sm:text-3xl lg:text-4xl">
               We Offer
             </span>
           </h2>
@@ -54,11 +54,11 @@ export const WarehouseMapSection = () => {
                 alt={service.title}
                 src={service.icon}
               />
-              <h3 className="flex items-center justify-center w-fit [font-family:'Lato',Helvetica] font-semibold text-simblue text-xl sm:text-2xl text-center tracking-[0] leading-[normal]">
+              <h3 className="flex w-fit items-center justify-center text-center text-xl font-semibold leading-normal text-simblue dark:text-blue-300 sm:text-2xl">
                 {service.title}
               </h3>
             </div>
-            <p className="flex items-center justify-center w-full max-w-[330px] [font-family:'Lato',Helvetica] font-normal text-text-1 text-sm sm:text-base lg:text-sm tracking-[0] leading-[21px] text-center lg:text-left">
+            <p className="flex w-full max-w-[330px] items-center justify-center text-center text-sm leading-[21px] text-muted-foreground sm:text-base lg:text-left lg:text-sm">
               {service.description}
             </p>
           </div>

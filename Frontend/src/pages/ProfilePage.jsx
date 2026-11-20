@@ -18,7 +18,7 @@ import { getAuthFromStorage, setAuth } from "../utils/auth";
 import { apiRequest } from "../services/api";
 
 const ROLE_LABELS = { user: "Customer", mover: "Mover", admin: "Administrator" };
-const cardClass = "rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-slate-700 dark:bg-slate-900";
+const cardClass = "rounded-card border border-border bg-card text-card-foreground shadow-sm";
 const inputClass = "min-h-12 w-full rounded-xl border border-slate-400 bg-white pl-11 pr-4 text-[15px] font-medium text-slate-900 placeholder:text-slate-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 dark:border-slate-500 dark:bg-slate-950 dark:text-slate-100 dark:placeholder:text-slate-400 dark:ring-offset-slate-900";
 const EMPTY_PROFILE = { name: "", email: "", phone: "" };
 
@@ -203,12 +203,11 @@ export function ProfilePage() {
   }
 
   return (
-    <div className="min-h-full bg-slate-100 dark:bg-slate-950">
+    <div className="min-h-full bg-background text-foreground">
       <div className="mx-auto w-full max-w-4xl space-y-6 px-4 py-8 sm:py-10">
         <section className={`${cardClass} overflow-hidden`} aria-labelledby="profile-heading">
           <div
-            className="h-32 bg-slate-900"
-            style={{ backgroundImage: "radial-gradient(circle at 15% 20%, rgba(37,99,235,.55), transparent 45%), radial-gradient(circle at 85% 80%, rgba(194,65,12,.35), transparent 40%)" }}
+            className="h-32 bg-gradient-to-r from-blue-900 via-slate-900 to-indigo-950"
             aria-hidden="true"
           />
           <div className="flex flex-col gap-5 px-5 pb-6 sm:flex-row sm:items-end sm:justify-between sm:px-6">

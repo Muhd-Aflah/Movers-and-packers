@@ -16,7 +16,7 @@ export function Layout() {
   const isPortalPage = isDashboard || (isAccountArea && Boolean(role)) || isCustomerBooking;
 
   return (
-    <div className={`min-h-screen flex flex-col bg-background text-foreground transition-colors duration-200 ${theme}`}>
+    <div className={`min-h-screen min-w-0 w-full flex flex-col bg-background text-foreground transition-colors duration-200 ${theme}`}>
       {isPortalPage ? (
         <PortalLayout role={role}><Outlet /></PortalLayout>
       ) : (

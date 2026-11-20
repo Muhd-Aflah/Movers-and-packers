@@ -1,16 +1,12 @@
-# SwiftMove — Movers and Packers
+﻿# SwiftMove — Movers and Packers
 
-SwiftMove is a React/Vite frontend and Express/MongoDB backend for moving and logistics workflows. The project is under development.
+SwiftMove is a moving and logistics application with a React/Vite frontend and an Express/MongoDB backend. The repository is under active development; deployment and external service behavior must be verified in the target environment.
 
-## Run locally
+## Get started
 
-Copy `Frontend/.env.example` to `Frontend/.env` and `Backend/.env.example` to `Backend/.env`, then set environment-specific values. The backend requires a MongoDB URI and a JWT secret containing at least 32 random bytes. Never commit real environment values.
+Install dependencies in each application folder and configure local environment values using the provided examples. Keep real credentials in local or deployment secret storage; never commit them.
 
-Distance pricing is inactive until `PRICING_CURRENCY`, `PRICING_BASE_CHARGE`, `PRICING_PER_KM`, `PRICING_MINIMUM_CHARGE`, `PRICING_SERVICE_CHARGES_JSON`, and any selected loading/unloading charges are configured with approved business rates. There are no production rate defaults. See [Backend/README.md](Backend/README.md) for details.
-
-Razorpay order and verification state is server-authoritative. Mover job discovery only returns paid moves. Marketplace settlement/release, payment webhooks, refunds, and reconciliation are not implemented; the existing Razorpay integration does not release funds to movers.
-
-Start the backend:
+Start the backend in one terminal:
 
 ```powershell
 cd Backend
@@ -26,8 +22,14 @@ npm install
 npm run dev
 ```
 
-Vite serves the frontend at `http://localhost:5173`; the backend defaults to `http://localhost:5000`.
+The backend defaults to `http://localhost:5000`; Vite defaults to `http://localhost:5173`. See [Backend README](Backend/README.md) for current backend configuration, pricing, payment, and API workflow notes, and [Frontend README](Frontend/README.md) for frontend setup.
 
-See [Backend/README.md](Backend/README.md) for mounted routes and backend configuration.
+## Operational notes
 
-Run the backend mocked checks with `cd Backend; npm test`. Build the frontend with `cd Frontend; npm run build`.
+- Pricing is computed by the backend and remains unavailable unless the required business-approved pricing configuration is set. Do not add sample or production rates without approval.
+- Payment processing, webhooks, reconciliation, and mover approval have operational requirements described in the backend guide and security checklist. A local implementation does not establish live service or deployment readiness.
+- The [Security Checklist](SECURITY_CHECKLIST.md) is the quick reference for implemented controls, known gaps, and staging actions.
+
+## Documentation
+
+Use the [documentation index](docs/README.md) to find architecture, implementation, workflow, migration, audit, and deployment records. Audit and implementation reports are retained as historical records; check their status notes and the current backend guide before relying on older findings.

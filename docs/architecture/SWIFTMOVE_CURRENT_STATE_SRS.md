@@ -1,3 +1,5 @@
+﻿> **Documentation status:** Point-in-time source snapshot. Later implementation details may differ; use [Backend/README.md](../../Backend/README.md) for current backend configuration and workflow notes, and verify source before relying on this document.
+
 # SwiftMove Current-State Software Requirements Specification
 
 **Document type:** As-built SRS  
@@ -190,7 +192,7 @@ erDiagram
 
 ## 8. API Documentation
 
-The complete mounted API inventory, request/response shapes, role requirements, and unmounted route inventory is in [SWIFTMOVE_API_DOCUMENTATION.md](SWIFTMOVE_API_DOCUMENTATION.md). APIs are mounted in `Backend/server.js`; endpoint details are derived from the route and controller code. No OpenAPI specification was found.
+The complete mounted API inventory, request/response shapes, role requirements, and unmounted route inventory is in [SWIFTMOVE_API_DOCUMENTATION.md](../implementation/SWIFTMOVE_API_DOCUMENTATION.md). APIs are mounted in `Backend/server.js`; endpoint details are derived from the route and controller code. No OpenAPI specification was found.
 
 ## 9. Non-Functional Requirements
 
@@ -222,7 +224,7 @@ No other active third-party API client was found. Google Analytics/Hotjar/featur
 
 ## 11. Current Implementation Status
 
-The full matrix with code evidence and work remaining is in [SWIFTMOVE_IMPLEMENTATION_STATUS.md](SWIFTMOVE_IMPLEMENTATION_STATUS.md).
+The full matrix with code evidence and work remaining is in [SWIFTMOVE_IMPLEMENTATION_STATUS.md](../implementation/SWIFTMOVE_IMPLEMENTATION_STATUS.md).
 
 ## 12. Known Issues and Limitations
 

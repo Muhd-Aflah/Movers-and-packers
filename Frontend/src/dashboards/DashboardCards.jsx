@@ -1,4 +1,4 @@
-import { AlertTriangle, CalendarDays, CheckCircle2, RefreshCw, Truck } from "lucide-react";
+import { AlertTriangle, CalendarDays, CheckCircle2, Truck } from "lucide-react";
 
 const METRICS = [
   { key: "totalMoves", title: "Total bookings", subtitle: "All your move requests", icon: CalendarDays, color: "blue" },
@@ -16,7 +16,7 @@ const ICON_COLORS = {
 
 function MetricCard({ title, value, subtitle, icon: Icon, color, loading }) {
   return (
-    <article className="flex min-w-0 items-center justify-between gap-3 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900 sm:p-5">
+    <article className="flex min-h-28 min-w-0 items-center justify-between gap-3 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900 sm:p-5">
       <div className="min-w-0">
         <p className="text-xs font-medium text-slate-600 dark:text-slate-400 sm:text-sm">{title}</p>
         {loading ? <div className="mt-2 h-7 w-14 animate-pulse rounded bg-slate-200 dark:bg-slate-700" aria-hidden="true" /> : <p className="mt-1 break-words text-xl font-bold tracking-tight text-slate-950 dark:text-white sm:text-2xl">{value ?? "—"}</p>}

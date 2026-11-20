@@ -1,0 +1,111 @@
+/* Keep older screens readable in dark mode until they use semantic theme classes. */
+.dark [class~="bg-white"]:not([class*="dark:bg-"]),
+.dark [class~="bg-gray-50"]:not([class*="dark:bg-"]),
+.dark [class~="bg-slate-50"]:not([class*="dark:bg-"]) {
+  background-color: #0f172a;
+}
+
+.dark [class~="bg-gray-100"]:not([class*="dark:bg-"]),
+.dark [class~="bg-gray-200"]:not([class*="dark:bg-"]),
+.dark [class~="bg-gray-300"]:not([class*="dark:bg-"]),
+.dark [class~="bg-slate-100"]:not([class*="dark:bg-"]),
+.dark [class~="bg-blue-100"]:not([class*="dark:bg-"]),
+.dark [class~="bg-blue-200"]:not([class*="dark:bg-"]),
+.dark [class~="bg-green-100"]:not([class*="dark:bg-"]),
+.dark [class~="bg-indigo-50"]:not([class*="dark:bg-"]),
+.dark [class~="bg-indigo-100"]:not([class*="dark:bg-"]),
+.dark [class~="bg-orange-50"]:not([class*="dark:bg-"]),
+.dark [class~="bg-orange-100"]:not([class*="dark:bg-"]),
+.dark [class~="bg-purple-50"]:not([class*="dark:bg-"]),
+.dark [class~="bg-yellow-100"]:not([class*="dark:bg-"]) {
+  background-color: #1e293b;
+}
+
+.dark [class~="text-gray-900"]:not([class*="dark:text-"]),
+.dark [class~="text-gray-800"]:not([class*="dark:text-"]),
+.dark [class~="text-gray-700"]:not([class*="dark:text-"]),
+.dark [class~="text-gray-100"]:not([class*="dark:text-"]),
+.dark [class~="text-gray-50"]:not([class*="dark:text-"]),
+.dark [class~="text-black"]:not([class*="dark:text-"]),
+.dark [class~="text-slate-950"]:not([class*="dark:text-"]),
+.dark [class~="text-slate-900"]:not([class*="dark:text-"]),
+.dark [class~="text-slate-800"]:not([class*="dark:text-"]),
+.dark [class~="text-slate-700"]:not([class*="dark:text-"]),
+.dark [class~="text-slate-100"]:not([class*="dark:text-"]),
+.dark [class~="text-slate-50"]:not([class*="dark:text-"]) {
+  color: #f8fafc;
+}
+
+.dark [class~="text-gray-600"]:not([class*="dark:text-"]),
+.dark [class~="text-gray-500"]:not([class*="dark:text-"]),
+.dark [class~="text-gray-400"]:not([class*="dark:text-"]),
+.dark [class~="text-slate-600"]:not([class*="dark:text-"]),
+.dark [class~="text-slate-500"]:not([class*="dark:text-"]),
+.dark [class~="text-slate-400"]:not([class*="dark:text-"]) {
+  color: #94a3b8;
+}
+
+.dark [class~="text-blue-900"]:not([class*="dark:text-"]),
+.dark [class~="text-blue-800"]:not([class*="dark:text-"]),
+.dark [class~="text-blue-700"]:not([class*="dark:text-"]),
+.dark [class~="text-blue-600"]:not([class*="dark:text-"]),
+.dark [class~="text-indigo-950"]:not([class*="dark:text-"]),
+.dark [class~="text-indigo-800"]:not([class*="dark:text-"]),
+.dark [class~="text-indigo-700"]:not([class*="dark:text-"]),
+.dark [class~="text-indigo-600"]:not([class*="dark:text-"]) {
+  color: #bfdbfe;
+}
+
+.dark [class~="text-green-700"]:not([class*="dark:text-"]),
+.dark [class~="text-green-800"]:not([class*="dark:text-"]) {
+  color: #86efac;
+}
+
+.dark [class~="text-amber-700"]:not([class*="dark:text-"]),
+.dark [class~="text-yellow-700"]:not([class*="dark:text-"]) {
+  color: #fde68a;
+}
+
+.dark [class~="text-orange-700"]:not([class*="dark:text-"]),
+.dark [class~="text-orange-600"]:not([class*="dark:text-"]) {
+  color: #fdba74;
+}
+
+.dark [class~="text-purple-700"]:not([class*="dark:text-"]),
+.dark [class~="text-purple-600"]:not([class*="dark:text-"]) {
+  color: #e9d5ff;
+}
+
+.dark [class~="text-red-800"]:not([class*="dark:text-"]),
+.dark [class~="text-red-700"]:not([class*="dark:text-"]) {
+  color: #fca5a5;
+}
+
+.dark [class~="border-gray-100"]:not([class*="dark:border-"]),
+.dark [class~="border-gray-200"]:not([class*="dark:border-"]),
+.dark [class~="border-gray-300"]:not([class*="dark:border-"]),
+.dark [class~="border-slate-100"]:not([class*="dark:border-"]),
+.dark [class~="border-slate-200"]:not([class*="dark:border-"]),
+.dark [class~="border-slate-300"]:not([class*="dark:border-"]) {
+  border-color: #334155;
+}
+
+.dark input:not([class*="dark:bg-"]),
+.dark select:not([class*="dark:bg-"]),
+.dark textarea:not([class*="dark:bg-"]) {
+  color: #f8fafc;
+  background-color: #0f172a;
+  border-color: #334155;
+}
+
+.dark input::placeholder,
+.dark textarea::placeholder {
+  color: #94a3b8;
+}
+
+.dark [class~="bg-blue-50"]:not([class*="dark:bg-"]),
+.dark [class~="bg-green-50"]:not([class*="dark:bg-"]),
+.dark [class~="bg-amber-50"]:not([class*="dark:bg-"]),
+.dark [class~="bg-red-50"]:not([class*="dark:bg-"]) {
+  background-color: #1e293b;
+}

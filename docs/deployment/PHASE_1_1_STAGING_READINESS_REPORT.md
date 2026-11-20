@@ -1,4 +1,4 @@
-# SwiftMove Phase 1.1 — Staging Readiness Review
+﻿# SwiftMove Phase 1.1 â€” Staging Readiness Review
 
 **Review date:** 2026-11-13  
 **Scope:** Phase 1 reports, current tracked and untracked source changes, staging configuration surface, and official Geoapify, Razorpay Route, and MongoDB documentation.  
@@ -8,14 +8,14 @@
 
 **Staging readiness is not complete.** The app has a coherent standard Razorpay checkout path with server-calculated order amounts, but staging payment and routing are not verified against external services. No Razorpay Route accounts, transfers, holds, refund/reversal, webhook, or reconciliation flow exists. Pricing is intentionally disabled until the owner supplies approved rates. The current mover role is self-selectable and immediately grants job APIs. Geoapify uses the first geocoding result without confidence review. CORS and proxy configuration do not yet identify the staging frontend and deployed proxy topology.
 
-The repository’s Phase 1 reports broadly reflect the current code, but their local mocked test results are not evidence of live MongoDB concurrency, external payment, geocoding/routing, or deployed behavior. This review made no test or live-service calls.
+The repositoryâ€™s Phase 1 reports broadly reflect the current code, but their local mocked test results are not evidence of live MongoDB concurrency, external payment, geocoding/routing, or deployed behavior. This review made no test or live-service calls.
 
 ## Current architecture and workflow as observed
 
 1. The React/Vite frontend calls an Express API using `VITE_API_URL`; the browser uses the public Razorpay key ID to open checkout.
 2. The backend validates booking details, resolves addresses through Geoapify, calculates the configured price, and persists a pricing snapshot on a move. Missing pricing configuration returns no price.
 3. The backend creates a Razorpay order from the saved move amount/currency. Payment verification validates the Razorpay signature, fetches order/payment state from Razorpay, and writes PaymentOrder, Payment, and Move state separately.
-4. A mover with the `mover` role can list paid jobs, accept one atomically, and progress accepted → in progress → completed.
+4. A mover with the `mover` role can list paid jobs, accept one atomically, and progress accepted â†’ in progress â†’ completed.
 5. Admin routes are read-only for mover and payment records. There is no mover approval decision endpoint and no settlement or refund workflow.
 
 ## Findings
@@ -26,81 +26,81 @@ No current critical vulnerability was confirmed from the reviewed code. The issu
 
 ### HIGH
 
-#### H1 — Any new user can activate mover capabilities at signup
+#### H1 â€” Any new user can activate mover capabilities at signup
 
-- **Location:** [auth.controller.js](Backend/src/controllers/auth.controller.js#L37), [User.model.js](Backend/src/models/User.model.js#L24), [provider.routes.js](Backend/src/routes/provider.routes.js#L16), [SignupPage.jsx](Frontend/src/pages/SignupPage.jsx#L11)
-- **Problem / cause:** Public signup accepts `role: "mover"`, creates that role immediately, and provider routes authorize solely by the JWT role. There is no application status, verification state, or admin approval mutation endpoint. Admin’s provider list counts every mover as an active provider.
+- **Location:** [auth.controller.js](../../Backend/src/controllers/auth.controller.js#L37), [User.model.js](../../Backend/src/models/User.model.js#L24), [provider.routes.js](../../Backend/src/routes/provider.routes.js#L16), [SignupPage.jsx](../../Frontend/src/pages/SignupPage.jsx#L11)
+- **Problem / cause:** Public signup accepts `role: "mover"`, creates that role immediately, and provider routes authorize solely by the JWT role. There is no application status, verification state, or admin approval mutation endpoint. Adminâ€™s provider list counts every mover as an active provider.
 - **Impact:** A self-registered mover can see customer contact details for paid unassigned jobs and attempt to claim them. Staging cannot exercise a trusted mover-onboarding/approval flow.
-- **Recommended solution:** Add an explicit mover approval state and an admin-only approve/reject workflow; enforce approval in middleware on every provider API, independently of frontend role routing. Keep customer account creation/login compatible. New mover signups should be pending. For existing records, first inventory existing mover accounts and make an owner-approved migration decision: grandfather verified accounts as approved and place unverified accounts into review. Do not make the new schema’s default silently block every existing mover or silently approve accounts without an explicit policy. Preserve existing account IDs, login, and assigned jobs. Record approver, timestamp, and decision reason. This is a recommendation only; no implementation was made.
+- **Recommended solution:** Add an explicit mover approval state and an admin-only approve/reject workflow; enforce approval in middleware on every provider API, independently of frontend role routing. Keep customer account creation/login compatible. New mover signups should be pending. For existing records, first inventory existing mover accounts and make an owner-approved migration decision: grandfather verified accounts as approved and place unverified accounts into review. Do not make the new schemaâ€™s default silently block every existing mover or silently approve accounts without an explicit policy. Preserve existing account IDs, login, and assigned jobs. Record approver, timestamp, and decision reason. This is a recommendation only; no implementation was made.
 - **Related files:** `Backend/src/models/User.model.js`, `Backend/src/controllers/auth.controller.js`, `Backend/src/routes/provider.routes.js`, `Backend/src/middleware/role.middleware.js` or a new approval middleware, `Backend/src/routes/admin.routes.js`, `Backend/src/controllers/admin.controller.js`, `Frontend/src/pages/SignupPage.jsx`, `Frontend/src/pages/admin/AdminProvidersPage.jsx`, plus a staged migration/backfill plan.
 
-#### H2 — Payment success depends on browser return; no webhook/reconciliation exists
+#### H2 â€” Payment success depends on browser return; no webhook/reconciliation exists
 
-- **Location:** [payment.routes.js](Backend/src/routes/payment.routes.js#L7), [payment.controller.js](Backend/src/controllers/payment.controller.js#L59), [payment.controller.js](Backend/src/controllers/payment.controller.js#L218), [PaymentOrder model](Backend/src/models/paymentOrder.model.js#L1)
+- **Location:** [payment.routes.js](../../Backend/src/routes/payment.routes.js#L7), [payment.controller.js](../../Backend/src/controllers/payment.controller.js#L59), [payment.controller.js](../../Backend/src/controllers/payment.controller.js#L218), [PaymentOrder model](../../Backend/src/models/paymentOrder.model.js#L1)
 - **Problem / cause:** The only payment finalization path is authenticated `/verify`, called after browser checkout. There is no Razorpay webhook route, signature verification for webhook payloads, event deduplication, or scheduled reconciliation process. The controller also calls Razorpay and then persists PaymentOrder, Payment, and Move separately; the external call cannot be covered by a MongoDB transaction.
 - **Impact:** A captured payment with a closed browser, failed network response, or backend interruption can remain locally unconfirmed and invisible to movers. Some partial writes can require manual repair. A retry can help in covered cases, but there is no independent source of eventual correction.
 - **Recommended solution:** Before inviting staging customers, implement signed payment/order webhook handling and an idempotent reconciliation path that fetches gateway state and repairs local records. Persist the gateway event ID and processing result for deduplication. Preserve the existing callback as a fast path, not the sole authority. Use a MongoDB transaction for the related local state updates only if the staging/production Mongo topology supports it; design idempotent recovery for the gateway/Mongo boundary.
 - **Related files:** payment controller/routes, PaymentOrder/Payment models, Move model, `server.js` raw-body handling for webhook signature validation, background job/worker setup, and operational runbook/alerts.
 
-#### H3 — No actual mover settlement exists; local `releaseStatus` is not a funds status
+#### H3 â€” No actual mover settlement exists; local `releaseStatus` is not a funds status
 
-- **Location:** [Payment model](Backend/src/models/payment.model.js#L56), [payment.controller.js](Backend/src/controllers/payment.controller.js#L59), [provider.controller.js](Backend/src/controllers/provider.controller.js#L75)
+- **Location:** [Payment model](../../Backend/src/models/payment.model.js#L56), [payment.controller.js](../../Backend/src/controllers/payment.controller.js#L59), [provider.controller.js](../../Backend/src/controllers/provider.controller.js#L75)
 - **Problem / cause:** Payment has a `releaseStatus` field whose default is `held`, but there are no Route transfer calls, linked-account IDs, settlement-hold calls, settlement webhooks, refunds, or reconciliation. No code marks it released, and the model comment correctly says it does not reflect actual funds custody.
 - **Impact:** The app cannot pay movers or demonstrate settlement. Any user-facing/admin interpretation of `held` as a Razorpay hold would be false. Job completion currently changes only the Move status and does not create a payable transfer.
 - **Recommended solution:** Keep Route disabled until Razorpay eligibility/account activation, mover onboarding/KYC, currency, fee/commission split, when-to-transfer, hold duration/release conditions, failed-transfer operations, refund/reversal policy, and accounting/reconciliation ownership are confirmed. Then create a separate durable transfer/settlement ledger keyed to Razorpay IDs and state; update it only from verified API responses/webhooks/reconciliation. Do not infer settlement from job completion or update `releaseStatus` to simulate a payout.
 - **Related files:** payment models/controllers/routes, `Backend/server.js`, mover account model/onboarding, admin settlement visibility, job completion path, webhook/background worker configuration, and finance/support operations documentation.
 
-#### H4 — No accepted staging configuration for CORS, proxy depth, and isolated service credentials
+#### H4 â€” No accepted staging configuration for CORS, proxy depth, and isolated service credentials
 
-- **Location:** [server.js](Backend/server.js#L10), [server.js](Backend/server.js#L41), [Frontend config](Frontend/src/constants/config.js#L32), [Backend env example](Backend/.env.example#L1), [Frontend env example](Frontend/.env.example#L1)
-- **Problem / cause:** Backend CORS origins are hard-coded to production Vercel, localhost, and the current Render backend origin; no staging frontend origin is included or environment-configured. `TRUST_PROXY_HOPS` defaults to `0`, which may not reflect Render’s actual proxy path. The repo contains no deployment manifest/CI definition that proves staging runtime variables, build settings, or health checks are configured.
+- **Location:** [server.js](../../Backend/server.js#L10), [server.js](../../Backend/server.js#L41), [Frontend config](../../Frontend/src/constants/config.js#L32), [Backend env example](../../Backend/.env.example#L1), [Frontend env example](../../Frontend/.env.example#L1)
+- **Problem / cause:** Backend CORS origins are hard-coded to production Vercel, localhost, and the current Render backend origin; no staging frontend origin is included or environment-configured. `TRUST_PROXY_HOPS` defaults to `0`, which may not reflect Renderâ€™s actual proxy path. The repo contains no deployment manifest/CI definition that proves staging runtime variables, build settings, or health checks are configured.
 - **Impact:** Staging browser requests may fail CORS. If proxy depth is wrong, clients can share one rate-limit identity or forwarding headers can be trusted too broadly. The required isolation and test-mode nature of the staging services cannot be verified from source.
 - **Recommended solution:** Set the exact staging frontend origin in a controlled CORS allowlist/configuration and verify preflight and authenticated requests. Determine trusted proxy hops from the actual hosting topology and set `TRUST_PROXY_HOPS` accordingly. Provision a separate non-production Mongo database, staging-only Razorpay test keys, staging Geoapify key, backend environment secrets, and frontend build-time Vite values. Add a deployment health check and document the exact runtime/build commands. Never use production data or keys in this test.
 - **Related files:** `Backend/server.js`, backend deployment settings, frontend Vercel project/environment settings, `Backend/.env.example`, `Frontend/.env.example`, and deployment/runbook docs.
 
 ### MEDIUM
 
-#### M1 — Geoapify returns one candidate and the app routes it without checking confidence
+#### M1 â€” Geoapify returns one candidate and the app routes it without checking confidence
 
-- **Location:** [pricing.service.js](Backend/src/services/pricing.service.js#L100)
+- **Location:** [pricing.service.js](../../Backend/src/services/pricing.service.js#L100)
 - **Problem / cause:** Geocoding requests set `limit=1`, then accept `features[0]` when coordinates exist. The code saves the formatted result but does not inspect `rank.confidence`, street/building confidence, match type, or whether multiple candidates are plausible. The free-form search does not constrain the search to a service country/area.
 - **Impact:** A valid-looking but wrong city/street/building can produce a route distance and price for the wrong journey. This is especially risky for common street names, misspellings, or incomplete addresses.
 - **Recommended solution:** Request several candidates, apply country and geographic service-area filters once the owner confirms service regions, compare normalized input/query components, and use documented confidence fields. Automatically accept only a product-approved precision level; show multiple plausible candidates and require explicit customer selection for medium confidence; reject unresolved, city-only, or low-confidence results. Save the chosen provider place IDs/coordinates and resolved labels into the quote/move snapshot. Thresholds must be selected from representative SwiftMove addresses, not copied blindly from examples. Keep the current fail-closed behavior for no route/provider errors.
 - **Related files:** `Backend/src/services/pricing.service.js`, pricing controller/routes, `Move` pricing snapshot schema, booking address inputs and quote UI.
 
-#### M2 — Process-local IP rate limiting is not fleet-wide and depends on proxy configuration
+#### M2 â€” Process-local IP rate limiting is not fleet-wide and depends on proxy configuration
 
-- **Location:** [rateLimit.middleware.js](Backend/src/middleware/rateLimit.middleware.js#L1), [auth.routes.js](Backend/src/routes/auth.routes.js#L8), [pricing.routes.js](Backend/src/routes/pricing.routes.js#L1), [server.js](Backend/server.js#L41)
+- **Location:** [rateLimit.middleware.js](../../Backend/src/middleware/rateLimit.middleware.js#L1), [auth.routes.js](../../Backend/src/routes/auth.routes.js#L8), [pricing.routes.js](../../Backend/src/routes/pricing.routes.js#L1), [server.js](../../Backend/server.js#L41)
 - **Problem / cause:** Limits use an in-process `Map` keyed by `req.ip`, with no shared store and no identity-level login throttling. Each server instance has independent buckets; the 10,000-entry capacity responds with 503 when it cannot evict live buckets. Client IP derivation relies on Express `trust proxy` being set correctly.
 - **Impact:** Horizontal scaling multiplies effective limits; restarts reset them; a deployment proxy misconfiguration can cause legitimate users to share limits or allow spoofable forwarded IP behavior. A login-targeted attack distributed across source IPs is not constrained per account.
 - **Recommended solution:** For a single controlled staging instance, configure and exercise the proxy identity behavior and monitor 429/503 outcomes. Before multi-instance or public use, use a shared rate-limit store with bounded expiry and a considered account/email key for login attempts while avoiding user lockout abuse. Set alerting on limiter capacity/evictions.
 - **Related files:** rate limiter, auth/pricing routes, deployment proxy settings, and staging monitoring.
 
-#### M3 — Multi-document payment state has no database transaction or unique per-move payment invariant
+#### M3 â€” Multi-document payment state has no database transaction or unique per-move payment invariant
 
-- **Location:** [payment.controller.js](Backend/src/controllers/payment.controller.js#L218), [Payment model](Backend/src/models/payment.model.js#L7), [PaymentOrder model](Backend/src/models/paymentOrder.model.js#L7), [Move model](Backend/src/models/move.model.js#L73)
+- **Location:** [payment.controller.js](../../Backend/src/controllers/payment.controller.js#L218), [Payment model](../../Backend/src/models/payment.model.js#L7), [PaymentOrder model](../../Backend/src/models/paymentOrder.model.js#L7), [Move model](../../Backend/src/models/move.model.js#L73)
 - **Problem / cause:** A conditional single-document Move lock serializes normal order creation/verification, but writes to PaymentOrder, Payment, and Move are separate. `razorpayPaymentId` and `razorpayOrderId` are unique; there is no unique constraint for a successful payment per Move. The five-minute lock is a lease and does not solve a process pause/network timeout longer than its expiry or remote success followed by local persistence failure.
 - **Impact:** Local status may temporarily diverge after partial failure or lock expiry; duplicate legacy payments/orders could complicate recovery. Mocked controller tests do not prove cross-process Mongo behavior.
 - **Recommended solution:** Inspect staging DB topology and indexes before migration. If adding a transaction for local updates, use a replica set or sharded deployment; MongoDB standalone does not support multi-document transactions. Keep gateway calls outside the transaction and make the reconciliation operation idempotent. Audit existing duplicate rows before adding a unique partial index for one successful payment per Move. Use explicit idempotency/business-operation IDs when supported by each Razorpay endpoint.
 - **Related files:** PaymentOrder/Payment/Move schemas, payment controller, migration scripts, MongoDB deployment/backup config, webhook and reconciliation service.
 
-#### M4 — No refund/cancellation/dispute process exists, despite payment schema states
+#### M4 â€” No refund/cancellation/dispute process exists, despite payment schema states
 
-- **Location:** [Payment model](Backend/src/models/payment.model.js#L49), [payment.routes.js](Backend/src/routes/payment.routes.js#L1), [move.model.js](Backend/src/models/move.model.js#L51)
+- **Location:** [Payment model](../../Backend/src/models/payment.model.js#L49), [payment.routes.js](../../Backend/src/routes/payment.routes.js#L1), [move.model.js](../../Backend/src/models/move.model.js#L51)
 - **Problem / cause:** Payment enum includes `refunded`, and Move includes `cancelled`, but there are no routes/controllers that issue refunds, reverse a Route transfer, enforce eligibility, or reconcile refund outcomes. The customer-facing cancellation/review controls were removed in Phase 1, so no active button was seen in the reviewed flow.
 - **Impact:** A staging tester cannot safely complete cancellation/refund cases; adding a refund manually in Razorpay would leave the local payment/move ledger wrong. A Route transfer reversal is separate from the customer refund.
 - **Recommended solution:** Document these cases as out of scope for the current staging acceptance run. Before offering cancellation/refunds, define who can authorize them, full/partial policy, state transitions, idempotency, fee treatment, transfer reversal behavior, gateway balance limitations, customer communications, and reconciliation.
 - **Related files:** payment controller/routes/models, move state machine, admin support view, and finance/support runbook.
 
-#### M5 — No database-backed evidence that required indexes exist in the target deployment
+#### M5 â€” No database-backed evidence that required indexes exist in the target deployment
 
-- **Location:** [User.model.js](Backend/src/models/User.model.js#L14), [PaymentOrder model](Backend/src/models/paymentOrder.model.js#L35), [Payment model](Backend/src/models/payment.model.js#L42)
+- **Location:** [User.model.js](../../Backend/src/models/User.model.js#L14), [PaymentOrder model](../../Backend/src/models/paymentOrder.model.js#L35), [Payment model](../../Backend/src/models/payment.model.js#L42)
 - **Problem / cause:** Mongoose schemas declare unique/index fields, but no staging database has been inspected to verify index creation. `unique: true` creates/requests a MongoDB index; it is not a Mongoose validation rule. Current payment model also declares both `unique` and `index` for `razorpayPaymentId`; the generated index inventory should be confirmed to avoid redundant/duplicate index assumptions. No index migration or production-like data audit is present in the reviewed repo.
 - **Impact:** Duplicate-key behavior can differ from expectation if indexes were never built; creating a unique index against duplicate existing data can fail deployment. Unindexed list/lookups can degrade as staging data grows.
 - **Recommended solution:** In the isolated staging DB, inspect `listIndexes()` and duplicate counts before creating indexes. Confirm unique user email, unique gateway order ID and payment ID, and query indexes for Move owner/provider/status, Payment user/date and Move reference, and PaymentOrder move/status. Add only required indexes through a controlled migration after resolving duplicates. Do not enable automatic index builds against production without a reviewed migration plan.
 - **Related files:** Mongoose models, DB bootstrap/deployment settings, controlled index migration/runbook.
 
-#### M6 — The project does not define a real end-to-end staging acceptance surface
+#### M6 â€” The project does not define a real end-to-end staging acceptance surface
 
 - **Location:** `Backend/package.json`, `Frontend/package.json`, `Backend/README.md`, `Frontend/vercel.json`
 - **Problem / cause:** Backend exposes `start`, `dev`, and mocked `test`; frontend exposes Vite `dev` and `build`. No lint script, browser E2E harness, CI workflow, Render manifest, or Vercel staging environment contract was found. The `/` response is a basic text response, not a dependency/readiness health check.
@@ -110,15 +110,15 @@ No current critical vulnerability was confirmed from the reviewed code. The issu
 
 ### LOW
 
-#### L1 — Authentication tokens remain long-lived browser localStorage bearer tokens
+#### L1 â€” Authentication tokens remain long-lived browser localStorage bearer tokens
 
-- **Location:** [auth.js](Frontend/src/utils/auth.js#L1), [auth.middleware.js](Backend/src/middleware/auth.middleware.js#L1)
+- **Location:** [auth.js](../../Frontend/src/utils/auth.js#L1), [auth.middleware.js](../../Backend/src/middleware/auth.middleware.js#L1)
 - **Problem / cause:** JWT is stored in browser local storage and expires after one day; no refresh, revocation, or CSP/security-header configuration was identified in the reviewed files.
 - **Impact:** A successful script injection can exfiltrate a bearer token until it expires. This is a residual security risk, not a blocker unique to staging if test accounts and data are isolated.
-- **Recommended solution:** Keep staging accounts/data synthetic; before production, adopt a reviewed token/session lifecycle and CSP/security-header policy consistent with the app’s deployment architecture.
+- **Recommended solution:** Keep staging accounts/data synthetic; before production, adopt a reviewed token/session lifecycle and CSP/security-header policy consistent with the appâ€™s deployment architecture.
 - **Related files:** auth utility, login/signup flows, API client, `server.js`, frontend hosting headers.
 
-#### L2 — Existing legacy model-name collision remains in inactive code
+#### L2 â€” Existing legacy model-name collision remains in inactive code
 
 - **Location:** `Backend/src/models/Service.model.js`, `Backend/src/models/ServiceProvider.model.js`
 - **Problem / cause:** Both legacy modules register the Mongoose model name `Provider` with different schemas. They are not imported by the active provider controllers found in this review.
@@ -128,7 +128,7 @@ No current critical vulnerability was confirmed from the reviewed code. The issu
 
 ## Authentication, approval gate, and rate-limit review
 
-- Auth signs HS256 one-day JWTs and verifies only HS256; startup requires a 32-byte-minimum JWT secret and Mongo URI. Signup rejects malformed/oversized values and cannot grant `admin`. Passwords over bcrypt’s 72-byte input limit are rejected. These are useful controls, but do not amount to mover approval.
+- Auth signs HS256 one-day JWTs and verifies only HS256; startup requires a 32-byte-minimum JWT secret and Mongo URI. Signup rejects malformed/oversized values and cannot grant `admin`. Passwords over bcryptâ€™s 72-byte input limit are rejected. These are useful controls, but do not amount to mover approval.
 - The current signup page deliberately sends the mover role when a provider chooses that path. `allowRoles("mover")` on provider routes checks role only. Approval must therefore be enforced server-side on all five mover endpoints; frontend hiding alone is insufficient.
 - A backward-compatible rollout should keep existing user IDs, credentials, and accepted jobs intact. Before applying status checks, inventory current mover accounts; owner decides which are grandfathered approved and which need review. New applicants should be pending from their creation. Add an admin-only decision route and ensure status changes are auditable. Keep existing pending/assigned jobs accessible only under the chosen migration policy. Revoke/refresh stale role claims or use authoritative DB status in the approval middleware so changing approval is effective without waiting for an old JWT to expire.
 - The current fixed-window rate limiter handles only signup, login, and quote routes. It is process-local, IP-only, and dependent on `req.ip` proxy correctness. It is adequate only as a limited single-instance staging guard, not a fleet-wide abuse control.
@@ -143,10 +143,10 @@ No current critical vulnerability was confirmed from the reviewed code. The issu
 
 ### External requirements to confirm before implementation
 
-1. **Eligibility and operating model:** Obtain written confirmation that SwiftMove’s Razorpay merchant account is eligible and activated for Route, and confirm the applicable country/currency/transaction constraints, fees, settlement schedules, test-mode support, and legal/compliance requirements with Razorpay. Official Route docs describe linked-account onboarding and transfer modes, but the exact account/product activation is account-specific.
-2. **Linked accounts:** Determine whether each mover is an individual or business and what legal name, email/phone, profile/address, PAN/GST or other KYC details, bank settlement destination, stakeholder details, and consent/privacy handling apply. Razorpay’s standard route path is create linked account → create stakeholder → request/update product configuration; composite onboarding can create account plus settlement destination in one call. Account creation is not the same as activation; handle `product.route.under_review`, `product.route.needs_clarification`, and `product.route.activated` events. Store gateway account ID and activation status against the correct mover only after verified responses/events.
+1. **Eligibility and operating model:** Obtain written confirmation that SwiftMoveâ€™s Razorpay merchant account is eligible and activated for Route, and confirm the applicable country/currency/transaction constraints, fees, settlement schedules, test-mode support, and legal/compliance requirements with Razorpay. Official Route docs describe linked-account onboarding and transfer modes, but the exact account/product activation is account-specific.
+2. **Linked accounts:** Determine whether each mover is an individual or business and what legal name, email/phone, profile/address, PAN/GST or other KYC details, bank settlement destination, stakeholder details, and consent/privacy handling apply. Razorpayâ€™s standard route path is create linked account â†’ create stakeholder â†’ request/update product configuration; composite onboarding can create account plus settlement destination in one call. Account creation is not the same as activation; handle `product.route.under_review`, `product.route.needs_clarification`, and `product.route.activated` events. Store gateway account ID and activation status against the correct mover only after verified responses/events.
 3. **Transfer allocation:** Choose whether to attach transfers during order creation or create transfers against the captured payment. Define the mover share, platform fee/commission, rounding, tax treatment, eligible destination, one-vs-many mover allocation, and rule for when the assigned mover becomes the payee. Validate that transfer allocations do not exceed captured payment and meet gateway minimums. Current documented Route transfer API fields are in minor units, and the transfer documentation says INR-only for Route transactions; confirm applicability for the live merchant/account before building around it.
-4. **Settlement holds:** Define the actual business condition for release, maximum hold period, fallback/exception owner, and what happens if work is disputed or incomplete. Route exposes transfer-level `on_hold` and optional Unix `on_hold_until`; omitting an end timestamp puts a transfer on hold indefinitely, while `on_hold: false` releases settlement. A local DB field is not proof of the hold. Obtain Route API/webhook state before displaying “held” or “released.”
+4. **Settlement holds:** Define the actual business condition for release, maximum hold period, fallback/exception owner, and what happens if work is disputed or incomplete. Route exposes transfer-level `on_hold` and optional Unix `on_hold_until`; omitting an end timestamp puts a transfer on hold indefinitely, while `on_hold: false` releases settlement. A local DB field is not proof of the hold. Obtain Route API/webhook state before displaying â€œheldâ€ or â€œreleased.â€
 5. **Refunds and reversals:** Separate customer refunds from Route transfer reversals in both workflow and ledger. Razorpay documents refund-with-`reverse_all` and a separate transfer reversal endpoint. Define full/partial refund rules, whether reversals are possible after settlement, what to do when the linked account lacks recoverable balance, and how failed/reversed states affect customer/job state. Never infer a worker payout can be recalled from their bank account.
 6. **Webhooks and reconciliation:** Configure separate staging webhook URL/secret in Razorpay test mode and select required payment, Route, product-activation, transfer, failure/reversal, and settlement events. Validate webhook signatures using the exact raw request bytes; store/deduplicate provider event IDs; handle retries and out-of-order notifications. Reconcile API transfer state and settlement reports to the internal ledger on a scheduled/manual support cadence. Alert on mismatched amounts, missing transfer, unresolved status, failed transfer, refund/reversal, and delayed settlement.
 7. **Explicit non-goal now:** Do not implement or test a real transfer, hold/release, linked account, refund, or live settlement until Route eligibility/account setup and owner-approved business settlement process are confirmed. No fake settlement status should be shown.
@@ -170,7 +170,7 @@ Source: [Geoapify Geocoding API confidence and filters](https://apidocs.geoapify
 | `MONGO_URI` | Required at startup; use a dedicated staging database with synthetic data and known topology. |
 | `JWT_SECRET` | Required at startup; at least 32 bytes of high-entropy, unique staging secret material. Never reuse production. |
 | `PORT` | Optional; host-provided listening port or default `5000`. |
-| `TRUST_PROXY_HOPS` | Defaults to `0`; set only after confirming the staging host’s trusted proxy chain. |
+| `TRUST_PROXY_HOPS` | Defaults to `0`; set only after confirming the staging hostâ€™s trusted proxy chain. |
 | `RAZORPAY_KEY_ID`, `RAZORPAY_KEY_SECRET` | Needed for backend order creation/verification; staging test-mode pair only. Secret remains backend-only. |
 | `GEOAPIFY_API_KEY` | Needed for geocoding and road route calls; staging key with correct API scope, quota, and restrictions. |
 | `PRICING_CURRENCY`, `PRICING_BASE_CHARGE`, `PRICING_PER_KM`, `PRICING_MINIMUM_CHARGE`, `PRICING_SERVICE_CHARGES_JSON` | Currently intentionally unset. Configure only after owner supplies actual business pricing rules and currency. No production price can be calculated until then. |
@@ -214,7 +214,7 @@ Source: [Geoapify Geocoding API confidence and filters](https://apidocs.geoapify
 6. **No Geoapify confidence/disambiguation handling or provider test evidence.** Current first-result routing can compute distance for the wrong plausible location.
 7. **No Razorpay Route eligibility/account activation or settlement business process.** Settlement, hold/release, refunds, reversals, and reconciliation cannot be tested, and must remain disabled.
 8. **MongoDB index/topology unverified.** Existing indexes, duplicate records, and transaction support are not established.
-9. **No end-to-end deployed workflow evidence.** Mocked unit tests and frontend build do not cover browser → API → Mongo → Razorpay sandbox → mover lifecycle.
+9. **No end-to-end deployed workflow evidence.** Mocked unit tests and frontend build do not cover browser â†’ API â†’ Mongo â†’ Razorpay sandbox â†’ mover lifecycle.
 
 ## Recommended implementation order
 
@@ -239,7 +239,7 @@ Source: [Geoapify Geocoding API confidence and filters](https://apidocs.geoapify
 
 ### Authentication and mover approval
 
-- [ ] Create customer signup/login; reject malformed fields, overlong values, and passwords above bcrypt’s accepted byte length.
+- [ ] Create customer signup/login; reject malformed fields, overlong values, and passwords above bcryptâ€™s accepted byte length.
 - [ ] Confirm public registration cannot grant admin; valid admin is provisioned through the approved separate process.
 - [ ] Verify legacy mover migration mapping and account login/assigned jobs against a staging snapshot/fixture.
 - [ ] New mover registration is pending; pending/rejected mover cannot list, accept, or progress jobs through direct API calls.
@@ -261,7 +261,7 @@ Source: [Geoapify Geocoding API confidence and filters](https://apidocs.geoapify
 - [ ] Staging checkout opens with the matching Razorpay test key and order ID from backend.
 - [ ] Order amount/currency exactly match the persisted backend-priced Move in minor units; client cannot choose a cheaper amount.
 - [ ] Successful sandbox payment becomes paid only after server verification of signature, gateway order/payment IDs, amount, currency and captured state.
-- [ ] Invalid signature, wrong order, wrong amount/currency, uncaptured/failed payment, other user’s move, and already-paid move do not mark move paid.
+- [ ] Invalid signature, wrong order, wrong amount/currency, uncaptured/failed payment, other userâ€™s move, and already-paid move do not mark move paid.
 - [ ] Double-click/concurrent order creation and repeated callback do not create duplicate payable orders or Payment records.
 - [ ] Simulate browser close after payment, backend restart/network timeout, webhook retry/out-of-order events once implemented; reconciliation reaches the correct terminal state without a second charge.
 - [ ] Reconcile Mongo Payment/PaymentOrder/Move to Razorpay sandbox dashboard and document any manual recovery steps.
@@ -270,7 +270,7 @@ Source: [Geoapify Geocoding API confidence and filters](https://apidocs.geoapify
 
 - [ ] Unpaid or unpriced moves never appear to movers and cannot be accepted or progressed by direct API call.
 - [ ] Approved mover accepts a paid move once; concurrent mover claims yield one assignment.
-- [ ] Only assigned mover can progress accepted → in_progress → completed; invalid jumps/repeats and other-mover calls fail.
+- [ ] Only assigned mover can progress accepted â†’ in_progress â†’ completed; invalid jumps/repeats and other-mover calls fail.
 - [ ] Customer/admin dashboards reflect the same assignment and status after refresh; job completion does not claim a settlement occurred.
 
 ### Settlement and refund (blocked until separately implemented/approved)

@@ -1,0 +1,12 @@
+# Repository-root local and generated files
+/node_modules/
+/.env
+/.env.*
+!/.env.example
+*.jks
+*.keystore
+/dist/
+/coverage/
+/*.log
+/.vscode/
+Frontend/gradle-error.txt

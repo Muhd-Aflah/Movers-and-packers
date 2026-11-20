@@ -1,3 +1,5 @@
+﻿> **Documentation status:** Point-in-time source snapshot. Later implementation details may differ; use [Backend/README.md](../../Backend/README.md) for current backend configuration and workflow notes, and verify source before relying on this document.
+
 # SwiftMove API Documentation (As Built)
 
 Base URL is configured by the deployment and frontend `VITE_API_URL`. Local backend default is `http://localhost:5000`. All JSON requests use `Content-Type: application/json`. Protected endpoints use `Authorization: Bearer <JWT>`.
@@ -36,7 +38,7 @@ The inventory below is derived from `Backend/server.js`, route modules, and cont
 | GET | `/api/admin/movers?status=pending\|approved\|rejected` | JWT role `admin`; `status` defaults to `pending` | `admin.controller.getMoversByApprovalStatus` |
 | GET | `/api/admin/movers/:id` | JWT role `admin`; valid mover ObjectId | `admin.controller.getMoverApplication` |
 | PUT | `/api/admin/movers/:id/approve` | JWT role `admin`; pending mover only | `admin.controller.approveMover` |
-| PUT | `/api/admin/movers/:id/reject` | JWT role `admin`; pending mover, required `reason` (1–500 chars) | `admin.controller.rejectMover` |
+| PUT | `/api/admin/movers/:id/reject` | JWT role `admin`; pending mover, required `reason` (1â€“500 chars) | `admin.controller.rejectMover` |
 | GET | `/api/admin/payments` | JWT role `admin` | `admin.controller.getAllPayments` |
 
 Unmatched paths return `404 { "message": "Route not found" }`.
@@ -212,7 +214,7 @@ All require JWT role `admin`.
 | `PUT /api/admin/movers/:id/reject` | Reject a pending mover with JSON `{ "reason": "..." }`; reason required, trimmed, max 500 chars; stores reviewer/timestamp/reason |
 | `GET /api/admin/payments` | Payment array with user and selected move fields populated |
 
-Existing admin list endpoints remain read-only. Approval decisions are limited to pending → approved/rejected; an already reviewed decision cannot be reversed through these endpoints because reapplication/reversal policy is not defined. Admin responses never include password hashes or tokens. List routes have no pagination. Data errors return `500`.
+Existing admin list endpoints remain read-only. Approval decisions are limited to pending â†’ approved/rejected; an already reviewed decision cannot be reversed through these endpoints because reapplication/reversal policy is not defined. Admin responses never include password hashes or tokens. List routes have no pagination. Data errors return `500`.
 
 ## Unmounted or placeholder routes
 
@@ -221,9 +223,9 @@ These route modules are present under `Backend/src/routes`, but `server.js` does
 | Module | Local route | Code behavior | Status |
 |---|---|---|---|
 | `quote.routes.js` | `POST /` (would be `/api/quote/` if mounted) | Checks name/phone/pickup/drop/moveDate then returns a success message without saving | Placeholder, unmounted |
-| `service.routes.js` | `GET /` | Returns a static “Services list working” message | Placeholder, unmounted |
+| `service.routes.js` | `GET /` | Returns a static â€œServices list workingâ€ message | Placeholder, unmounted |
 | `serviceRequest.routes.js` | `POST /` | Returns static success without persistence; imports middleware but does not use it | Placeholder, unmounted |
-| `review.routes.js` | `POST /review` | Returns static “Review submitted”; imports middleware but does not use it | Placeholder, unmounted |
+| `review.routes.js` | `POST /review` | Returns static â€œReview submittedâ€; imports middleware but does not use it | Placeholder, unmounted |
 
 Controllers and schemas for ServiceRequest, Service, Review, Client, ServiceProvider, and provider verification do not participate in mounted API flows. See the database document.
 

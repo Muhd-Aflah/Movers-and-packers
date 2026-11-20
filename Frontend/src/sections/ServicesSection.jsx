@@ -5,7 +5,7 @@ const operationSteps = [
   {
     number: "1",
     title: "Connect",
-    titleColor: "text-[#00c8b3]",
+    titleColor: "text-teal-700 dark:text-teal-300",
     description:
       "You're currently running your store on Shopify, WooCommerce, or any other platform. As a first step, you'll connect your store with our platform.",
     imageSrc: "/image-3.png",
@@ -18,7 +18,7 @@ const operationSteps = [
   {
     number: "2",
     title: "Store",
-    titleColor: "text-[#00c0e8]",
+    titleColor: "text-sky-700 dark:text-sky-300",
     description:
       "Then, you can send us your inventory and the fun begins. We'll choose a delivery day together so your fulfilment is not interrupted.",
     imageSrc: "/rectangle-1314.png",
@@ -31,7 +31,7 @@ const operationSteps = [
   {
     number: "3",
     title: "Ship",
-    titleColor: "text-[#00c3d0]",
+    titleColor: "text-cyan-700 dark:text-cyan-300",
     description:
       "We pick, pack and ship all incoming orders directly from our own warehouse until 12pm on the same day,",
     imageSrc: "/91fa59e6781adbdced82e349bb595d99-1-1.png",
@@ -45,13 +45,13 @@ const operationSteps = [
 
 export const ServicesSection = () => {
   return (
-    <section className="relative w-full py-16 sm:py-20 lg:py-[147px] px-4">
+    <section className="relative w-full bg-background px-4 py-16 text-foreground sm:py-20 lg:py-[147px]">
       <div className="max-w-7xl mx-auto flex flex-col gap-8 sm:gap-12 lg:gap-[50px]">
         <div className="flex justify-center">
           <div className="inline-flex flex-col items-start gap-2.5">
-            <div className="flex items-center justify-center [font-family:'Lato',Helvetica] font-normal text-black text-2xl sm:text-3xl lg:text-4xl tracking-[0] leading-[normal] whitespace-nowrap">
+            <div className="flex items-center justify-center whitespace-nowrap text-2xl font-normal leading-normal text-foreground sm:text-3xl lg:text-4xl">
               <span className="font-bold">Operation </span>
-              <span className="[font-family:'Lato',Helvetica] font-normal text-[#141414] text-2xl sm:text-3xl lg:text-4xl tracking-[0]">
+              <span className="text-foreground text-2xl font-normal sm:text-3xl lg:text-4xl">
                 Mode
               </span>
             </div>
@@ -78,7 +78,7 @@ export const ServicesSection = () => {
                     {step.title}
                   </h3>
                 </div>
-                <p className="w-full max-w-[400px] [font-family:'Lato',Helvetica] font-normal text-text-1 text-sm sm:text-base lg:text-sm tracking-[0] leading-[normal] text-center sm:text-left">
+                <p className="w-full max-w-[400px] text-center text-sm leading-normal text-muted-foreground sm:text-left sm:text-base lg:text-sm">
                   {step.description}
                 </p>
               </div>

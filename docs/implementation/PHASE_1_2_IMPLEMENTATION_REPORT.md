@@ -1,4 +1,4 @@
-# SwiftMove Phase 1.2 — Implementation Report
+﻿# SwiftMove Phase 1.2 â€” Implementation Report
 
 **Overall status: PARTIALLY COMPLETED**  
 **Code changes:** Implemented and locally checked  
@@ -54,16 +54,16 @@ Added `Backend/scripts/migrateMoversToPending.js` and `npm run migrate:movers:pe
 
 **Dry-run result:** Not run against a database; counts are **NOT VERIFIED**. Mocked dry-run test confirmed zero writes. Apply result: **NOT RUN**.
 
-See [MOVER_MIGRATION_GUIDE.md](MOVER_MIGRATION_GUIDE.md) for execution steps and [MOVER_APPROVAL_WORKFLOW.md](MOVER_APPROVAL_WORKFLOW.md) for status and assignment behavior.
+See [MOVER_MIGRATION_GUIDE.md](../migration/MOVER_MIGRATION_GUIDE.md) for execution steps and [MOVER_APPROVAL_WORKFLOW.md](../workflows/MOVER_APPROVAL_WORKFLOW.md) for status and assignment behavior.
 
 ## Verification performed
 
 | Check | Result |
 |---|---|
-| Backend `npm.cmd test` | **PASS** — 24 tests, 24 passed, 0 failed. Includes pending signup, current DB status enforcement, all five provider routes, customer/admin role denial, admin decision/audit/idempotency/non-mover/rejection validation, migration mocked dry-run/apply filter and CLI guards. |
+| Backend `npm.cmd test` | **PASS** â€” 24 tests, 24 passed, 0 failed. Includes pending signup, current DB status enforcement, all five provider routes, customer/admin role denial, admin decision/audit/idempotency/non-mover/rejection validation, migration mocked dry-run/apply filter and CLI guards. |
 | Backend JavaScript syntax (`node --check` for `src`, `scripts`, `test`) | **PASS** |
-| Frontend `npm.cmd run build` | **PASS** — Vite transformed 1,642 modules and built production assets. |
-| Live MongoDB migration dry-run | **NOT RUN** — no safe staging database supplied. |
+| Frontend `npm.cmd run build` | **PASS** â€” Vite transformed 1,642 modules and built production assets. |
+| Live MongoDB migration dry-run | **NOT RUN** â€” no safe staging database supplied. |
 | HTTP/browser E2E, deployment, Razorpay/Geoapify | **NOT RUN** |
 
 These checks do not establish live database referential integrity or a deployed UI/API flow. The migration tests use mock models and synthetic records only.

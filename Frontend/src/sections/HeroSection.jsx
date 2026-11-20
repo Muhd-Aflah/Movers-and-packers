@@ -19,18 +19,18 @@ export const HeroSection = () => {
           <div className="flex flex-col lg:flex-row items-center justify-between gap-12">
             {/* LEFT */}
             <div className="flex flex-col gap-6 max-w-xl">
-              <p className="text-sm font-semibold tracking-wide text-gray-500 uppercase">
+              <p className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">
                 Quick • Reliable • Insured
               </p>
 
-              <h1 className="text-4xl sm:text-5xl font-extrabold text-gray-900 leading-tight">
+              <h1 className="text-4xl font-extrabold leading-tight text-foreground sm:text-5xl">
                 Safe, Insured &{" "}
-                <span className="text-blue-500">On-Time Moving</span>
+                <span className="text-blue-600 dark:text-blue-400">On-Time Moving</span>
                 <br />
                 Every Step of the Way.
               </h1>
 
-              <p className="text-gray-600">
+              <p className="text-muted-foreground">
                 Professional home and office moving services with expert packing,
                 secure transportation, and guaranteed on-time delivery.
               </p>
@@ -40,7 +40,7 @@ export const HeroSection = () => {
                   ref={quoteTriggerRef}
                   type="button"
                   onClick={() => setIsQuoteOpen(true)}
-                  className="px-6 py-3 rounded-lg bg-blue-600 text-white font-semibold hover:bg-blue-700"
+                  className="rounded-lg bg-primary px-6 py-3 font-semibold text-primary-foreground hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
                   aria-haspopup="dialog"
                   aria-expanded={isQuoteOpen}
                   aria-controls="public-quote-dialog"
@@ -50,13 +50,13 @@ export const HeroSection = () => {
 
                 <button
                   onClick={() => navigate("/signup")}
-                  className="px-6 py-3 rounded-lg bg-gray-900 text-white font-semibold hover:bg-gray-800"
+                  className="rounded-lg bg-slate-900 px-6 py-3 font-semibold text-white hover:bg-slate-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 dark:bg-slate-100 dark:text-slate-900 dark:hover:bg-white"
                 >
                   Join Now
                 </button>
               </div>
 
-              <p className="text-sm text-gray-500">
+              <p className="text-sm text-muted-foreground">
                 No hidden charges • 100% insured • On-time guarantee
               </p>
             </div>
@@ -64,9 +64,9 @@ export const HeroSection = () => {
             {/* RIGHT */}
             <div className="w-full flex justify-center lg:justify-end">
               <img
-                src="/91fa59e6781adbdced82e349bb595d99-1.png"
-                alt="Moving illustration"
-                className="w-full max-w-md lg:max-w-2xl"
+                src="/swiftmove-hero-transparent.png"
+                alt="Courier carrying a delivery beside a route map"
+                className="h-auto w-full max-w-md object-contain lg:max-w-2xl dark:lg:bg-transparent"
               />
             </div>
           </div>

@@ -137,14 +137,14 @@ export function PaymentPage() {
   ];
 
   return (
-    <div className="min-h-screen bg-gray-50 py-12">
-      <div className="mx-auto max-w-xl rounded-xl bg-white p-6 shadow">
+    <div className="min-h-screen bg-gray-50 py-12 text-slate-900 dark:bg-slate-950 dark:text-slate-100">
+      <div className="mx-auto max-w-xl rounded-xl bg-white p-6 text-slate-900 shadow dark:bg-slate-900 dark:text-slate-100">
         <Link to="/booking" className="text-blue-600">← Back to booking</Link>
-        <h1 className="mb-4 mt-4 text-2xl font-bold">Payment</h1>
+        <h1 className="mb-4 mt-4 text-2xl font-bold text-slate-950 dark:text-white">Payment</h1>
         {move && (
           <>
-            {move.pricingStatus === "manual_review" && <p className="mb-4 rounded bg-amber-50 p-3 text-sm text-amber-900">Your full-service move is awaiting an administrator packing estimate. Payment is unavailable until an estimate is prepared and accepted.</p>}
-            <div className="space-y-2 text-sm">
+            {move.pricingStatus === "manual_review" && <p className="mb-4 rounded bg-amber-50 p-3 text-sm text-amber-900 dark:border dark:border-amber-800 dark:bg-amber-950 dark:text-amber-100">Your full-service move is awaiting an administrator packing estimate. Payment is unavailable until an estimate is prepared and accepted.</p>}
+            <div className="space-y-2 text-sm text-slate-700 dark:text-slate-200">
               <p><b>From:</b> {move.pickup?.address}</p>
               <p><b>To:</b> {move.dropoff?.address}</p>
               <p><b>Move date:</b> {formatMoveDate(move.moveDate)}</p>
@@ -152,38 +152,38 @@ export function PaymentPage() {
               <p><b>Vehicle:</b> {move.vehicleType?.replaceAll("_", " ")}</p>
               <p><b>Road distance:</b> {move.pricing?.distanceKm?.toLocaleString()} km</p>
             </div>
-            {move.pricingStatus === "pending_acceptance" && <p className="mb-4 mt-4 rounded bg-blue-50 p-3 text-sm text-blue-900">Review the administrator’s itemized estimate below. Accept this estimate before payment.</p>}
+            {move.pricingStatus === "pending_acceptance" && <p className="mb-4 mt-4 rounded border border-blue-100 bg-blue-50 p-3 text-sm text-blue-900 dark:border-blue-900 dark:bg-blue-950 dark:text-blue-100">Review the administrator’s itemized estimate below. Accept this estimate before payment.</p>}
             {breakdown && (
-              <dl className="mt-5 space-y-2 border-t pt-4">
-                <div className="mb-3 text-xs text-gray-600">
+              <dl className="mt-5 space-y-2 border-t border-slate-200 pt-4 dark:border-slate-700">
+                <div className="mb-3 text-xs text-slate-600 dark:text-slate-300">
                   Rate: {currency(move.pricing.vehicle?.perKmRate, move.pricing.currency)} per km ·
                   Minimum transport fare: {currency(move.pricing.vehicle?.minimumFare, move.pricing.currency)}
                 </div>
                 {breakdownLabels.map(([field, label]) => (
                   <div key={field} className="flex justify-between gap-4 text-sm">
-                    <dt>{label}{field === "tax" ? ` (${breakdown.taxStatus})` : ""}</dt>
-                    <dd>{currency(breakdown[field] || 0, move.pricing.currency)}</dd>
+                    <dt className="text-slate-600 dark:text-slate-300">{label}{field === "tax" ? ` (${breakdown.taxStatus})` : ""}</dt>
+                    <dd className="font-semibold text-slate-900 dark:text-slate-100">{currency(breakdown[field] || 0, move.pricing.currency)}</dd>
                   </div>
                 ))}
-                <div className="flex justify-between border-t pt-3 text-lg font-bold">
-                  <dt>Total</dt>
-                  <dd>{currency(move.price, move.pricing.currency)}</dd>
+                <div className="flex justify-between border-t border-slate-300 pt-3 text-lg font-bold dark:border-slate-600">
+                  <dt className="text-slate-950 dark:text-white">Total</dt>
+                  <dd className="text-slate-950 dark:text-white">{currency(move.price, move.pricing.currency)}</dd>
                 </div>
               </dl>
             )}
-            {breakdown && <p className="mt-3 text-xs text-gray-600">Tax is {breakdown.taxIncluded ? "included" : "excluded"}. Tolls are excluded; actual tolls may be added when known.</p>}
+            {breakdown && <p className="mt-3 text-xs text-slate-600 dark:text-slate-300">Tax is {breakdown.taxIncluded ? "included" : "excluded"}. Tolls are excluded; actual tolls may be added when known.</p>}
             {move.pricing?.estimateType === "admin_manual" && (
-              <div className="mt-4 space-y-3 border-t pt-4 text-sm">
+              <div className="mt-4 space-y-3 border-t border-slate-200 pt-4 text-sm text-slate-700 dark:border-slate-700 dark:text-slate-200 [&_h2]:text-slate-900 dark:[&_h2]:text-slate-100 [&_dt]:text-slate-600 dark:[&_dt]:text-slate-300 [&_dd]:shrink-0 [&_dd]:font-semibold [&_dd]:text-slate-900 dark:[&_dd]:text-slate-100">
                 <section><h2 className="font-semibold">Packing material estimate</h2><dl className="mt-2 space-y-1">{move.pricing.materials.map((line, index) => <div key={`${line.description}-${index}`} className="flex justify-between gap-3"><dt>{line.description} ({line.quantity} {line.unit} × {currency(line.unitRate, move.pricing.currency)})</dt><dd>{currency(line.amount, move.pricing.currency)}</dd></div>)}</dl></section>
                 <section><h2 className="font-semibold">Labour estimate</h2><dl className="mt-2 space-y-1">{["packing", "loading", "unloading"].map((key) => <div key={key} className="flex justify-between gap-3"><dt className="capitalize">{key}: {move.pricing.labor[key].workers} worker(s) × {currency(move.pricing.labor[key].ratePerWorker, move.pricing.currency)}</dt><dd>{currency(move.pricing.labor[key].amount, move.pricing.currency)}</dd></div>)}</dl></section>
                 {move.pricing.additionalCharges.length > 0 && <section><h2 className="font-semibold">Additional approved charges</h2><dl className="mt-2 space-y-1">{move.pricing.additionalCharges.map((line, index) => <div key={`${line.description}-${index}`} className="flex justify-between gap-3"><dt>{line.description}</dt><dd>{currency(line.amount, move.pricing.currency)}</dd></div>)}</dl></section>}
               </div>
             )}
-            {move.paid && <p className="mt-4 text-green-700">This move is already paid.</p>}
+            {move.paid && <p className="mt-4 text-green-700 dark:text-green-300">This move is already paid.</p>}
           </>
         )}
 
-        {error && <p role="alert" className="mt-4 text-red-600">{error}</p>}
+        {error && <p role="alert" className="mt-4 text-red-600 dark:text-red-300">{error}</p>}
         {move?.pricingStatus === "pending_acceptance" && (
           <button onClick={handleAcceptEstimate} disabled={accepting} className="mt-6 w-full rounded-lg bg-blue-600 py-3 text-white disabled:opacity-50">
             {accepting ? "Saving acceptance..." : `Accept estimate ${currency(move.price, move.pricing.currency)}`}

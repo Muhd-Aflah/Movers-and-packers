@@ -95,7 +95,7 @@ export const QuoteModal = ({ isOpen, onClose, returnFocusRef }) => {
         aria-labelledby="public-quote-title"
         aria-describedby="public-quote-description"
         tabIndex={-1}
-        className="w-full max-w-md overflow-hidden rounded-2xl bg-white shadow-2xl"
+        className="w-full max-w-md overflow-hidden rounded-2xl border border-border bg-popover text-popover-foreground shadow-2xl"
       >
         <div className="relative bg-gradient-to-r from-blue-600 to-indigo-700 p-6">
           <button
@@ -115,24 +115,24 @@ export const QuoteModal = ({ isOpen, onClose, returnFocusRef }) => {
         <form onSubmit={handleSubmit} noValidate className="space-y-4 p-6">
           {Object.values(errors).some(Boolean) && <p role="alert" aria-live="assertive" className="text-sm text-red-700">Please correct the highlighted fields.</p>}
           <div>
-            <label htmlFor="quote-pickup" className="mb-1 block text-sm font-medium text-gray-700">Pickup address</label>
-            <input ref={pickupRef} id="quote-pickup" name="pickup" value={form.pickup} required aria-invalid={Boolean(errors.pickup)} aria-describedby={fieldError("pickup")} onChange={handleChange} className="w-full rounded-lg border px-4 py-3 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600" />
-            {errors.pickup && <p id="pickup-error" className="mt-1 text-sm text-red-700">{errors.pickup}</p>}
+            <label htmlFor="quote-pickup" className="mb-1 block text-sm font-medium text-foreground">Pickup address</label>
+            <input ref={pickupRef} id="quote-pickup" name="pickup" value={form.pickup} required aria-invalid={Boolean(errors.pickup)} aria-describedby={fieldError("pickup")} onChange={handleChange} className="w-full rounded-lg border border-input bg-background px-4 py-3 text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring" />
+            {errors.pickup && <p id="pickup-error" className="mt-1 text-sm text-destructive">{errors.pickup}</p>}
           </div>
           <div>
-            <label htmlFor="quote-drop" className="mb-1 block text-sm font-medium text-gray-700">Delivery address</label>
-            <input ref={dropRef} id="quote-drop" name="drop" value={form.drop} required aria-invalid={Boolean(errors.drop)} aria-describedby={fieldError("drop")} onChange={handleChange} className="w-full rounded-lg border px-4 py-3 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600" />
-            {errors.drop && <p id="drop-error" className="mt-1 text-sm text-red-700">{errors.drop}</p>}
+            <label htmlFor="quote-drop" className="mb-1 block text-sm font-medium text-foreground">Delivery address</label>
+            <input ref={dropRef} id="quote-drop" name="drop" value={form.drop} required aria-invalid={Boolean(errors.drop)} aria-describedby={fieldError("drop")} onChange={handleChange} className="w-full rounded-lg border border-input bg-background px-4 py-3 text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring" />
+            {errors.drop && <p id="drop-error" className="mt-1 text-sm text-destructive">{errors.drop}</p>}
           </div>
           <div>
-            <label htmlFor="quote-date" className="mb-1 block text-sm font-medium text-gray-700">Moving date</label>
-            <input ref={dateRef} id="quote-date" type="date" name="moveDate" value={form.moveDate} required aria-invalid={Boolean(errors.moveDate)} aria-describedby={fieldError("moveDate")} onChange={handleChange} className="w-full rounded-lg border px-4 py-3 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600" />
-            {errors.moveDate && <p id="moveDate-error" className="mt-1 text-sm text-red-700">{errors.moveDate}</p>}
+            <label htmlFor="quote-date" className="mb-1 block text-sm font-medium text-foreground">Moving date</label>
+            <input ref={dateRef} id="quote-date" type="date" name="moveDate" value={form.moveDate} required aria-invalid={Boolean(errors.moveDate)} aria-describedby={fieldError("moveDate")} onChange={handleChange} className="w-full rounded-lg border border-input bg-background px-4 py-3 text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring" />
+            {errors.moveDate && <p id="moveDate-error" className="mt-1 text-sm text-destructive">{errors.moveDate}</p>}
           </div>
           <button type="submit" className="w-full rounded-lg bg-blue-600 py-3 font-semibold text-white hover:bg-blue-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600 focus-visible:ring-offset-2">
             Continue to Booking
           </button>
-          <p className="text-center text-xs text-gray-500">No payment is taken at this step.</p>
+          <p className="text-center text-xs text-muted-foreground">No payment is taken at this step.</p>
         </form>
       </div>
     </div>
