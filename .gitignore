@@ -10,3 +10,5 @@
 /*.log
 /.vscode/
 Frontend/gradle-error.txt
+/package.json
+/package-lock.json
