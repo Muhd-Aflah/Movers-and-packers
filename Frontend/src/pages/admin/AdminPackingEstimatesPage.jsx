@@ -3,7 +3,10 @@ import { adminService } from "../../services/admin.service";
 import { formatCurrency } from "../../utils/currency";
 import { PaginationControls } from "../../components/ui/PaginationControls";
 import { usePaginatedData } from "../../hooks/usePaginatedData";
+import { useSocketEvents } from "../../hooks/useSocketEvents";
 import { runEstimateSubmission } from "./packingEstimateWorkflow";
+
+const ESTIMATE_QUEUE_EVENTS = ["booking:created", "estimate:created", "estimate:updated", "estimate:accepted"];
 
 const emptyEstimate = (move) => ({
   materials: [{ description: "", quantity: "1", unit: "", unitRate: "" }],
@@ -22,7 +25,8 @@ export function AdminPackingEstimatesPage() {
   const [notice, setNotice] = useState("");
 
   const fetchPage = useCallback((page) => adminService.getPendingPackingEstimatesPage(page), []);
-  const { items: moves, setItems: setMoves, loading, error, page, pagination, setPage, reload: loadMoves } = usePaginatedData(fetchPage);
+  const { items: moves, setItems: setMoves, loading, error, page, pagination, setPage, reload: loadMoves, refresh } = usePaginatedData(fetchPage);
+  useSocketEvents(ESTIMATE_QUEUE_EVENTS, () => refresh(), () => refresh(), { coalesceMs: 50 });
 
   useEffect(() => {
     setForms((current) => {

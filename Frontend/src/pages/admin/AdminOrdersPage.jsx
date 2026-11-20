@@ -5,10 +5,13 @@ import { formatMoveDate } from "../../utils/moveDate";
 import { getServiceModeLabel } from "../../utils/serviceMode";
 import { PaginationControls } from "../../components/ui/PaginationControls";
 import { usePaginatedData } from "../../hooks/usePaginatedData";
+import { useSocketEvents } from "../../hooks/useSocketEvents";
+import { ADMIN_DASHBOARD_EVENTS } from "../../realtime/events";
 
 export function AdminOrdersPage() {
   const fetchPage = useCallback((page) => adminService.getAllMovesPage(page), []);
-  const { items: moves, loading, error, page, pagination, setPage } = usePaginatedData(fetchPage);
+  const { items: moves, loading, error, page, pagination, setPage, refresh } = usePaginatedData(fetchPage);
+  useSocketEvents(ADMIN_DASHBOARD_EVENTS, () => refresh(), () => refresh(), { coalesceMs: 50 });
 
   if (loading && !pagination) return <div>Loading orders...</div>;
 

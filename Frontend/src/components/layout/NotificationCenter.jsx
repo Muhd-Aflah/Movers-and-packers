@@ -1,7 +1,8 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Bell, LoaderCircle, RefreshCw, X } from "lucide-react";
 import { Link } from "react-router-dom";
-import { getMyNotifications } from "../../services/notification.service";
+import { getMyNotifications, markNotificationRead } from "../../services/notification.service";
+import { useSocketEvents } from "../../hooks/useSocketEvents";
 
 const DATE_FORMAT = new Intl.DateTimeFormat("en-IN", {
   dateStyle: "medium",
@@ -16,7 +17,20 @@ export function NotificationCenter({ role }) {
   const [error, setError] = useState("");
   const [retry, setRetry] = useState(0);
   const isMover = role === "mover";
-  const updatesPath = isMover ? "/dashboard/provider/my-jobs" : "/dashboard/user";
+  const updatesPath = isMover ? "/dashboard/provider/my-jobs" : role === "admin" ? "/dashboard/admin" : "/dashboard/user";
+
+  const onSocketEvent = useCallback((event, payload) => {
+    if (event === "notification:new" && payload?.id) {
+      setNotifications((current) => [payload, ...current.filter((item) => item.id !== payload.id)]
+        .sort((left, right) => right.at.localeCompare(left.at)).slice(0, 50));
+      setStatus("success");
+    } else if (event === "notification:read" && payload?.notificationId) {
+      setNotifications((current) => current.map((item) => item.id === payload.notificationId
+        ? { ...item, readAt: payload.readAt, isRead: true }
+        : item));
+    }
+  }, []);
+  useSocketEvents(["notification:new", "notification:read"], onSocketEvent);
 
   useEffect(() => {
     if (!open) return undefined;
@@ -26,7 +40,11 @@ export function NotificationCenter({ role }) {
     getMyNotifications(role)
       .then((result) => {
         if (!active) return;
-        setNotifications(Array.isArray(result?.notifications) ? result.notifications : []);
+        setNotifications((current) => {
+          const byId = new Map();
+          for (const item of [...(result?.notifications || []), ...current]) byId.set(item.id, item);
+          return [...byId.values()].sort((left, right) => right.at.localeCompare(left.at)).slice(0, 50);
+        });
         setStatus("success");
       })
       .catch((requestError) => {
@@ -37,20 +55,28 @@ export function NotificationCenter({ role }) {
     return () => { active = false; };
   }, [open, role, retry]);
 
-  const visibleCount = notifications.length > 9 ? "9+" : notifications.length;
+  const unreadCount = notifications.filter((notification) => !notification.isRead).length;
+  const visibleCount = unreadCount > 9 ? "9+" : unreadCount;
+
+  const openNotification = (notification) => {
+    if (notification.isRead || !/^[a-f\d]{24}$/i.test(notification.id)) return;
+    markNotificationRead(notification.id)
+      .then(({ readAt }) => onSocketEvent("notification:read", { notificationId: notification.id, readAt }))
+      .catch(() => {});
+  };
 
   return (
     <div className="relative">
       <button
         type="button"
         onClick={() => setOpen((current) => !current)}
-        aria-label={notifications.length ? `Recent updates, ${notifications.length} items` : "Recent updates"}
+        aria-label={unreadCount ? `Recent updates, ${unreadCount} unread` : "Recent updates"}
         aria-expanded={open}
         aria-controls="portal-notifications"
         className="relative inline-flex h-11 w-11 items-center justify-center rounded-control border border-slate-200 text-slate-700 hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sm-primary dark:border-slate-700 dark:text-slate-100 dark:hover:bg-slate-800"
       >
         <Bell className="h-4 w-4" aria-hidden="true" />
-        {notifications.length > 0 && <span aria-hidden="true" className="absolute right-1 top-1 min-w-4 rounded-full bg-blue-600 px-1 text-[10px] font-bold leading-4 text-white">{visibleCount}</span>}
+        {unreadCount > 0 && <span aria-hidden="true" className="absolute right-1 top-1 min-w-4 rounded-full bg-blue-600 px-1 text-[10px] font-bold leading-4 text-white">{visibleCount}</span>}
       </button>
       {open && (
         <section id="portal-notifications" aria-label="Recent updates" className="absolute right-0 z-50 mt-2 w-[min(22rem,calc(100vw-2rem))] overflow-hidden rounded-xl border border-slate-200 bg-white text-slate-900 shadow-xl dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100">
@@ -72,8 +98,8 @@ export function NotificationCenter({ role }) {
               <ul className="divide-y divide-slate-200 dark:divide-slate-700">
                 {notifications.map((notification) => (
                   <li key={notification.id}>
-                    <Link to={updatesPath} onClick={() => setOpen(false)} className="block px-4 py-3 hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-blue-600 dark:hover:bg-slate-800">
-                      <p className="text-sm font-semibold">{notification.title}</p>
+                    <Link to={updatesPath} onClick={() => { openNotification(notification); setOpen(false); }} className={`block px-4 py-3 hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-blue-600 dark:hover:bg-slate-800 ${notification.isRead ? "" : "bg-blue-50/70 dark:bg-blue-950/30"}`}>
+                      <p className="text-sm font-semibold">{notification.title}{!notification.isRead && <span className="sr-only">, unread</span>}</p>
                       <p className="mt-1 text-sm text-slate-600 dark:text-slate-300">{notification.message}</p>
                       <time className="mt-1 block text-xs text-slate-500 dark:text-slate-400" dateTime={notification.at}>{DATE_FORMAT.format(new Date(notification.at))}</time>
                     </Link>

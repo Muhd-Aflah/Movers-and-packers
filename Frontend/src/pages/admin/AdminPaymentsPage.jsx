@@ -3,10 +3,14 @@ import { adminService } from "../../services/admin.service";
 import { formatCurrency } from "../../utils/currency";
 import { PaginationControls } from "../../components/ui/PaginationControls";
 import { usePaginatedData } from "../../hooks/usePaginatedData";
+import { useSocketEvents } from "../../hooks/useSocketEvents";
+
+const PAYMENT_EVENTS = ["payment:initiated", "payment:success", "payment:failed", "payment:refunded"];
 
 export function AdminPaymentsPage() {
   const fetchPage = useCallback((page) => adminService.getAllPaymentsPage(page), []);
-  const { items: payments, loading, error, page, pagination, setPage } = usePaginatedData(fetchPage);
+  const { items: payments, loading, error, page, pagination, setPage, refresh } = usePaginatedData(fetchPage);
+  useSocketEvents(PAYMENT_EVENTS, () => refresh(), () => refresh(), { coalesceMs: 50 });
 
   if (loading && !pagination) return <div>Loading payments...</div>;
 

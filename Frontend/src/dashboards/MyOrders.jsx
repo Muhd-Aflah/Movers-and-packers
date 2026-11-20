@@ -102,6 +102,11 @@ export function MyOrders({ orders = [], pagination, page, onPageChange, loading 
   const location = useLocation();
 
   useEffect(() => { if (location.hash === "#bookings") setActiveTab("bookings"); }, [location.hash]);
+  useEffect(() => {
+    setSelectedMove((current) => current
+      ? orders.find((move) => String(move._id) === String(current._id)) || current
+      : current);
+  }, [orders]);
 
   const hasBookings = orders.length > 0 || (pagination?.total || 0) > 0;
   return (

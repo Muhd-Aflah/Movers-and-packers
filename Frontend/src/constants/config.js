@@ -33,6 +33,10 @@ export const APP_CONFIG = {
     timeout: 10000,
   },
 
+  socket: {
+    baseUrl: import.meta.env.VITE_SOCKET_URL || import.meta.env.VITE_API_URL || "",
+  },
+
   // Analytics
   analytics: {
     googleAnalyticsId: import.meta.env.VITE_GA_ID,

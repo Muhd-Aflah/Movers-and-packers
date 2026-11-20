@@ -1,4 +1,5 @@
 import { apiRequest } from "./api";
+import { clearAuthStorage } from "../utils/auth";
 
 // LOGIN
 export const login = async (email, password) => {
@@ -24,6 +25,5 @@ export const submitMoverApplication = (name, email, password) =>
 export const getCurrentProfile = () => apiRequest("/api/auth/profile");
 
 export const logout = () => {
-  localStorage.removeItem("token");
-  localStorage.removeItem("user");
+  clearAuthStorage();
 };

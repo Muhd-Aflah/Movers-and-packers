@@ -11,16 +11,23 @@ export function decodeJwt(token) {
   }
 }
 
+const notifyAuthChanged = () => {
+  if (typeof window === "undefined") return;
+  window.dispatchEvent(new Event("swiftmove:auth-changed"));
+};
+
 export function setAuth({ token, user }) {
   localStorage.setItem("token", token);
   if (user) {
     localStorage.setItem("user", JSON.stringify(user));
   }
+  notifyAuthChanged();
 }
 
 export function clearAuthStorage() {
   localStorage.removeItem("token");
   localStorage.removeItem("user");
+  if (typeof window !== "undefined") queueMicrotask(notifyAuthChanged);
 }
 
 export function getAuthFromStorage() {

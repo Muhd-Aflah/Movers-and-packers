@@ -1,7 +1,9 @@
 import { Link, Outlet } from "react-router-dom";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { adminService } from "../services/admin.service";
 import { formatCurrency } from "../utils/currency";
+import { useSocketEvents } from "../hooks/useSocketEvents";
+import { ADMIN_DASHBOARD_EVENTS } from "../realtime/events";
 
 export function AdminDashboard() {
   const [stats, setStats] = useState({
@@ -12,9 +14,17 @@ export function AdminDashboard() {
   });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const requestInFlight = useRef(false);
+  const refreshQueued = useRef(false);
 
-  useEffect(() => {
-    const fetchStats = async () => {
+  const fetchStats = useCallback(async () => {
+    if (requestInFlight.current) {
+      refreshQueued.current = true;
+      return;
+    }
+    requestInFlight.current = true;
+    do {
+      refreshQueued.current = false;
       try {
         const data = await adminService.getDashboardStats();
         setStats({
@@ -25,14 +35,20 @@ export function AdminDashboard() {
             ? data.revenueByCurrency.map(({ currency, amount }) => formatCurrency(amount, currency)).join(" · ")
             : "No paid transactions",
         });
+        setError(null);
       } catch (err) {
         setError(err);
       } finally {
         setLoading(false);
       }
-    };
-    fetchStats();
+    } while (refreshQueued.current);
+    requestInFlight.current = false;
   }, []);
+
+  useEffect(() => {
+    fetchStats();
+  }, [fetchStats]);
+  useSocketEvents(ADMIN_DASHBOARD_EVENTS, () => fetchStats(), () => fetchStats(), { coalesceMs: 50 });
 
   if (loading) return <div>Loading admin dashboard...</div>;
   if (error) return <div>Error: {error.message}</div>;

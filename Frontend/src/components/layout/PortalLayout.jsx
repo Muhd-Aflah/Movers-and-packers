@@ -86,7 +86,7 @@ export function PortalLayout({ role, children }) {
       >
         {isDark ? <Sun className="h-4 w-4" aria-hidden="true" /> : <Moon className="h-4 w-4" aria-hidden="true" />}
       </button>
-      {(role === "user" || role === "mover") && <NotificationCenter role={role} />}
+      <NotificationCenter role={role} />
       <button
         type="button"
         onClick={logout}

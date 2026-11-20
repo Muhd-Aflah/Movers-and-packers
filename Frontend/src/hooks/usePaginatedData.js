@@ -15,22 +15,25 @@ export function usePaginatedData(fetchPage, pageSize = 10) {
     lastPageWithoutMetadata.current = null;
   }
 
-  const reload = useCallback(async () => {
+  const loadPage = useCallback(async ({ silent = false } = {}) => {
     const currentRequest = ++requestId.current;
-    setItems([]);
-    setLoading(true);
-    setError("");
-    setPagination((current) => current ? {
-      ...current,
-      page,
-      hasPrevPage: page > 1,
-      hasNextPage: current.metadataAvailable === false ? false : page < current.totalPages,
-    } : null);
+    if (!silent) {
+      setItems([]);
+      setLoading(true);
+      setError("");
+      setPagination((current) => current ? {
+        ...current,
+        page,
+        hasPrevPage: page > 1,
+        hasNextPage: current.metadataAvailable === false ? false : page < current.totalPages,
+      } : null);
+    }
     try {
       const result = await fetchPage(page);
       if (currentRequest !== requestId.current) return;
       if (!Array.isArray(result?.data)) throw new Error("The paginated endpoint did not return a record list");
       setItems(result.data);
+      setError("");
       if (result.pagination) {
         lastPageWithoutMetadata.current = null;
         setPagination(result.pagination);
@@ -61,16 +64,19 @@ export function usePaginatedData(fetchPage, pageSize = 10) {
         });
       }
     } catch (requestError) {
-      if (currentRequest === requestId.current) setError(requestError.message || "Could not load records");
+      if (currentRequest === requestId.current && !silent) setError(requestError.message || "Could not load records");
     } finally {
-      if (currentRequest === requestId.current) setLoading(false);
+      if (currentRequest === requestId.current && !silent) setLoading(false);
     }
   }, [fetchPage, page, pageSize]);
+
+  const reload = useCallback(() => loadPage(), [loadPage]);
+  const refresh = useCallback(() => loadPage({ silent: true }), [loadPage]);
 
   useEffect(() => {
     reload();
     return () => { requestId.current += 1; };
   }, [reload]);
 
-  return { page, setPage, items, setItems, pagination, loading, error, setError, reload };
+  return { page, setPage, items, setItems, pagination, loading, error, setError, reload, refresh };
 }

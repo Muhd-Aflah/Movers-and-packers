@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { Activity, ArrowRight, CalendarDays, MapPin, Package, Sparkles, Truck } from "lucide-react";
 import { DashboardCards } from "./DashboardCards";
@@ -15,6 +15,8 @@ import { getServiceModeLabel } from "../utils/serviceMode";
 import { getAuthFromStorage } from "../utils/auth";
 import { getIndiaToday } from "../components/booking/bookingContract";
 import { summarizeCustomerMoves } from "./customerDashboardModel";
+import { useSocketEvents } from "../hooks/useSocketEvents";
+import { CUSTOMER_DASHBOARD_EVENTS } from "../realtime/events";
 
 const vehicleNames = {
   three_wheeler_eeco: "3-Wheeler / Eeco",
@@ -110,6 +112,12 @@ export function UserDashboard() {
   const fetchPayments = useCallback((page) => getMyPaymentsPage(page), []);
   const moves = usePaginatedData(fetchMoves);
   const payments = usePaginatedData(fetchPayments);
+  const summaryRequestId = useRef(0);
+  const refreshInFlight = useRef(false);
+  const refreshPending = useRef(false);
+  const refreshTimer = useRef(null);
+  const lastRefreshAt = useRef(0);
+  const dashboardMounted = useRef(false);
   const authUser = getAuthFromStorage().user;
   const firstName = authUser?.name?.trim().split(/\s+/)[0] || "there";
 
@@ -138,13 +146,84 @@ export function UserDashboard() {
   }, []);
 
   useEffect(() => {
+    dashboardMounted.current = true;
+    return () => {
+      dashboardMounted.current = false;
+      window.clearTimeout(refreshTimer.current);
+    };
+  }, []);
+
+  useEffect(() => {
     let active = true;
+    const requestId = ++summaryRequestId.current;
     setSummaryState({ status: "loading", data: null, error: "" });
     loadMoveSummary()
-      .then((data) => { if (active) setSummaryState({ status: "success", data, error: "" }); })
-      .catch((error) => { if (active) setSummaryState({ status: "error", data: null, error: error.message || "Could not load your move summary." }); });
+      .then((data) => {
+        if (active && requestId === summaryRequestId.current) setSummaryState({ status: "success", data, error: "" });
+      })
+      .catch((error) => {
+        if (active && requestId === summaryRequestId.current) setSummaryState({ status: "error", data: null, error: error.message || "Could not load your move summary." });
+      });
     return () => { active = false; };
   }, [loadMoveSummary, summaryRetry]);
+
+  const refreshCustomerMoves = useCallback(async (force = false) => {
+    if (!dashboardMounted.current || document.visibilityState === "hidden") return;
+    const now = Date.now();
+    if (moves.loading) {
+      refreshPending.current = true;
+      return;
+    }
+    if (refreshInFlight.current) {
+      if (now - lastRefreshAt.current >= 1000) refreshPending.current = true;
+      return;
+    }
+    // Visibility and focus can fire together on mobile browsers and WebViews.
+    if (!force && now - lastRefreshAt.current < 1000) return;
+    lastRefreshAt.current = now;
+    refreshPending.current = false;
+    refreshInFlight.current = true;
+    const requestId = ++summaryRequestId.current;
+    try {
+      const [summary] = await Promise.all([loadMoveSummary(), moves.refresh()]);
+      if (dashboardMounted.current && requestId === summaryRequestId.current) {
+        setSummaryState({ status: "success", data: summary, error: "" });
+      }
+    } catch {
+      // Keep the last displayed data during transient event or polling failures.
+    } finally {
+      refreshInFlight.current = false;
+      if (refreshPending.current && dashboardMounted.current && document.visibilityState === "visible") {
+        refreshPending.current = false;
+        refreshTimer.current = window.setTimeout(() => refreshCustomerMoves(true), 0);
+      }
+    }
+  }, [loadMoveSummary, moves.loading, moves.refresh]);
+
+  useEffect(() => {
+    if (!moves.loading && refreshPending.current && document.visibilityState === "visible") {
+      refreshPending.current = false;
+      refreshCustomerMoves();
+    }
+  }, [moves.loading, refreshCustomerMoves]);
+
+  const onRealtimeUpdate = useCallback(() => refreshCustomerMoves(), [refreshCustomerMoves]);
+  useSocketEvents(CUSTOMER_DASHBOARD_EVENTS, onRealtimeUpdate, onRealtimeUpdate);
+
+  useEffect(() => {
+    const onVisibilityChange = () => {
+      if (document.visibilityState === "visible") refreshCustomerMoves();
+    };
+
+    const intervalId = window.setInterval(refreshCustomerMoves, 12_000);
+    document.addEventListener("visibilitychange", onVisibilityChange);
+    window.addEventListener("focus", refreshCustomerMoves);
+    return () => {
+      window.clearInterval(intervalId);
+      document.removeEventListener("visibilitychange", onVisibilityChange);
+      window.removeEventListener("focus", refreshCustomerMoves);
+    };
+  }, [refreshCustomerMoves]);
 
   const upcomingMove = summaryState.data?.upcomingMove;
   const actionMoves = summaryState.data?.actionRequiredMoves || [];

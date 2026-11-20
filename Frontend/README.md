@@ -9,7 +9,15 @@ From this directory, install the dependencies and run `npm run dev`. Create a lo
 
 ```text
 VITE_API_URL=http://localhost:5000
+VITE_SOCKET_URL=http://localhost:5000
 ```
+
+`VITE_SOCKET_URL` is the backend origin used by Socket.IO; when it is omitted,
+the app uses `VITE_API_URL`. The shared socket authenticates with the existing
+JWT, disconnects at logout, and reconnects/synchronizes data after a connection
+returns. On Capacitor Android it disconnects in the background and reconnects
+when the app becomes active. Sockets do not provide notifications while the app
+is suspended or closed.
 
 The payment-order endpoint returns Razorpay's public key ID alongside its
 server-created order details, so checkout configuration stays aligned with the
