@@ -706,37 +706,48 @@ const paymentIneligibilityReason = ({ payment, userId }) => {
   return null;
 };
 
-const receiptIneligibilityReason = ({ payment, processing, order, move, userId }) => {
+const receiptIneligibility = ({ payment, processing, order, move, userId }) => {
   const paymentReason = paymentIneligibilityReason({ payment, userId });
-  if (paymentReason) return paymentReason;
-  if (!processing) return "payment_processing_record_missing";
-  if (processing.status !== "credited" || !processing.completedAt) return "payment_not_credited";
-  if (!order) return "payment_order_missing";
-  if (order.status !== "paid") return "payment_order_not_paid";
-  if (!move) return "move_record_missing";
-  if (move.paid !== true) return "move_not_credited";
-  if (!sameId(move.user, userId)) return "move_owner_mismatch";
+  if (paymentReason) return { reason: paymentReason, failedChecks: [] };
+  if (!processing) return { reason: "payment_processing_record_missing", failedChecks: [] };
+  if (processing.status !== "credited" || !processing.completedAt) return { reason: "payment_not_credited", failedChecks: [] };
+  if (!order) return { reason: "payment_order_missing", failedChecks: [] };
+  if (order.status !== "paid") return { reason: "payment_order_not_paid", failedChecks: [] };
+  if (!move) return { reason: "move_record_missing", failedChecks: [] };
+  if (move.paid !== true) return { reason: "move_not_credited", failedChecks: [] };
+  if (!sameId(move.user, userId)) return { reason: "move_owner_mismatch", failedChecks: [] };
 
   let expectedMinorUnits;
   try { expectedMinorUnits = toMinorUnits(payment.amount, payment.currency); }
-  catch { return "payment_amount_invalid"; }
+  catch { return { reason: "payment_amount_invalid", failedChecks: [] }; }
 
-  const relationshipsMatch = sameId(referenceId(payment.move), move._id) &&
-    sameId(payment.order, processing.paymentOrder) && sameId(payment.order, order._id) &&
-    sameId(payment.razorpayPaymentId, processing.razorpayPaymentId) &&
-    sameId(payment.razorpayPaymentId, order.razorpayPaymentId) &&
-    sameId(processing.user, userId) && sameId(processing.move, move._id) &&
-    sameId(order.user, userId) && sameId(order.move, move._id) &&
-    sameId(move.payment, payment._id) &&
-    order.amount === payment.amount && order.currency === payment.currency &&
-    processing.amountMinorUnits === expectedMinorUnits && processing.currency === payment.currency;
-  return relationshipsMatch ? null : "payment_verification_mismatch";
+  const checks = [
+    ["payment_move_matches_move", sameId(referenceId(payment.move), move._id)],
+    ["payment_order_matches_processing_order", sameId(payment.order, processing.paymentOrder)],
+    ["payment_order_matches_order", sameId(payment.order, order._id)],
+    ["payment_razorpay_payment_matches_processing", sameId(payment.razorpayPaymentId, processing.razorpayPaymentId)],
+    ["payment_razorpay_payment_matches_order", sameId(payment.razorpayPaymentId, order.razorpayPaymentId)],
+    ["processing_user_matches_authenticated_user", sameId(processing.user, userId)],
+    ["processing_move_matches_move", sameId(processing.move, move._id)],
+    ["order_user_matches_authenticated_user", sameId(order.user, userId)],
+    ["order_move_matches_move", sameId(order.move, move._id)],
+    ["move_payment_matches_payment", sameId(move.payment, payment._id)],
+    ["order_amount_matches_payment", order.amount === payment.amount],
+    ["order_currency_matches_payment", order.currency === payment.currency],
+    ["processing_amount_minor_units_matches_payment", processing.amountMinorUnits === expectedMinorUnits],
+    ["processing_currency_matches_payment", processing.currency === payment.currency],
+  ];
+  const failedChecks = checks.filter(([, passed]) => !passed).map(([checkId]) => checkId);
+  return {
+    reason: failedChecks.length ? "payment_verification_mismatch" : null,
+    failedChecks,
+  };
 };
 
-const receiptStateIsEligible = (state) => receiptIneligibilityReason(state) === null;
+const receiptStateIsEligible = (state) => receiptIneligibility(state).reason === null;
 
-const reportReceiptUnavailable = (res, requestId, reason) => {
-  console.warn("Receipt unavailable", { requestId, reason });
+const reportReceiptUnavailable = (res, requestId, reason, failedChecks = []) => {
+  console.warn("Receipt unavailable", { requestId, reason, failedChecks });
   return res.status(404).json({ message: "Receipt unavailable", requestId });
 };
 
@@ -768,10 +779,12 @@ exports.getPaymentReceipt = async (req, res) => {
       User.findById(req.user.id).select("name email"),
     ]);
 
-    const unavailableReason = receiptIneligibilityReason({
+    const ineligibility = receiptIneligibility({
       payment, processing, order, move, userId: req.user.id,
     });
-    if (unavailableReason) return reportReceiptUnavailable(res, requestId, unavailableReason);
+    if (ineligibility.reason) {
+      return reportReceiptUnavailable(res, requestId, ineligibility.reason, ineligibility.failedChecks);
+    }
     if (!customer) return reportReceiptUnavailable(res, requestId, "customer_record_missing");
 
     const receiptReference = `SM-RCP-${crypto.createHash("sha256")
@@ -807,7 +820,7 @@ exports.getPaymentReceipt = async (req, res) => {
     console.error("Receipt retrieval failed", {
       requestId,
       reason: "receipt_lookup_or_generation_failure",
-      errorName: typeof error?.name === "string" ? error.name.replace(/[^A-Za-z0-9_-]/g, "").slice(0, 60) : "Error",
+      failedChecks: [],
     });
     return res.status(500).json({ message: "Could not retrieve receipt", requestId });
   }

@@ -185,7 +185,7 @@ test("receipt lookup returns 404 when the payment record does not exist", async 
   assert.equal(res.statusCode, 404);
   assert.equal(res.body.message, "Receipt unavailable");
   assert.equal(res.body.requestId, res.headers["X-Receipt-Request-Id"]);
-  assert.deepEqual(diagnostic, ["Receipt unavailable", { requestId: res.body.requestId, reason: "payment_not_found" }]);
+  assert.deepEqual(diagnostic, ["Receipt unavailable", { requestId: res.body.requestId, reason: "payment_not_found", failedChecks: [] }]);
   assert.equal(downstreamLookups, 0);
 });
 
@@ -197,7 +197,7 @@ test("invalid payment ID format returns a correlated generic 404 without databas
   await paymentController.getPaymentReceipt({ params: { paymentId: "not-an-object-id" }, user: { id: "customer-id" } }, res);
   assert.equal(res.statusCode, 404);
   assert.equal(res.body.message, "Receipt unavailable");
-  assert.deepEqual(diagnostic, ["Receipt unavailable", { requestId: res.body.requestId, reason: "payment_id_invalid" }]);
+  assert.deepEqual(diagnostic, ["Receipt unavailable", { requestId: res.body.requestId, reason: "payment_id_invalid", failedChecks: [] }]);
 });
 
 test("receipt lookup hides payments not owned by the authenticated customer", async (t) => {
@@ -217,7 +217,7 @@ test("receipt lookup hides payments not owned by the authenticated customer", as
   assert.equal(res.statusCode, 404);
   assert.equal(lookup, data.paymentId.toString());
   assert.equal(res.body.message, "Receipt unavailable");
-  assert.deepEqual(diagnostic, ["Receipt unavailable", { requestId: res.body.requestId, reason: "payment_owner_mismatch" }]);
+  assert.deepEqual(diagnostic, ["Receipt unavailable", { requestId: res.body.requestId, reason: "payment_owner_mismatch", failedChecks: [] }]);
   assert.equal(JSON.stringify(diagnostic).includes(data.paymentId.toString()), false);
   assert.equal(downstreamLookups, 0);
 });
@@ -243,7 +243,7 @@ test("pending, failed, refunded and non-Razorpay payment records cannot receive 
     const res = response();
     await paymentController.getPaymentReceipt({ params: { paymentId: data.paymentId.toString() }, user: { id: data.userId.toString() } }, res);
     assert.equal(res.statusCode, 404);
-    assert.deepEqual(diagnostic, ["Receipt unavailable", { requestId: res.body.requestId, reason: ineligible.reason }]);
+    assert.deepEqual(diagnostic, ["Receipt unavailable", { requestId: res.body.requestId, reason: ineligible.reason, failedChecks: [] }]);
     assert.equal(downstreamLookups, 0);
     });
   }
@@ -253,9 +253,9 @@ test("receipt is unavailable for unverified, reconciling, mismatched or uncredit
   const ineligibleCases = [
     { label: "missing capture processing record", reason: "payment_processing_record_missing", processing: null },
     { label: "reconciliation-required capture", reason: "payment_not_credited", processing: (data) => ({ ...data.processing, status: "reconciliation_required" }) },
-    { label: "capture amount mismatch", reason: "payment_verification_mismatch", processing: (data) => ({ ...data.processing, amountMinorUnits: 999 }) },
+    { label: "capture amount mismatch", reason: "payment_verification_mismatch", failedChecks: ["processing_amount_minor_units_matches_payment"], processing: (data) => ({ ...data.processing, amountMinorUnits: 999 }) },
     { label: "missing payment order", reason: "payment_order_missing", order: null },
-    { label: "payment order currency mismatch", reason: "payment_verification_mismatch", order: (data) => ({ ...data.order, currency: "EUR" }) },
+    { label: "payment order currency mismatch", reason: "payment_verification_mismatch", failedChecks: ["order_currency_matches_payment"], order: (data) => ({ ...data.order, currency: "EUR" }) },
     { label: "payment order awaiting reconciliation", reason: "payment_order_not_paid", order: (data) => ({ ...data.order, status: "reconciliation_required" }) },
     { label: "move not credited", reason: "move_record_missing", move: null },
     { label: "move ownership mismatch", reason: "move_owner_mismatch", move: (data) => ({ ...data.move, user: new mongoose.Types.ObjectId() }) },
@@ -283,9 +283,98 @@ test("receipt is unavailable for unverified, reconciling, mismatched or uncredit
       await paymentController.getPaymentReceipt({ params: { paymentId: data.paymentId.toString() }, user: { id: data.userId.toString() } }, res);
       assert.equal(res.statusCode, 404);
       assert.equal(res.body.message, "Receipt unavailable");
-      assert.deepEqual(diagnostic, ["Receipt unavailable", { requestId: res.body.requestId, reason: ineligible.reason }]);
+      const failedChecks = ineligible.failedChecks || [];
+      assert.deepEqual(diagnostic, ["Receipt unavailable", { requestId: res.body.requestId, reason: ineligible.reason, failedChecks }]);
     });
   }
+});
+
+test("receipt diagnostics identify every individual failed verification comparison", async (t) => {
+  const mismatchCases = [
+    { id: "payment_move_matches_move", payment: (d) => ({ ...d.payment, move: new mongoose.Types.ObjectId() }) },
+    { id: "payment_order_matches_processing_order", processing: (d) => ({ ...d.processing, paymentOrder: new mongoose.Types.ObjectId() }) },
+    { id: "payment_order_matches_order", order: (d) => ({ ...d.order, _id: new mongoose.Types.ObjectId() }) },
+    { id: "payment_razorpay_payment_matches_processing", processing: (d) => ({ ...d.processing, razorpayPaymentId: "different_processing_reference" }) },
+    { id: "payment_razorpay_payment_matches_order", order: (d) => ({ ...d.order, razorpayPaymentId: "different_order_reference" }) },
+    { id: "processing_user_matches_authenticated_user", processing: (d) => ({ ...d.processing, user: new mongoose.Types.ObjectId() }) },
+    { id: "processing_move_matches_move", processing: (d) => ({ ...d.processing, move: new mongoose.Types.ObjectId() }) },
+    { id: "order_user_matches_authenticated_user", order: (d) => ({ ...d.order, user: new mongoose.Types.ObjectId() }) },
+    { id: "order_move_matches_move", order: (d) => ({ ...d.order, move: new mongoose.Types.ObjectId() }) },
+    { id: "move_payment_matches_payment", move: (d) => ({ ...d.move, payment: new mongoose.Types.ObjectId() }) },
+    { id: "order_amount_matches_payment", order: (d) => ({ ...d.order, amount: 99.99 }) },
+    { id: "order_currency_matches_payment", order: (d) => ({ ...d.order, currency: "EUR" }) },
+    { id: "processing_amount_minor_units_matches_payment", processing: (d) => ({ ...d.processing, amountMinorUnits: 999 }) },
+    { id: "processing_currency_matches_payment", processing: (d) => ({ ...d.processing, currency: "EUR" }) },
+  ];
+
+  for (const mismatch of mismatchCases) {
+    await t.test(mismatch.id, async (subtest) => {
+      const data = fixture();
+      const records = {
+        payment: mismatch.payment ? mismatch.payment(data) : data.payment,
+        processing: mismatch.processing ? mismatch.processing(data) : data.processing,
+        order: mismatch.order ? mismatch.order(data) : data.order,
+        move: mismatch.move ? mismatch.move(data) : data.move,
+        customer: data.customer,
+      };
+      let diagnostic;
+      subtest.mock.method(console, "warn", (...args) => { diagnostic = args; });
+      mockReceiptRecords(subtest, records);
+      const res = response();
+      await paymentController.getPaymentReceipt({
+        params: { paymentId: data.paymentId.toString() },
+        user: { id: data.userId.toString() },
+      }, res);
+
+      assert.equal(res.statusCode, 404);
+      assert.equal(res.body.message, "Receipt unavailable");
+      assert.deepEqual(diagnostic, ["Receipt unavailable", {
+        requestId: res.body.requestId,
+        reason: "payment_verification_mismatch",
+        failedChecks: [mismatch.id],
+      }]);
+      assert.equal(JSON.stringify(diagnostic).includes(data.userId.toString()), false);
+      assert.equal(JSON.stringify(diagnostic).includes(data.gatewayPaymentId), false);
+    });
+  }
+});
+
+test("receipt diagnostics collect multiple simultaneous verification failures", async (t) => {
+  const data = fixture();
+  const records = {
+    ...data,
+    processing: {
+      ...data.processing,
+      paymentOrder: new mongoose.Types.ObjectId(),
+      amountMinorUnits: 999,
+      currency: "EUR",
+    },
+    order: { ...data.order, amount: 99.99, currency: "GBP" },
+  };
+  let diagnostic;
+  t.mock.method(console, "warn", (...args) => { diagnostic = args; });
+  mockReceiptRecords(t, records);
+  const res = response();
+  await paymentController.getPaymentReceipt({
+    params: { paymentId: data.paymentId.toString() },
+    user: { id: data.userId.toString() },
+  }, res);
+
+  assert.equal(res.statusCode, 404);
+  assert.deepEqual(diagnostic, ["Receipt unavailable", {
+    requestId: res.body.requestId,
+    reason: "payment_verification_mismatch",
+    failedChecks: [
+      "payment_order_matches_processing_order",
+      "order_amount_matches_payment",
+      "order_currency_matches_payment",
+      "processing_amount_minor_units_matches_payment",
+      "processing_currency_matches_payment",
+    ],
+  }]);
+  assert.equal(JSON.stringify(diagnostic).includes(data.paymentId.toString()), false);
+  assert.equal(JSON.stringify(diagnostic).includes(data.gatewayPaymentId), false);
+  assert.equal(JSON.stringify(diagnostic).includes(String(data.payment.amount)), false);
 });
 
 test("missing optional customer and booking fields do not prevent a verified receipt", async (t) => {
@@ -308,7 +397,7 @@ test("a missing customer record does not produce a receipt", async (t) => {
   const res = response();
   await paymentController.getPaymentReceipt({ params: { paymentId: data.paymentId.toString() }, user: { id: data.userId.toString() } }, res);
   assert.equal(res.statusCode, 404);
-  assert.deepEqual(diagnostic, ["Receipt unavailable", { requestId: res.body.requestId, reason: "customer_record_missing" }]);
+  assert.deepEqual(diagnostic, ["Receipt unavailable", { requestId: res.body.requestId, reason: "customer_record_missing", failedChecks: [] }]);
 });
 
 test("receipt generation failure returns 500 and logs only a safe diagnostic", async (t) => {
@@ -322,8 +411,11 @@ test("receipt generation failure returns 500 and logs only a safe diagnostic", a
   assert.equal(res.statusCode, 500);
   assert.equal(res.body.message, "Could not retrieve receipt");
   assert.equal(JSON.stringify(diagnostic).includes(data.paymentId.toString()), false);
-  assert.equal(JSON.stringify(diagnostic).includes("sensitive internal detail"), false);
-  assert.equal(diagnostic[1].reason, "receipt_lookup_or_generation_failure");
+  assert.deepEqual(diagnostic, ["Receipt retrieval failed", {
+    requestId: res.body.requestId,
+    reason: "receipt_lookup_or_generation_failure",
+    failedChecks: [],
+  }]);
 });
 
 test("receipt route requires authentication and customer role", async () => {
