@@ -4,7 +4,7 @@ const PROPERTY_TYPES_BY_MOVE = {
   office_move: ["office", "shop_commercial"],
 };
 const METADATA_FIELDS = ["moveType", "propertyType", "approximateSize"];
-const INDIA_TIME_ZONE = "Asia/Kolkata";
+const utcDateKey = (date) => `${date.getUTCFullYear()}-${String(date.getUTCMonth() + 1).padStart(2, "0")}-${String(date.getUTCDate()).padStart(2, "0")}`;
 
 class BookingMetadataError extends Error {
   constructor(message) {
@@ -17,18 +17,8 @@ class BookingMetadataError extends Error {
 
 const hasOwn = (object, key) => Object.prototype.hasOwnProperty.call(object, key);
 
-const indiaDateKey = (date) => {
-  const parts = new Intl.DateTimeFormat("en-CA", {
-    timeZone: INDIA_TIME_ZONE,
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-  }).formatToParts(date);
-  const values = Object.fromEntries(parts.map(({ type, value }) => [type, value]));
-  return `${values.year}-${values.month}-${values.day}`;
-};
-
 const isValidDateOnly = (value) => {
+  if (typeof value !== "string") return false;
   const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(value);
   if (!match) return false;
   const [, yearText, monthText, dayText] = match;
@@ -40,21 +30,21 @@ const isValidDateOnly = (value) => {
 };
 
 const normalizeMoveDate = (value, now = new Date()) => {
-  if ((typeof value !== "string" && !(value instanceof Date)) || !value) {
+  if (typeof value !== "string" || !value) {
     const error = new Error("Enter a valid move date");
     error.statusCode = 400;
     error.code = "INVALID_MOVE_DATE";
     throw error;
   }
 
-  if (typeof value === "string" && /^\d{4}-\d{2}-\d{2}$/.test(value) && !isValidDateOnly(value)) {
+  if (!isValidDateOnly(value)) {
     const error = new Error("Enter a valid move date");
     error.statusCode = 400;
     error.code = "INVALID_MOVE_DATE";
     throw error;
   }
 
-  const parsed = value instanceof Date ? new Date(value.getTime()) : new Date(value);
+  const parsed = new Date(`${value}T00:00:00.000Z`);
   if (!Number.isFinite(parsed.getTime())) {
     const error = new Error("Enter a valid move date");
     error.statusCode = 400;
@@ -62,13 +52,9 @@ const normalizeMoveDate = (value, now = new Date()) => {
     throw error;
   }
 
-  // Date inputs represent a calendar day. Compare that exact key; for legacy
-  // timestamp inputs, compare the day observed in India without changing storage.
-  const requestedDay = typeof value === "string" && /^\d{4}-\d{2}-\d{2}$/.test(value)
-    ? value
-    : indiaDateKey(parsed);
-  if (requestedDay < indiaDateKey(now)) {
-    const error = new Error("Move date cannot be before today in India");
+  // Date-only values are compared as UTC calendar keys to avoid host timezone shifts.
+  if (value < utcDateKey(now)) {
+    const error = new Error("Please select today or a future date.");
     error.statusCode = 400;
     error.code = "MOVE_DATE_IN_PAST";
     throw error;
@@ -116,5 +102,5 @@ module.exports = {
   BookingMetadataError,
   normalizeBookingMetadata,
   normalizeMoveDate,
-  indiaDateKey,
+  utcDateKey,
 };

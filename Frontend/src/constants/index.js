@@ -70,7 +70,7 @@ export const OPERATION_STEPS = [
     titleColor: "text-[#00c8b3]",
     description:
       "You're currently running your store on Shopify, WooCommerce, or any other platform. As a first step, you'll connect your store with our platform.",
-    imageSrc: "/image-3.png",
+    imageSrc: "/image-3-transparent.png",
     imageAlt: "Image connection process",
   },
   {
@@ -79,7 +79,7 @@ export const OPERATION_STEPS = [
     titleColor: "text-[#00c0e8]",
     description:
       "Then, you can send us your inventory and the fun begins. We'll choose a delivery day together so your fulfilment is not interrupted.",
-    imageSrc: "/rectangle-1314.png",
+    imageSrc: "/rectangle-1314-transparent.png",
     imageAlt: "Warehouse storage",
   },
   {
@@ -88,7 +88,7 @@ export const OPERATION_STEPS = [
     titleColor: "text-[#00c3d0]",
     description:
       "We pick, pack and ship all incoming orders directly from our own warehouse until 12pm on the same day,",
-    imageSrc: "/91fa59e6781adbdced82e349bb595d99-1-1.png",
+    imageSrc: "/91fa59e6781adbdced82e349bb595d99-1-1-transparent.png",
     imageAlt: "Shipping process",
   },
 ];

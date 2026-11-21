@@ -60,12 +60,13 @@ test("booking metadata rejects invalid, incomplete, incompatible, or unexpected 
   }
 });
 
-test("Asia/Kolkata move-date validation compares the date-only calendar day", () => {
-  const now = new Date("2026-11-14T00:30:00.000Z");
-  assert.throws(() => normalizeMoveDate("2026-11-13", now), { code: "MOVE_DATE_IN_PAST" });
-  assert.equal(normalizeMoveDate("2026-11-14", now).toISOString(), "2026-11-14T00:00:00.000Z");
-  assert.equal(normalizeMoveDate("2026-11-15", now).toISOString(), "2026-11-15T00:00:00.000Z");
+test("move-date validation accepts today and tomorrow and rejects yesterday and invalid formats", () => {
+  const now = new Date("2026-11-21T00:30:00.000Z");
+  assert.throws(normalizeMoveDate.bind(null, "2026-11-20", now), { code: "MOVE_DATE_IN_PAST", message: "Please select today or a future date." });
+  assert.equal(normalizeMoveDate("2026-11-21", now).toISOString(), "2026-11-21T00:00:00.000Z");
+  assert.equal(normalizeMoveDate("2026-11-22", now).toISOString(), "2026-11-22T00:00:00.000Z");
   assert.throws(() => normalizeMoveDate("2026-02-30", now), { code: "INVALID_MOVE_DATE" });
+  assert.throws(() => normalizeMoveDate("21-11-2026", now), { code: "INVALID_MOVE_DATE" });
   assert.throws(() => normalizeMoveDate("not-a-date", now), { code: "INVALID_MOVE_DATE" });
   assert.throws(() => normalizeMoveDate(undefined, now), { code: "INVALID_MOVE_DATE" });
 });
@@ -152,6 +153,9 @@ test("booking creation rejects malformed metadata and past or missing dates", as
     const res = response();
     await createMove(req, res);
     assert.equal(res.statusCode, 400);
+    if (req.body.moveDate === "2000-01-01") {
+      assert.equal(res.body.message, "Please select today or a future date.");
+    }
   }
 });
 

@@ -8,7 +8,7 @@ const operationSteps = [
     titleColor: "text-teal-700 dark:text-teal-300",
     description:
       "You're currently running your store on Shopify, WooCommerce, or any other platform. As a first step, you'll connect your store with our platform.",
-    imageSrc: "/image-3.png",
+    imageSrc: "/image-3-transparent.png",
     imageAlt: "Image",
     imageWidth: "w-full max-w-[400px] lg:max-w-[600.94px]",
     imageHeight: "h-auto max-h-[300px] lg:h-[400px]",
@@ -21,7 +21,7 @@ const operationSteps = [
     titleColor: "text-sky-700 dark:text-sky-300",
     description:
       "Then, you can send us your inventory and the fun begins. We'll choose a delivery day together so your fulfilment is not interrupted.",
-    imageSrc: "/rectangle-1314.png",
+    imageSrc: "/rectangle-1314-transparent.png",
     imageAlt: "Rectangle",
     imageWidth: "w-full max-w-[400px]",
     imageHeight: "h-auto max-h-[300px] lg:h-[400px]",
@@ -34,7 +34,7 @@ const operationSteps = [
     titleColor: "text-cyan-700 dark:text-cyan-300",
     description:
       "We pick, pack and ship all incoming orders directly from our own warehouse until 12pm on the same day,",
-    imageSrc: "/91fa59e6781adbdced82e349bb595d99-1-1.png",
+    imageSrc: "/91fa59e6781adbdced82e349bb595d99-1-1-transparent.png",
     imageAlt: "Img",
     imageWidth: "w-full max-w-[400px]",
     imageHeight: "h-auto max-h-[300px] lg:h-[400px]",

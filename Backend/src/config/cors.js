@@ -4,6 +4,7 @@ const PRODUCTION_ORIGINS = new Set([
 ]);
 
 const STAGING_ORIGINS = new Set([
+  "http://localhost:5173",
   "https://swiftmove-staging.vercel.app",
   "https://localhost",
 ]);

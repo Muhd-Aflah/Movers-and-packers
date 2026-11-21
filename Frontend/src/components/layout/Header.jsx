@@ -70,7 +70,7 @@ export function Header() {
   ];
 
   return (
-    <header ref={headerRef} className="relative z-[60] w-full border-b border-border bg-background text-foreground">
+    <header ref={headerRef} className="sticky top-0 z-[60] w-full border-b border-border bg-background text-foreground">
       <div className="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
         {/* LOGO */}
         <Link to="/" className="flex items-center hover:opacity-90 transition">
@@ -85,7 +85,7 @@ export function Header() {
           {NAV_ITEMS.map((item) => (
             <div
               key={item.href}
-              className="relative"
+              className="relative flex flex-row items-center gap-1"
               onMouseEnter={() => item.children && setDropdown(item.label)}
               onMouseLeave={(event) => {
                 if (item.children && !event.currentTarget.contains(event.relatedTarget)) setDropdown(null);
@@ -107,7 +107,7 @@ export function Header() {
                   aria-label={`${dropdown === item.label ? "Close" : "Open"} ${item.label} menu`}
                   aria-expanded={dropdown === item.label}
                   aria-controls={`nav-${item.label.toLowerCase()}`}
-                  className="ml-1 inline-flex rounded p-1 text-muted-foreground hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                  className="inline-flex rounded p-1 text-muted-foreground hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                 >
                   <ChevronDownIcon className="h-4 w-4" aria-hidden="true" />
                 </button>
@@ -160,10 +160,16 @@ export function Header() {
             </>
           ) : (
             <>
-              <Button asChild>
+              <Button
+                asChild
+                className="border border-blue-600 bg-transparent text-[#2563EB] shadow-none hover:bg-blue-50 hover:text-[#2563EB] dark:border-blue-400 dark:text-blue-300 dark:hover:bg-blue-950 dark:hover:text-blue-200"
+              >
                 <Link to="/login">Sign In</Link>
               </Button>
-              <Button asChild>
+              <Button
+                asChild
+                className="bg-blue-600 text-white hover:bg-blue-700"
+              >
                 <Link to="/signup">Sign Up</Link>
               </Button>
             </>
@@ -244,10 +250,16 @@ export function Header() {
                 </>
               ) : (
                 <>
-                  <Button asChild className="w-full">
+                  <Button
+                    asChild
+                    className="w-full border border-blue-600 bg-transparent text-[#2563EB] shadow-none hover:bg-blue-50 hover:text-[#2563EB] dark:border-blue-400 dark:text-blue-300 dark:hover:bg-blue-950 dark:hover:text-blue-200"
+                  >
                     <Link to="/login">Sign In</Link>
                   </Button>
-                  <Button asChild className="w-full">
+                  <Button
+                    asChild
+                    className="w-full bg-blue-600 text-white hover:bg-blue-700"
+                  >
                     <Link to="/signup">Sign Up</Link>
                   </Button>
                 </>

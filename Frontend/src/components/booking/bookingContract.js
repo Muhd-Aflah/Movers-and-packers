@@ -53,6 +53,12 @@ export const LEGACY_DRAFT_KEY = "pendingBooking";
 export const DRAFT_VERSION = 1;
 export const DRAFT_TTL_MS = 24 * 60 * 60 * 1000;
 
+export const getLocalToday = (now = new Date()) => {
+  const pad = (value) => String(value).padStart(2, "0");
+  return `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`;
+};
+
+// Retained for dashboard date grouping, which is intentionally India-based.
 export const getIndiaToday = (now = new Date()) => {
   const parts = new Intl.DateTimeFormat("en-CA", {
     timeZone: "Asia/Kolkata",
@@ -64,7 +70,7 @@ export const getIndiaToday = (now = new Date()) => {
   return `${values.year}-${values.month}-${values.day}`;
 };
 
-const isValidDateOnly = (value) => {
+export const isValidDateOnly = (value) => {
   if (typeof value !== "string") return false;
   const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(value);
   if (!match) return false;
@@ -250,7 +256,7 @@ export const validateStep = (step, draft) => {
     const size = Number(draft.approximateSize.value);
     if (!Number.isFinite(size) || size <= 0) errors.approximateSize = "Enter a positive approximate size.";
     else if (draft.moveType === "home_move" && !Number.isSafeInteger(size)) errors.approximateSize = "BHK must be a whole number.";
-    if (!isValidDateOnly(draft.moveDate) || draft.moveDate < getIndiaToday()) errors.moveDate = "Choose today or a future move date.";
+    if (!isValidDateOnly(draft.moveDate) || draft.moveDate < getLocalToday()) errors.moveDate = "Please select today or a future date.";
   }
   if (step === 1) {
     if (!draft.pickup.trim()) errors.pickup = "Enter a pickup address.";

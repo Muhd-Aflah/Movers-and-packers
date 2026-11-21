@@ -7,7 +7,7 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "test": "node --test && vitest run src/context/SocketContext.test.jsx --environment jsdom"
+    "test": "node --test && vitest run src/context/SocketContext.test.jsx src/services/pricing.service.test.jsx --environment jsdom"
   },
   "dependencies": {
     "@capacitor/app": "^8.1.2",

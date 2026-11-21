@@ -61,14 +61,17 @@ The additive Move schema fields require no backfill; existing saved move prices
 remain stored as before.
 
 CORS is isolated by `APP_ENV`. Development accepts explicitly configured HTTP
-localhost origins only. Staging accepts only the approved staging Vercel origin
-(`https://swiftmove-staging.vercel.app`), while production accepts only the
-approved production Vercel origin
+localhost origins only. Staging accepts the local Vite origin
+(`http://localhost:5173`), the approved staging Vercel origin
+(`https://swiftmove-staging.vercel.app`), and `https://localhost` for the
+Capacitor WebView. Production accepts only the approved production Vercel origin
 (`https://swiftmove-movers-and-packers.vercel.app`). Set `APP_ENV=staging` on
-the staging backend even when `NODE_ENV=production`; set the matching exact
-`CORS_ORIGINS` value. Startup rejects missing, wildcard, malformed, or
-cross-environment origins. Credentials are enabled for the exact allowlist and
-the CORS middleware handles OPTIONS preflight.
+the staging backend even when `NODE_ENV=production`; set
+`CORS_ORIGINS=http://localhost:5173,https://swiftmove-staging.vercel.app,https://localhost`
+there. Production keeps its existing exact `CORS_ORIGINS` value. Startup
+rejects missing, wildcard, malformed, or cross-environment origins.
+Credentials are enabled for the exact allowlist and the CORS middleware handles
+OPTIONS preflight.
 
 Socket.IO shares the same HTTP server and `APP_ENV`/`CORS_ORIGINS` allowlist.
 Its handshake requires the existing HS256 JWT and reloads the current User

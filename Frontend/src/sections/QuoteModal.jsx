@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { getLocalToday, isValidDateOnly } from "../components/booking/bookingContract";
 import { X } from "lucide-react";
 
 const FOCUSABLE = 'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
@@ -65,7 +66,7 @@ export const QuoteModal = ({ isOpen, onClose, returnFocusRef }) => {
     const nextErrors = {
       pickup: form.pickup.trim() ? "" : "Enter a pickup address.",
       drop: form.drop.trim() ? "" : "Enter a delivery address.",
-      moveDate: form.moveDate ? "" : "Choose a moving date.",
+      moveDate: isValidDateOnly(form.moveDate) && form.moveDate >= getLocalToday() ? "" : "Please select today or a future date.",
     };
     setErrors(nextErrors);
     const firstInvalid = Object.keys(nextErrors).find((key) => nextErrors[key]);
@@ -126,7 +127,7 @@ export const QuoteModal = ({ isOpen, onClose, returnFocusRef }) => {
           </div>
           <div>
             <label htmlFor="quote-date" className="mb-1 block text-sm font-medium text-foreground">Moving date</label>
-            <input ref={dateRef} id="quote-date" type="date" name="moveDate" value={form.moveDate} required aria-invalid={Boolean(errors.moveDate)} aria-describedby={fieldError("moveDate")} onChange={handleChange} className="w-full rounded-lg border border-input bg-background px-4 py-3 text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring" />
+            <input ref={dateRef} id="quote-date" type="date" name="moveDate" min={getLocalToday()} value={form.moveDate} required aria-invalid={Boolean(errors.moveDate)} aria-describedby={fieldError("moveDate")} onChange={handleChange} className="w-full rounded-lg border border-input bg-background px-4 py-3 text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring" />
             {errors.moveDate && <p id="moveDate-error" className="mt-1 text-sm text-destructive">{errors.moveDate}</p>}
           </div>
           <button type="submit" className="w-full rounded-lg bg-blue-600 py-3 font-semibold text-white hover:bg-blue-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600 focus-visible:ring-offset-2">

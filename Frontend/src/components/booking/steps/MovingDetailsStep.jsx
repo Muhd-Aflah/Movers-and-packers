@@ -1,7 +1,7 @@
 import { Building2, Home } from "lucide-react";
 import { BookingField } from "../BookingField";
 import { Input } from "../../ui/input";
-import { PROPERTY_TYPES, getIndiaToday } from "../bookingContract";
+import { PROPERTY_TYPES, getLocalToday } from "../bookingContract";
 
 export function MovingDetailsStep({ draft, update, errors }) {
   const chooseMoveType = (moveType) => update({
@@ -44,8 +44,8 @@ export function MovingDetailsStep({ draft, update, errors }) {
         </BookingField>
       </div>
 
-      <BookingField id="moveDate" label="Preferred move date" error={errors.moveDate} hint="Choose today or a future date. Dates are checked using India time.">
-        <Input id="moveDate" type="date" min={getIndiaToday()} value={draft.moveDate} onChange={(event) => update({ moveDate: event.target.value })} aria-invalid={Boolean(errors.moveDate)} aria-describedby={errors.moveDate ? "moveDate-error" : "moveDate-hint"} />
+      <BookingField id="moveDate" label="Preferred move date" error={errors.moveDate} hint="Choose today or a future date.">
+        <Input id="moveDate" type="date" min={getLocalToday()} value={draft.moveDate} onChange={(event) => update({ moveDate: event.target.value })} aria-invalid={Boolean(errors.moveDate)} aria-describedby={errors.moveDate ? "moveDate-error" : "moveDate-hint"} />
       </BookingField>
     </div>
   );
