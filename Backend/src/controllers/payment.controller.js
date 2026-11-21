@@ -693,6 +693,11 @@ exports.getMyPayments = async (req, res) => {
 
 const sameId = (left, right) => left != null && right != null && String(left) === String(right);
 const referenceId = (value) => value && typeof value === "object" && value._id ? value._id : value;
+const referenceFingerprint = (value) => {
+  if (typeof value !== "string" || !value) return null;
+  try { return crypto.createHash("sha256").update(value).digest("hex").slice(0, 16); }
+  catch { return null; }
+};
 
 const paymentIneligibilityReason = ({ payment, userId }) => {
   if (!payment || !userId) return "receipt_context_missing";
@@ -746,46 +751,68 @@ const receiptIneligibility = ({ payment, processing, order, move, userId }) => {
 
 const receiptStateIsEligible = (state) => receiptIneligibility(state).reason === null;
 
-const reportReceiptUnavailable = (res, requestId, reason, failedChecks = []) => {
+const reportReceiptUnavailable = (res, requestId, reason, failedChecks = [], trace = {}) => {
   console.warn("Receipt unavailable", { requestId, reason, failedChecks });
+  console.info("Receipt diagnostic", {
+    requestId,
+    requestedPaymentIdFingerprint: referenceFingerprint(trace.requestedPaymentId),
+    resolvedPaymentDocumentIdFingerprint: referenceFingerprint(trace.resolvedPaymentDocumentId),
+    paymentProcessingFound: trace.paymentProcessingFound ?? null,
+    databaseName: mongoose.connection.name || null,
+    collections: {
+      payments: Payment.collection.name,
+      paymentProcessing: PaymentProcessing.collection.name,
+      paymentOrders: PaymentOrder.collection.name,
+      moves: Move.collection.name,
+    },
+    reason,
+    failedChecks,
+  });
   return res.status(404).json({ message: "Receipt unavailable", requestId });
 };
 
 exports.getPaymentReceipt = async (req, res) => {
   const requestId = crypto.randomUUID();
+  const trace = {
+    requestedPaymentId: req.params.paymentId,
+    resolvedPaymentDocumentId: null,
+    paymentProcessingFound: null,
+  };
   res.set("X-Receipt-Request-Id", requestId);
   if (!mongoose.Types.ObjectId.isValid(req.params.paymentId)) {
-    return reportReceiptUnavailable(res, requestId, "payment_id_invalid");
+    return reportReceiptUnavailable(res, requestId, "payment_id_invalid", [], trace);
   }
   try {
     // Read only the payment fields needed to distinguish missing from an
     // ownership mismatch. The same generic 404 is returned for both cases.
     const payment = await Payment.findById(req.params.paymentId)
       .select("user move order amount currency gateway razorpayPaymentId paymentStatus createdAt");
-    if (!payment) return reportReceiptUnavailable(res, requestId, "payment_not_found");
-    if (!sameId(payment.user, req.user.id)) return reportReceiptUnavailable(res, requestId, "payment_owner_mismatch");
+    if (!payment) return reportReceiptUnavailable(res, requestId, "payment_not_found", [], trace);
+    trace.resolvedPaymentDocumentId = String(payment._id);
+    if (!sameId(payment.user, req.user.id)) return reportReceiptUnavailable(res, requestId, "payment_owner_mismatch", [], trace);
 
     const paymentReason = paymentIneligibilityReason({ payment, userId: req.user.id });
-    if (paymentReason) return reportReceiptUnavailable(res, requestId, paymentReason);
+    if (paymentReason) return reportReceiptUnavailable(res, requestId, paymentReason, [], trace);
 
     const [processing, order, move, customer] = await Promise.all([
       PaymentProcessing.findOne({
         razorpayPaymentId: payment.razorpayPaymentId,
-      }).select("user move paymentOrder amountMinorUnits currency status completedAt"),
+      }).select("user move paymentOrder razorpayPaymentId amountMinorUnits currency status completedAt"),
       PaymentOrder.findById(payment.order)
         .select("user move amount currency razorpayPaymentId status"),
       Move.findById(payment.move)
         .select("pickup dropoff moveDate serviceMode vehicleType paid payment user"),
       User.findById(req.user.id).select("name email"),
     ]);
+    trace.paymentProcessingFound = Boolean(processing);
 
     const ineligibility = receiptIneligibility({
       payment, processing, order, move, userId: req.user.id,
     });
     if (ineligibility.reason) {
-      return reportReceiptUnavailable(res, requestId, ineligibility.reason, ineligibility.failedChecks);
+      return reportReceiptUnavailable(res, requestId, ineligibility.reason, ineligibility.failedChecks, trace);
     }
-    if (!customer) return reportReceiptUnavailable(res, requestId, "customer_record_missing");
+    if (!customer) return reportReceiptUnavailable(res, requestId, "customer_record_missing", [], trace);
 
     const receiptReference = `SM-RCP-${crypto.createHash("sha256")
       .update(payment.razorpayPaymentId)
@@ -819,6 +846,21 @@ exports.getPaymentReceipt = async (req, res) => {
   } catch (error) {
     console.error("Receipt retrieval failed", {
       requestId,
+      reason: "receipt_lookup_or_generation_failure",
+      failedChecks: [],
+    });
+    console.info("Receipt diagnostic", {
+      requestId,
+      requestedPaymentIdFingerprint: referenceFingerprint(trace.requestedPaymentId),
+      resolvedPaymentDocumentIdFingerprint: referenceFingerprint(trace.resolvedPaymentDocumentId),
+      paymentProcessingFound: trace.paymentProcessingFound,
+      databaseName: mongoose.connection.name || null,
+      collections: {
+        payments: Payment.collection.name,
+        paymentProcessing: PaymentProcessing.collection.name,
+        paymentOrders: PaymentOrder.collection.name,
+        moves: Move.collection.name,
+      },
       reason: "receipt_lookup_or_generation_failure",
       failedChecks: [],
     });

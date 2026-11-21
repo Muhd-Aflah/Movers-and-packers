@@ -131,6 +131,81 @@ test("receipt uses consistent persisted payment, order, processing, move and cus
   assert.equal(res.body.gst, undefined);
 });
 
+test("receipt diagnostics correlate the requested Payment document and processing lookup without logging references", async (t) => {
+  const data = fixture();
+  let processingFilter;
+  let diagnostic;
+  t.mock.method(Payment, "findById", () => query(data.payment));
+  t.mock.method(PaymentProcessing, "findOne", (filter) => {
+    processingFilter = filter;
+    return query(null);
+  });
+  t.mock.method(PaymentOrder, "findById", () => query(data.order));
+  t.mock.method(Move, "findById", () => query(data.move));
+  t.mock.method(User, "findById", () => query(data.customer));
+  t.mock.method(console, "info", (...args) => { diagnostic = args; });
+
+  const res = response();
+  await paymentController.getPaymentReceipt({
+    params: { paymentId: data.paymentId.toString() },
+    user: { id: data.userId.toString() },
+  }, res);
+
+  assert.equal(res.statusCode, 404);
+  assert.equal(res.body.message, "Receipt unavailable");
+  assert.equal(processingFilter.razorpayPaymentId, data.payment.razorpayPaymentId);
+  assert.deepEqual(diagnostic, ["Receipt diagnostic", {
+    requestId: res.body.requestId,
+    requestedPaymentIdFingerprint: crypto.createHash("sha256").update(data.paymentId.toString()).digest("hex").slice(0, 16),
+    resolvedPaymentDocumentIdFingerprint: crypto.createHash("sha256").update(String(data.payment._id)).digest("hex").slice(0, 16),
+    paymentProcessingFound: false,
+    databaseName: null,
+    collections: {
+      payments: Payment.collection.name,
+      paymentProcessing: PaymentProcessing.collection.name,
+      paymentOrders: PaymentOrder.collection.name,
+      moves: Move.collection.name,
+    },
+    reason: "payment_processing_record_missing",
+    failedChecks: [],
+  }]);
+  const serialized = JSON.stringify(diagnostic);
+  assert.equal(serialized.includes(data.paymentId.toString()), false);
+  assert.equal(serialized.includes(data.payment.razorpayPaymentId), false);
+  assert.equal(serialized.includes(data.userId.toString()), false);
+});
+
+test("receipt projects the processing payment reference before comparing consistent payment records", async (t) => {
+  const data = fixture();
+  let processingFilter;
+  let processingProjection;
+  t.mock.method(Payment, "findById", () => query(data.payment));
+  t.mock.method(PaymentProcessing, "findOne", (filter) => {
+    processingFilter = filter;
+    return {
+      select(fields) {
+        processingProjection = fields;
+        return query(data.processing);
+      },
+    };
+  });
+  t.mock.method(PaymentOrder, "findById", () => query(data.order));
+  t.mock.method(Move, "findById", () => query(data.move));
+  t.mock.method(User, "findById", () => query(data.customer));
+
+  const res = response();
+  await paymentController.getPaymentReceipt({
+    params: { paymentId: data.paymentId.toString() },
+    user: { id: data.userId.toString() },
+  }, res);
+
+  assert.equal(res.statusCode, 200);
+  assert.equal(processingFilter.razorpayPaymentId, data.payment.razorpayPaymentId);
+  assert.match(processingProjection, /(?:^|\s)razorpayPaymentId(?:\s|$)/);
+  assert.equal(data.payment.razorpayPaymentId, data.processing.razorpayPaymentId);
+  assert.equal(res.body.payment.id, data.paymentId.toString());
+});
+
 test("payment history marks only fully credited and reconciled payment rows as receipt eligible", async (t) => {
   const data = fixture();
   assert.equal(String(data.move.user), data.userId.toString());
