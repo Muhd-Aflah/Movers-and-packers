@@ -8,9 +8,16 @@ test("local today uses the user's calendar date rather than UTC", () => {
 });
 
 test("booking date validation accepts today and tomorrow and rejects yesterday or invalid dates", () => {
-  const today = getLocalToday(new Date(2026, 10, 21, 12));
-  const tomorrow = "2026-11-22";
-  const yesterday = "2026-11-20";
+  const now = new Date();
+  const today = getLocalToday(now);
+  const dateAtOffset = (days) => getLocalToday(new Date(
+    now.getFullYear(),
+    now.getMonth(),
+    now.getDate() + days,
+    12,
+  ));
+  const tomorrow = dateAtOffset(1);
+  const yesterday = dateAtOffset(-1);
   const draft = { moveType: "home_move", propertyType: "apartment_flat", approximateSize: { value: 2 }, moveDate: today };
   assert.equal(validateStep(0, draft).moveDate, undefined);
   assert.equal(validateStep(0, { ...draft, moveDate: tomorrow }).moveDate, undefined);

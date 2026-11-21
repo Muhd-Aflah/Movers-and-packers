@@ -12,7 +12,10 @@ const buttonVariants = cva(
           "bg-primary text-primary-foreground shadow hover:bg-primary/90",
 
         signup:
-          "bg-primary text-primary-foreground shadow hover:bg-primary/90",
+          "bg-blue-600 text-white shadow hover:bg-blue-700 dark:bg-blue-600 dark:text-white dark:hover:bg-blue-700",
+
+        signin:
+          "border border-blue-600 bg-white text-blue-700 shadow-none hover:bg-blue-50 hover:text-blue-800 dark:border-blue-500 dark:bg-white dark:text-blue-700 dark:hover:bg-blue-50 dark:hover:text-blue-800",
 
         destructive:
           "bg-destructive text-destructive-foreground shadow-sm hover:bg-destructive/90",

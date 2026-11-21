@@ -162,13 +162,13 @@ export function Header() {
             <>
               <Button
                 asChild
-                className="border border-blue-600 bg-transparent text-[#2563EB] shadow-none hover:bg-blue-50 hover:text-[#2563EB] dark:border-blue-400 dark:text-blue-300 dark:hover:bg-blue-950 dark:hover:text-blue-200"
+                variant="signin"
               >
                 <Link to="/login">Sign In</Link>
               </Button>
               <Button
                 asChild
-                className="bg-blue-600 text-white hover:bg-blue-700"
+                variant="signup"
               >
                 <Link to="/signup">Sign Up</Link>
               </Button>
@@ -252,13 +252,15 @@ export function Header() {
                 <>
                   <Button
                     asChild
-                    className="w-full border border-blue-600 bg-transparent text-[#2563EB] shadow-none hover:bg-blue-50 hover:text-[#2563EB] dark:border-blue-400 dark:text-blue-300 dark:hover:bg-blue-950 dark:hover:text-blue-200"
+                    variant="signin"
+                    className="w-full"
                   >
                     <Link to="/login">Sign In</Link>
                   </Button>
                   <Button
                     asChild
-                    className="w-full bg-blue-600 text-white hover:bg-blue-700"
+                    variant="signup"
+                    className="w-full"
                   >
                     <Link to="/signup">Sign Up</Link>
                   </Button>
